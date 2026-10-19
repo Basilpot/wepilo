@@ -17,7 +17,7 @@ Every request has to say which agency (tenant) it is for. Use one of these:
 | `x-api-key: <key>` | **Recommended** for server-side code (Next.js server components, Astro, Nuxt server routes, build scripts). Owners generate the key under Settings → API keys (any paid plan; not during the trial). |
 | `x-tenant-slug: <slug>` | Browser-side calls where a secret can't be kept, such as a contact form posting straight from the visitor's browser. The slug is shown under the agency name in the dashboard sidebar. |
 
-Keep the API key on the server. It's shown **once** when generated. Generating a new one revokes the old one immediately.
+Keep the API key on the server. It's shown **once** when generated. If it leaks, revoke it in the dashboard and create a new one.
 
 ```bash
 curl https://nerfuapi.basilpot.com/api/v1/activities \
