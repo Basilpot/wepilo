@@ -1,0 +1,59 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "narfu-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // Hourly: email owners whose trial or plan has ended (src/lib/billing.ts → sendExpiryNotices).
+  "triggers": { "crons": ["0 * * * *"] },
+  "routes": [{ "pattern": "nerfuapi.basilpot.com", "custom_domain": true }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "narfu-db",
+      "database_id": "df51fae0-f1c4-4f80-837c-c01d84a6d968",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "narfu-media"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "development",
+    "DODO_ENVIRONMENT": "test_mode",
+    "COOKIE_DOMAIN": "localhost",
+    "API_BASE_URL": "http://localhost:8787",
+    "DASHBOARD_URL": "http://localhost:5173",
+    "SITE_URL": "http://localhost:5173"
+  },
+  "env": {
+    "production": {
+      "vars": {
+        "ENVIRONMENT": "production",
+        "DODO_ENVIRONMENT": "live_mode",
+        "COOKIE_DOMAIN": "nerfu.basilpot.com",
+        "API_BASE_URL": "https://nerfuapi.basilpot.com",
+        "DASHBOARD_URL": "https://nerfu.basilpot.com",
+        "SITE_URL": "https://nerfu.basilpot.com"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "narfu-db",
+          "database_id": "df51fae0-f1c4-4f80-837c-c01d84a6d968",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "MEDIA",
+          "bucket_name": "narfu-media"
+        }
+      ]
+    }
+  }
+}

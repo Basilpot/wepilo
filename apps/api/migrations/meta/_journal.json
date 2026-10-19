@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1792076447526,
+      "tag": "0000_striped_stick",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1792110262220,
+      "tag": "0001_calm_gunslinger",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792111841782,
+      "tag": "0002_smart_morlocks",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792112897742,
+      "tag": "0003_slim_the_spike",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792160015982,
+      "tag": "0004_trip_layout",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792162297035,
+      "tag": "0005_remove_ai_generation",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1792416665703,
+      "tag": "0006_lumpy_siren",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@narfu/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply narfu-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply narfu-db --remote",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
+    "bcryptjs": "^3.0.2",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.9.6",
+    "jose": "^6.1.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "^5.9.2",
+    "wrangler": "^4.106.0"
+  }
+}
