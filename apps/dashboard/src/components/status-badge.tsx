@@ -72,6 +72,14 @@ const STATUSES = {
     CANCELED: { label: "Cancelled", tone: "neutral" },
     EXPIRED: { label: "Expired", tone: "danger" },
   },
+  workspace: {
+    ACTIVE: { label: "Active", tone: "success" },
+    TRIAL: { label: "Trial", tone: "info" },
+    PAST_DUE: { label: "Payment due", tone: "warning" },
+    UNPAID: { label: "Unpaid", tone: "neutral" },
+    EXPIRED: { label: "Expired", tone: "neutral" },
+    SUSPENDED: { label: "Suspended", tone: "danger" },
+  },
 } satisfies Record<string, Record<string, StatusDef>>;
 
 export type StatusKind = keyof typeof STATUSES;

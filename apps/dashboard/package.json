@@ -1,11 +1,12 @@
 {
-  "name": "@narfu/dashboard",
+  "name": "@wepilo/dashboard",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "deploy:prod": "vite build && wrangler deploy",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

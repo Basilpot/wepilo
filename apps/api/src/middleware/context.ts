@@ -16,6 +16,10 @@ export type AppVariables = {
   staff: schema.TenantStaff | null;
   user: schema.User | null;
   tenant: schema.Tenant | null;
+  /** Platform admin id when the staff session was opened by "Open as owner". */
+  impersonatedBy: number | null;
+  /** Signed-in platform admin (platform routes only). */
+  platformAdmin: schema.PlatformAdmin | null;
 };
 
 export const appContext = createMiddleware<{ Bindings: Env; Variables: AppVariables }>(
@@ -25,6 +29,8 @@ export const appContext = createMiddleware<{ Bindings: Env; Variables: AppVariab
     c.set("staff", null);
     c.set("user", null);
     c.set("tenant", null);
+    c.set("impersonatedBy", null);
+    c.set("platformAdmin", null);
 
     const staffToken = getCookie(c, staffCookieName);
     if (staffToken) {
@@ -37,9 +43,14 @@ export const appContext = createMiddleware<{ Bindings: Env; Variables: AppVariab
             eq(schema.tenantStaff.isActive, true),
           ),
         });
-        if (staff) {
+        const tenant = staff
+          ? await db.query.tenants.findFirst({ where: eq(schema.tenants.id, staff.tenantId), columns: { status: true } })
+          : null;
+        // A suspended workspace signs everyone out.
+        if (staff && tenant && tenant.status !== "SUSPENDED") {
           c.set("staff", staff);
           c.set("tenantId", staff.tenantId);
+          c.set("impersonatedBy", payload.impersonatedBy ?? null);
         }
       }
     }
@@ -158,7 +169,7 @@ export async function assertPlanLimit(db: Db, tenantId: number, resource: "trips
 }
 
 /** Paths that stay open while a workspace is locked: signing in/out and paying. */
-const OPEN_WHEN_LOCKED = [/^\/api\/v1\/auth\//, /^\/api\/v1\/billing\//, /^\/api\/v1\/tenant\/billing(\/|$)/];
+const OPEN_WHEN_LOCKED = [/^\/api\/v1\/platform(\/|$)/, /^\/api\/v1\/auth\//, /^\/api\/v1\/billing\//, /^\/api\/v1\/tenant\/billing(\/|$)/];
 
 /**
  * No access without payment.
@@ -183,7 +194,7 @@ export const requirePaidAccess = createMiddleware<{ Bindings: Env; Variables: Ap
         error:
           loaded.access.state === "TRIAL"
             ? "API access starts with a paid plan."
-            : "This site's Narfu plan is inactive.",
+            : "This site's Wepilo plan is inactive.",
         code: "API_ACCESS_INACTIVE",
       },
       402,

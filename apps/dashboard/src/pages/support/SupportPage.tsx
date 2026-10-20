@@ -113,7 +113,7 @@ export function SupportPage() {
     <div>
       <PageHeader
         title="Support"
-        description="Tickets with the Narfu team."
+        description="Tickets with the Wepilo team."
         action={
           <Button
             onClick={() => {
@@ -135,7 +135,7 @@ export function SupportPage() {
         onRowClick={(t) => navigate(`/support/${t.id}`)}
         emptyIcon={LifeBuoy}
         emptyTitle="No tickets"
-        emptyHint="Open a ticket and the Narfu team will follow up."
+        emptyHint="Open a ticket and the Wepilo team will follow up."
         toolbar={
           <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
             <SelectTrigger className="w-40">

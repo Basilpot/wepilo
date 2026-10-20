@@ -1,13 +1,13 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "narfu-api",
+  "name": "wepilo-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   // Hourly: email owners whose trial or plan has ended (src/lib/billing.ts → sendExpiryNotices).
   "triggers": { "crons": ["0 * * * *"] },
-  "routes": [{ "pattern": "nerfuapi.basilpot.com", "custom_domain": true }],
+  // D1 and R2 keep their original names: they hold live data and can't be renamed in place.
   "d1_databases": [
     {
       "binding": "DB",
@@ -31,14 +31,16 @@
     "SITE_URL": "http://localhost:5173"
   },
   "env": {
+    // Deploy with `pnpm deploy:api` (wrangler deploy --env production). The Worker is "wepilo-api-production".
     "production": {
+      "routes": [{ "pattern": "wepiloapi.basilpot.com", "custom_domain": true }],
       "vars": {
         "ENVIRONMENT": "production",
         "DODO_ENVIRONMENT": "live_mode",
-        "COOKIE_DOMAIN": "nerfu.basilpot.com",
-        "API_BASE_URL": "https://nerfuapi.basilpot.com",
-        "DASHBOARD_URL": "https://nerfu.basilpot.com",
-        "SITE_URL": "https://nerfu.basilpot.com"
+        "COOKIE_DOMAIN": "wepilo.basilpot.com",
+        "API_BASE_URL": "https://wepiloapi.basilpot.com",
+        "DASHBOARD_URL": "https://wepilo.basilpot.com",
+        "SITE_URL": "https://wepilo.basilpot.com"
       },
       "d1_databases": [
         {

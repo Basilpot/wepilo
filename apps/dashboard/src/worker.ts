@@ -1,6 +1,6 @@
 type Env = { ASSETS: { fetch(request: Request): Promise<Response> } };
 
-const API_ORIGIN = "nerfuapi.basilpot.com";
+const API_ORIGIN = "wepiloapi.basilpot.com";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {

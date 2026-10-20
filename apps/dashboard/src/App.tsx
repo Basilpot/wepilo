@@ -37,9 +37,12 @@ import { SupportPage } from "@/pages/support/SupportPage";
 import { SupportTicketPage } from "@/pages/support/SupportTicketPage";
 import { BillingReturnPage, PaywallPage } from "@/pages/billing/PaywallPage";
 import type { Access } from "@/pages/billing/billing";
+import { AdminApp } from "@/pages/admin/AdminApp";
 
 export type Session = {
   staff: { id: number; name: string; email: string; role: string };
+  /** Platform admin id when a Wepilo admin opened this workspace as its owner. */
+  impersonatedBy: number | null;
   tenant: {
     id: number;
     email: string;
@@ -78,11 +81,11 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const onUnauthorized = () => navigate("/login", { replace: true });
     const onPaymentRequired = () => queryClient.invalidateQueries({ queryKey: ["session"] });
-    window.addEventListener("narfu:unauthorized", onUnauthorized);
-    window.addEventListener("narfu:payment-required", onPaymentRequired);
+    window.addEventListener("wepilo:unauthorized", onUnauthorized);
+    window.addEventListener("wepilo:payment-required", onPaymentRequired);
     return () => {
-      window.removeEventListener("narfu:unauthorized", onUnauthorized);
-      window.removeEventListener("narfu:payment-required", onPaymentRequired);
+      window.removeEventListener("wepilo:unauthorized", onUnauthorized);
+      window.removeEventListener("wepilo:payment-required", onPaymentRequired);
     };
   }, [navigate, queryClient]);
 
@@ -108,6 +111,8 @@ export default function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/setup-account" element={<ResetPasswordPage setup />} />
+      <Route path="/admin/*" element={<AdminApp />} />
       <Route
         path="/"
         element={

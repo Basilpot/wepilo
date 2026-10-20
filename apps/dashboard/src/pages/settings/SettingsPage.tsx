@@ -542,7 +542,11 @@ function BillingTab() {
   const planName = access ? PLAN_NAMES[access.plan] : "—";
 
   let summary = "";
-  if (access && sub) {
+  if (access?.managed) {
+    summary = access.endsAt
+      ? `Arranged with the Wepilo team · runs until ${formatDate(access.endsAt)}`
+      : "Arranged with the Wepilo team · no end date";
+  } else if (access && sub) {
     if (access.state === "TRIAL") {
       summary = `Trial ends ${access.endsAt ? formatDate(access.endsAt) : "soon"}. You won't be charged automatically. Choose a plan below to keep access.`;
     } else if (access.state === "PAST_DUE") {
@@ -578,6 +582,17 @@ function BillingTab() {
         )}
       </SettingsSection>
 
+      {access?.managed ? (
+        <SettingsSection title="Changing your plan" description="Your plan was set up with the Wepilo team.">
+          <p className="text-sm text-muted-foreground">
+            To change your plan, limits or end date,{" "}
+            <Link className="font-medium text-foreground underline underline-offset-4" to="/support">
+              contact us through Support
+            </Link>
+            .
+          </p>
+        </SettingsSection>
+      ) : (
       <SettingsSection
         title={sub?.hasPaidSubscription ? "Change plan" : "Choose a plan"}
         description={
@@ -604,6 +619,7 @@ function BillingTab() {
           Need more than 25 staff or custom terms? <Link className="font-medium text-foreground underline underline-offset-4" to="/support">Talk to us about Enterprise</Link>.
         </p>
       </SettingsSection>
+      )}
     </>
   );
 }

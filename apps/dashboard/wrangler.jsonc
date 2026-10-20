@@ -1,5 +1,5 @@
 {
-  "name": "narfu-dashboard",
+  "name": "wepilo-dashboard",
   "main": "src/worker.ts",
   "compatibility_date": "2026-10-01",
   "assets": {
@@ -7,5 +7,5 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
-  "routes": [{ "pattern": "nerfu.basilpot.com", "custom_domain": true }]
+  "routes": [{ "pattern": "wepilo.basilpot.com", "custom_domain": true }]
 }

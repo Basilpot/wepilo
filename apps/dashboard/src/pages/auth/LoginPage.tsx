@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,12 @@ type FormValues = z.infer<typeof schema>;
 export function LoginPage() {
   const redirect = useAuthRedirect();
   const { error, capture } = useErrorMessage();
-  const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { email: "", password: "" } });
+  const [params] = useSearchParams();
+  const welcome = params.get("welcome") === "1";
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: params.get("email") ?? "", password: "" },
+  });
 
   const login = useMutation({
     mutationFn: (values: FormValues) => api("/auth/tenant/login", { body: values }),
@@ -29,8 +34,8 @@ export function LoginPage() {
 
   return (
     <AuthCard
-      title="Sign in"
-      description="Sign in to your Narfu workspace."
+      title={welcome ? "You're all set" : "Sign in"}
+      description={welcome ? "Password saved. Sign in to open your workspace." : "Sign in to your Wepilo workspace."}
       footer={
         <>
           No account yet?{" "}

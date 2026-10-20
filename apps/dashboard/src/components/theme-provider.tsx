@@ -7,14 +7,14 @@ export const ThemeContext = createContext<Ctx>({ theme: "light", toggle: () => {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const s = localStorage.getItem("narfu-theme") as Theme | null;
+    const s = localStorage.getItem("wepilo-theme") as Theme | null;
     if (s === "dark" || s === "light") return s;
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("narfu-theme", theme);
+    localStorage.setItem("wepilo-theme", theme);
   }, [theme]);
 
   return (

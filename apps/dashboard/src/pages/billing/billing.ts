@@ -14,6 +14,8 @@ export type Access = {
   endsAt: string | null;
   trialAvailable: boolean;
   cancelAtPeriodEnd: boolean;
+  /** Plan set by the Wepilo team; no self-serve billing. */
+  managed: boolean;
   apiUntil: string | null;
 };
 

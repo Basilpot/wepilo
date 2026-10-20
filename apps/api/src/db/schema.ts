@@ -41,6 +41,15 @@ export const tenants = sqliteTable(
     trialEmail: text("trial_email").unique(),
     /** When the "your access ended" email went out for the current expiry; cleared when access is extended. */
     expiryNoticeSentAt: integer("expiry_notice_sent_at", { mode: "timestamp_ms" }),
+    /**
+     * SELF_SERVE: access comes from the $1 trial or a Dodo subscription.
+     * MANUAL: a platform admin set the plan and end date by hand (enterprise deals, comped accounts).
+     */
+    billingMode: text("billing_mode", { enum: ["SELF_SERVE", "MANUAL"] }).notNull().default("SELF_SERVE"),
+    /** Platform-only notes (deal terms, contacts). Never shown to the agency. */
+    internalNotes: text("internal_notes"),
+    /** Platform admin who created this workspace; null for self sign-ups. */
+    createdByAdminId: integer("created_by_admin_id"),
     apiKeyHash: text("api_key_hash").unique(),
     dodoCustomerId: text("dodo_customer_id").unique(),
     siteConfig: text("site_config", { mode: "json" }),
@@ -118,6 +127,48 @@ export const authors = sqliteTable(
     uniqueIndex("authors_email_uidx").on(t.tenantId, t.email),
     index("authors_tenant_idx").on(t.tenantId),
   ],
+);
+
+/** Wepilo's own team. Not tied to any tenant. */
+export const platformAdmins = sqliteTable("platform_admins", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  password: text("password").notNull(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  lastLoginAt: integer("last_login_at", { mode: "timestamp_ms" }),
+  ...timestamps,
+});
+
+/** Single-use links for staff: account setup (handover) and password reset. Only the hash is stored. */
+export const staffAuthTokens = sqliteTable(
+  "staff_auth_tokens",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    staffId: integer("staff_id")
+      .notNull()
+      .references(() => tenantStaff.id, { onDelete: "cascade" }),
+    purpose: text("purpose", { enum: ["SETUP", "RESET"] }).notNull(),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    usedAt: integer("used_at", { mode: "timestamp_ms" }),
+    createdAt: timestamps.createdAt,
+  },
+  (t) => [index("staff_auth_tokens_staff_idx").on(t.staffId)],
+);
+
+/** What platform admins did, per workspace. */
+export const platformAuditLog = sqliteTable(
+  "platform_audit_log",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    adminId: integer("admin_id").references(() => platformAdmins.id, { onDelete: "set null" }),
+    tenantId: integer("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),
+    action: text("action").notNull(),
+    detail: text("detail", { mode: "json" }),
+    createdAt: timestamps.createdAt,
+  },
+  (t) => [index("platform_audit_log_tenant_idx").on(t.tenantId, t.createdAt)],
 );
 
 // ─── Catalog taxonomy ────────────────────────────────────────────────────────
@@ -744,6 +795,7 @@ export type InfoPage = typeof infoPages.$inferSelect;
 export type Media = typeof media.$inferSelect;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 export type SupportTicket = typeof supportTickets.$inferSelect;
+export type PlatformAdmin = typeof platformAdmins.$inferSelect;
 
 // ─── Relations ───────────────────────────────────────────────────────────────
 
@@ -858,4 +910,8 @@ export const reviewRelations = relations(reviews, ({ one }) => ({
 
 export const wishlistRelations = relations(wishlists, ({ one }) => ({
   activity: one(activities, { fields: [wishlists.itemId], references: [activities.id] }),
+}));
+
+export const platformAuditLogRelations = relations(platformAuditLog, ({ one }) => ({
+  admin: one(platformAdmins, { fields: [platformAuditLog.adminId], references: [platformAdmins.id] }),
 }));

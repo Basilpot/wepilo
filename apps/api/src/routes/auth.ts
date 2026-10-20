@@ -9,14 +9,13 @@ import {
   hashPassword,
   verifyPassword,
   signToken,
-  verifyToken,
-  type TokenPayload,
   setStaffAuthCookie,
   setUserAuthCookie,
   clearAuthCookies,
 } from "@/lib/auth";
 import { requireStaff, requireUser } from "@/middleware/context";
 import { sendEmail, layout, escapeHtml } from "@/lib/email";
+import { issueStaffToken, consumeStaffToken, peekStaffToken } from "@/lib/staff-tokens";
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -144,6 +143,11 @@ export const authRoutes = new Hono<AppEnv>()
     if (!staff || !staff.isActive || !(await verifyPassword(body.password, staff.password))) {
       throw new ApiError(401, "Invalid email or password");
     }
+    const staffTenant = await db.query.tenants.findFirst({
+      where: eq(schema.tenants.id, staff.tenantId),
+      columns: { status: true },
+    });
+    if (staffTenant?.status === "SUSPENDED") throw new ApiError(403, "Account suspended");
     const token = await signToken(c.env, {
       kind: "staff",
       staffId: staff.id,
@@ -227,6 +231,7 @@ export const authRoutes = new Hono<AppEnv>()
         email: staff.email,
         role: staff.role,
       },
+      impersonatedBy: c.get("impersonatedBy"),
       tenant: tenant
         ? {
             id: tenant.id,
@@ -256,42 +261,49 @@ export const authRoutes = new Hono<AppEnv>()
     const body = z.object({ email: z.string().email() }).parse(await c.req.json());
     const db = c.get("db");
     const staff = await db.query.tenantStaff.findFirst({
-      where: eq(schema.tenantStaff.email, body.email.toLowerCase()),
+      where: and(eq(schema.tenantStaff.email, body.email.toLowerCase()), eq(schema.tenantStaff.isActive, true)),
     });
     if (!staff) return c.json({ ok: true });
 
-    const token = await signToken(c.env, {
-      kind: "staff",
-      staffId: staff.id,
-      tenantId: staff.tenantId,
-      role: staff.role,
-    });
+    const { token } = await issueStaffToken(db, staff.id, "RESET");
     const resetUrl = `${c.env.DASHBOARD_URL}/reset-password?token=${token}`;
     await sendEmail({
       apiKey: c.env.RESEND_API_KEY,
       from: c.env.PLATFORM_EMAIL_FROM,
       to: staff.email,
-      subject: "Reset your Narfu password",
+      subject: "Reset your Wepilo password",
       html: layout(
         "Password reset",
-        `<p>Hi ${escapeHtml(staff.name)},</p><p>Use the link below to reset your password. It expires in 1 hour.</p><p><a href="${resetUrl}">Reset password</a></p>`,
+        `<p>Hi ${escapeHtml(staff.name)},</p><p>Use the link below to reset your password. It expires in 1 hour and works once.</p><p><a href="${resetUrl}">Reset password</a></p>`,
       ),
     });
     return c.json({ ok: true });
   })
+  // What a setup/reset link is for, so the page can greet the person. 404 when the link is dead.
+  .get("/link-info", async (c) => {
+    const token = c.req.query("token") ?? "";
+    const db = c.get("db");
+    const found = token ? await peekStaffToken(db, token) : null;
+    if (!found) throw new ApiError(404, "This link has expired or was already used.", "LINK_INVALID");
+    const tenant = await db.query.tenants.findFirst({
+      where: eq(schema.tenants.id, found.staff.tenantId),
+      columns: { companyName: true },
+    });
+    return c.json({
+      purpose: found.row.purpose,
+      email: found.staff.email,
+      name: found.staff.name,
+      companyName: tenant?.companyName ?? null,
+    });
+  })
   .post("/reset-password", async (c) => {
     const body = z
-      .object({ token: z.string(), password: z.string().min(8) })
+      .object({ token: z.string().min(1), password: z.string().min(8) })
       .parse(await c.req.json());
     const db = c.get("db");
-    const decoded = await verifyToken<TokenPayload>(c.env, body.token);
-    if (!decoded || decoded.kind !== "staff") throw new ApiError(400, "Invalid or expired token");
-    const passwordHash = await hashPassword(body.password);
-    await db
-      .update(schema.tenantStaff)
-      .set({ password: passwordHash, updatedAt: new Date() })
-      .where(eq(schema.tenantStaff.id, decoded.staffId));
-    return c.json({ ok: true });
+    const used = await consumeStaffToken(db, body.token, await hashPassword(body.password));
+    if (!used) throw new ApiError(400, "This link has expired or was already used.", "LINK_INVALID");
+    return c.json({ ok: true, email: used.staff.email });
   })
   .get("/authors/:username", async (c) => {
     const tenantId = c.get("tenantId");

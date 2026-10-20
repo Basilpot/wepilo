@@ -24,7 +24,7 @@ function PaywallLayout({ session, children }: { session: Session; children: Reac
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Mountain className="size-4" />
           </span>
-          <span className="text-sm font-semibold tracking-tight">{session.tenant?.companyName ?? "Narfu"}</span>
+          <span className="text-sm font-semibold tracking-tight">{session.tenant?.companyName ?? "Wepilo"}</span>
         </div>
         <Button variant="ghost" size="sm" onClick={signOut}>
           <LogOut />

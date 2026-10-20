@@ -6,7 +6,7 @@ import { dodoGetSubscription, verifyDodoWebhook, type DodoSubscription, type Dod
 import { applySubscription, grantTrial } from "@/lib/billing";
 import { SELF_SERVE_PLANS, type SelfServePlan } from "@/lib/plans";
 
-// Dodo → Narfu. Configure in Dodo: Developer → Webhooks → https://<api>/api/v1/billing/webhook
+// Dodo → Wepilo. Configure in Dodo: Developer → Webhooks → https://<api>/api/v1/billing/webhook
 // Events: payment.succeeded and all subscription.* events.
 
 export const billingRoutes = new Hono<AppEnv>().post("/webhook", async (c) => {

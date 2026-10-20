@@ -31,7 +31,7 @@ export function AuthCard({
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Mountain className="size-4" />
           </span>
-          <span className="text-sm font-semibold tracking-tight">Narfu</span>
+          <span className="text-sm font-semibold tracking-tight">Wepilo</span>
         </div>
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full max-w-sm">
@@ -41,7 +41,7 @@ export function AuthCard({
             {footer && <div className="mt-8 border-t pt-6 text-center text-sm text-muted-foreground">{footer}</div>}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Narfu</p>
+        <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Wepilo</p>
       </div>
       <aside className="relative hidden overflow-hidden bg-[oklch(0.27_0.06_155)] text-white lg:flex lg:flex-col lg:justify-end">
         <div

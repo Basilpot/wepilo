@@ -55,7 +55,7 @@ import { cn } from "@/lib/utils";
 import { PLAN_NAMES, daysLeft, useBillingPortal } from "@/pages/billing/billing";
 import type { Session } from "@/App";
 
-const COLLAPSED_KEY = "narfu-nav-collapsed";
+const COLLAPSED_KEY = "wepilo-nav-collapsed";
 
 function readCollapsed(): string[] {
   try {
@@ -345,6 +345,28 @@ function AppSidebar({ session }: { session: Session }) {
   );
 }
 
+/** Shown while a Wepilo admin works inside this workspace as its owner. */
+function ImpersonationBanner({ session }: { session: Session }) {
+  if (!session.impersonatedBy) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b bg-primary px-4 py-2 text-center text-sm text-primary-foreground">
+      <span>
+        Platform admin view: you're signed in as the owner of <strong>{session.tenant?.companyName ?? session.tenant?.slug}</strong>. Expires within an hour.
+      </span>
+      <button
+        type="button"
+        className="font-medium underline underline-offset-4"
+        onClick={async () => {
+          await api("/auth/logout", { method: "POST" }).catch(() => {});
+          window.location.href = session.tenant ? `/admin/workspaces/${session.tenant.id}` : "/admin";
+        }}
+      >
+        Back to admin
+      </button>
+    </div>
+  );
+}
+
 function BillingBanner({ session }: { session: Session }) {
   const access = session.access;
   const portal = useBillingPortal();
@@ -455,7 +477,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
 
   useEffect(() => {
     const title = findNavItem(pathname)?.title;
-    const company = session.tenant?.companyName ?? "Narfu";
+    const company = session.tenant?.companyName ?? "Wepilo";
     document.title = title ? `${title} · ${company}` : company;
   }, [pathname, session.tenant?.companyName]);
 
@@ -463,6 +485,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
     <SidebarProvider>
       <AppSidebar session={session} />
       <SidebarInset className="min-w-0">
+        <ImpersonationBanner session={session} />
         <BillingBanner session={session} />
         <SiteHeader session={session} onSearch={() => setSearchOpen(true)} />
         <div className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">

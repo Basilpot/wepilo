@@ -45,6 +45,6 @@ export function layout(title: string, body: string) {
   return `<!doctype html><html><body style="font-family:system-ui,sans-serif;color:#0f172a;max-width:560px;margin:0 auto;padding:24px;">
   <h2 style="font-size:18px;margin:0 0 16px;">${title}</h2>
   ${body}
-  <p style="color:#64748b;font-size:12px;margin-top:32px;">Sent by Narfu</p>
+  <p style="color:#64748b;font-size:12px;margin-top:32px;">Sent by Wepilo</p>
   </body></html>`;
 }

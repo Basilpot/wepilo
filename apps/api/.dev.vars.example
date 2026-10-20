@@ -1,6 +1,6 @@
 JWT_SECRET=replace-me
 RESEND_API_KEY=re_replace_me
-PLATFORM_EMAIL_FROM=Narfu <billing@yourdomain.com>
+PLATFORM_EMAIL_FROM=Wepilo <billing@yourdomain.com>
 PLATFORM_SUPPORT_EMAIL=support@yourdomain.com
 
 # Dodo Payments (test-mode values locally; DODO_ENVIRONMENT is set in wrangler.jsonc)

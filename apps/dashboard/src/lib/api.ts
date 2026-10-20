@@ -34,11 +34,11 @@ export async function api<T = unknown>(path: string, options: RequestOptions = {
   if (res.status === 204) return undefined as T;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    if (res.status === 401 && !path.startsWith("/auth/")) {
-      window.dispatchEvent(new Event("narfu:unauthorized"));
+    if (res.status === 401 && !path.startsWith("/auth/") && !path.startsWith("/platform/")) {
+      window.dispatchEvent(new Event("wepilo:unauthorized"));
     }
     if (res.status === 402 && (data as { code?: string }).code === "PAYMENT_REQUIRED") {
-      window.dispatchEvent(new Event("narfu:payment-required"));
+      window.dispatchEvent(new Event("wepilo:payment-required"));
     }
     throw new ApiClientError(res.status, (data as { error?: string }).error ?? "Request failed", (data as { code?: string }).code);
   }

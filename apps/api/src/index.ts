@@ -8,6 +8,7 @@ import { handleRouteError } from "@/lib/http";
 import { authRoutes } from "@/routes/auth";
 import { tenantRoutes } from "@/routes/tenant";
 import { billingRoutes } from "@/routes/billing";
+import { platformRoutes } from "@/routes/platform";
 import {
   catalogRoutes,
   countryRoutes,
@@ -51,7 +52,7 @@ app.use(
 
 app.onError((err, c) => handleRouteError(c, err));
 
-app.get("/health", (c) => c.json({ ok: true, service: "narfu-api" }));
+app.get("/health", (c) => c.json({ ok: true, service: "wepilo-api" }));
 
 // Media files are public (R2-backed with immutable cache)
 app.route("/media/file", mediaFileRoutes);
@@ -64,6 +65,8 @@ const v1 = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 v1.route("/auth", authRoutes);
 v1.route("/tenant", tenantRoutes);
 v1.route("/billing", billingRoutes);
+// Wepilo's own team: create and hand over workspaces. Separate login and cookie.
+v1.route("/platform", platformRoutes);
 
 v1.route("/", catalogRoutes);
 v1.route("/countries", countryRoutes);

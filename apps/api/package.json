@@ -1,13 +1,14 @@
 {
-  "name": "@narfu/api",
+  "name": "@wepilo/api",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "deploy:prod": "wrangler d1 migrations apply DB --remote && wrangler deploy --env production",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply narfu-db --local",
-    "db:migrate:remote": "wrangler d1 migrations apply narfu-db --remote",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "admin:create": "node scripts/create-platform-admin.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

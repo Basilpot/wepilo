@@ -33,6 +33,8 @@ export type Access = {
   endsAt: Date | null;
   trialAvailable: boolean;
   cancelAtPeriodEnd: boolean;
+  /** Plan set by the Wepilo team (enterprise / comped). The agency can't self-manage billing. */
+  managed: boolean;
   /**
    * Until when the public website API (API key / tenant slug) answers. Never during the trial;
    * for paid subscriptions it runs API_GRACE_DAYS past the end of access. Null = no API.
@@ -40,7 +42,8 @@ export type Access = {
   apiUntil: Date | null;
 };
 
-type TenantBilling = Pick<schema.Tenant, "plan" | "planExpiresAt" | "trialUsedAt">;
+type TenantBilling = Pick<schema.Tenant, "plan" | "planExpiresAt" | "trialUsedAt"> &
+  Partial<Pick<schema.Tenant, "billingMode">>;
 type SubscriptionBilling =
   | Pick<schema.PlatformSubscription, "status" | "cancelAtPeriodEnd" | "dodoSubscriptionId">
   | null
@@ -48,12 +51,15 @@ type SubscriptionBilling =
 
 export function accessFor(tenant: TenantBilling, sub: SubscriptionBilling, now = Date.now()): Access {
   const plan = (PLAN_KEYS as readonly string[]).includes(tenant.plan) ? (tenant.plan as PlanKey) : "STARTER";
-  const paid = Boolean(sub?.dodoSubscriptionId);
+  const managed = tenant.billingMode === "MANUAL";
+  // A hand-set plan counts as paid: the website API is on and gets the same grace period.
+  const paid = managed || Boolean(sub?.dodoSubscriptionId);
   const base = {
     plan,
     endsAt: tenant.planExpiresAt,
     trialAvailable: !tenant.trialUsedAt,
     cancelAtPeriodEnd: Boolean(sub?.cancelAtPeriodEnd),
+    managed,
     apiUntil:
       paid && tenant.planExpiresAt ? new Date(tenant.planExpiresAt.getTime() + API_GRACE_DAYS * DAY) : null,
   };
@@ -61,8 +67,13 @@ export function accessFor(tenant: TenantBilling, sub: SubscriptionBilling, now =
   if (plan === "ENTERPRISE" && !tenant.planExpiresAt)
     return { ...base, state: "ACTIVE", locked: false, apiUntil: new Date(8.64e15) };
   if (tenant.planExpiresAt && tenant.planExpiresAt.getTime() > now) {
-    const state: AccessState =
-      sub?.status === "TRIALING" ? "TRIAL" : sub?.status === "PAST_DUE" ? "PAST_DUE" : "ACTIVE";
+    const state: AccessState = managed
+      ? "ACTIVE"
+      : sub?.status === "TRIALING"
+        ? "TRIAL"
+        : sub?.status === "PAST_DUE"
+          ? "PAST_DUE"
+          : "ACTIVE";
     return { ...base, state, locked: false };
   }
   return { ...base, state: tenant.trialUsedAt ? "EXPIRED" : "UNPAID", locked: true };
@@ -212,7 +223,8 @@ export async function applySubscription(
       planExpiresAt,
       // A paying customer has no trial left to take.
       ...(tenant?.trialUsedAt ? {} : { trialUsedAt: new Date(now) }),
-      ...(extended ? { expiryNoticeSentAt: null } : {}),
+      // A live Dodo subscription takes over from any hand-set plan.
+      ...(extended ? { expiryNoticeSentAt: null, billingMode: "SELF_SERVE" as const } : {}),
       ...(sub.customer?.customer_id ? { dodoCustomerId: sub.customer.customer_id } : {}),
       updatedAt: new Date(now),
     })
@@ -272,13 +284,13 @@ export async function sendExpiryNotices(env: Env, db: Db, now = Date.now()) {
     const sub = await db.query.platformSubscriptions.findFirst({
       where: eq(schema.platformSubscriptions.tenantId, tenant.id),
     });
-    const wasTrial = !sub?.dodoSubscriptionId;
+    const wasTrial = !sub?.dodoSubscriptionId && tenant.billingMode !== "MANUAL";
     const name = escapeHtml(tenant.companyName ?? "there");
     const billingUrl = `${env.DASHBOARD_URL}/settings/billing`;
-    const subject = wasTrial ? "Your Narfu trial has ended" : "Your Narfu plan has ended";
+    const subject = wasTrial ? "Your Wepilo trial has ended" : "Your Wepilo plan has ended";
     const lead = wasTrial
-      ? `Your 3-day Narfu trial for <strong>${name}</strong> has ended. Your trips, pages and settings are saved, but the dashboard and your website's API are paused until you choose a plan.`
-      : `The Narfu plan for <strong>${name}</strong> has ended because the subscription wasn't renewed. Your content is saved and your website keeps working for ${API_GRACE_DAYS} more days, but the dashboard is paused until you renew.`;
+      ? `Your 3-day Wepilo trial for <strong>${name}</strong> has ended. Your trips, pages and settings are saved, but the dashboard and your website's API are paused until you choose a plan.`
+      : `The Wepilo plan for <strong>${name}</strong> has ended ${tenant.billingMode === "MANUAL" ? "on its agreed end date" : "because the subscription wasn't renewed"}. Your content is saved and your website keeps working for ${API_GRACE_DAYS} more days, but the dashboard is paused until you renew.`;
     const html = layout(
       subject,
       `<p>${lead}</p>

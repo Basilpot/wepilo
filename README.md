@@ -1,6 +1,6 @@
-# Narfu
+# Wepilo
 
-Narfu is a multi-tenant backend for travel agencies. Each agency (a **tenant**) runs its trips, departures, bookings, inquiries and website content from one dashboard, and its public website reads everything through the Narfu API.
+Wepilo is a multi-tenant backend for travel agencies. Each agency (a **tenant**) runs its trips, departures, bookings, inquiries and website content from one dashboard, and its public website reads everything through the Wepilo API.
 
 ```
 apps/
@@ -25,7 +25,7 @@ cp apps/api/.dev.vars.example apps/api/.dev.vars
 #    set JWT_SECRET to a long random string; the rest can stay as placeholders locally
 
 # 2. Create the local D1 database
-pnpm --filter @narfu/api db:migrate:local
+pnpm --filter @wepilo/api db:migrate:local
 
 # 3. Run both apps (two terminals, or `pnpm dev` for both)
 pnpm dev:api        # http://localhost:8787
@@ -40,9 +40,10 @@ Open http://localhost:5173/signup to create a workspace. A new workspace is lock
 | --- | --- |
 | `pnpm typecheck` | Type-check both apps |
 | `pnpm build` | Build both apps |
-| `pnpm --filter @narfu/api db:generate` | Generate a migration after editing `apps/api/src/db/schema.ts` |
-| `pnpm --filter @narfu/api db:migrate:local` | Apply migrations to the local D1 database |
-| `pnpm --filter @narfu/api db:migrate:remote` | Apply migrations to the production D1 database |
+| `pnpm --filter @wepilo/api db:generate` | Generate a migration after editing `apps/api/src/db/schema.ts` |
+| `pnpm --filter @wepilo/api db:migrate:local` | Apply migrations to the local D1 database |
+| `pnpm --filter @wepilo/api db:migrate:remote` | Apply migrations to the production D1 database |
+| `pnpm --filter @wepilo/api admin:create -- --email you@x.com --name "You"` | Create a platform admin, or reset their password (prompts for it; add `--remote` for production) |
 
 ### Environment
 
@@ -64,13 +65,21 @@ Plain variables (`ENVIRONMENT`, `DODO_ENVIRONMENT` (`test_mode` locally, `live_m
 ## Deploying
 
 ```bash
-# API
-pnpm --filter @narfu/api db:migrate:remote
-cd apps/api && pnpm wrangler deploy --env production
-
-# Dashboard
-cd apps/dashboard && pnpm build && pnpm wrangler deploy
+pnpm deploy:api        # applies remote D1 migrations, then deploys Worker "wepilo-api-production"
+pnpm deploy:dashboard  # builds the SPA, then deploys Worker "wepilo-dashboard"
+pnpm --filter @wepilo/api admin:create -- --email you@x.com --name "You" --remote   # first platform admin
 ```
+
+Use these scripts rather than `pnpm deploy`. That is a built-in pnpm command, not a script, so it doesn't deploy anything to Cloudflare.
+
+| | Worker | Domain |
+| --- | --- | --- |
+| API | `wepilo-api-production` (`--env production`) | `wepiloapi.basilpot.com` |
+| Dashboard | `wepilo-dashboard` | `wepilo.basilpot.com` |
+
+The D1 database (`narfu-db`) and R2 bucket (`narfu-media`) keep their original names, because they hold data and can't be renamed.
+
+**Secrets live on the Worker.** A new Worker name starts with none, so set them once per Worker with `wrangler secret put NAME --env production`, run from `apps/api` (see [Environment](#environment)).
 
 The dashboard Worker serves the built SPA and forwards `/api/*` to the API host, so staff cookies stay first-party on the dashboard domain.
 
@@ -107,11 +116,25 @@ Going over a limit returns `402` with `code: "PLAN_LIMIT"`, and the dashboard sh
 **Dodo setup**
 
 1. Products: one **one-time** product at $1 for the trial, plus one **subscription** product per plan and interval. Set **no trial** on the subscription products; checkout also forces `trial_period_days: 0`.
-2. Webhook: `https://nerfuapi.basilpot.com/api/v1/billing/webhook` with `payment.succeeded` and all `subscription.*` events. Put its signing secret in `DODO_WEBHOOK_SECRET`.
+2. Webhook: `https://wepiloapi.basilpot.com/api/v1/billing/webhook` with `payment.succeeded` and all `subscription.*` events. Put its signing secret in `DODO_WEBHOOK_SECRET`.
 3. Customer portal: set the return URL to the dashboard's `/settings/billing`.
 4. Production secrets: `wrangler secret put DODO_API_KEY --env production` (and the rest).
 
 **Testing locally.** Dodo can't reach `localhost`. Either expose the API with `cloudflared tunnel --url http://localhost:8787` and use that URL as a test-mode webhook, or send signed test events yourself (Standard Webhooks: `webhook-id`, `webhook-timestamp`, `webhook-signature: v1,<base64 HMAC-SHA256 of "id.timestamp.body">`). Trigger the expiry cron with `wrangler dev --test-scheduled`, then `curl "localhost:8787/__scheduled?cron=0+*+*+*+*"`.
+
+## Platform admin
+
+Wepilo's own team works at `/admin` on the dashboard domain. It has its own login and cookie, separate from any agency workspace.
+
+- **Create a workspace** for an enterprise deal: company, slug, owner name and email, plan (any plan, Enterprise included) and an end date (Enterprise can have none). These workspaces are **managed** (`billing_mode = MANUAL`): no $1 trial or checkout, and the dashboard and website API stay on until the end date. Afterwards the usual expiry email and 15-day API grace period apply.
+- **Hand it over** with a one-time setup link (valid 7 days). The admin can email it from Wepilo or copy it and send it themselves. Issuing a new link cancels the old one. When the client uses it, they choose a password and sign in as the owner.
+- **Open as owner** signs the admin's browser into the workspace as its owner for one hour, for example to load trips before the handover. A banner shows while this is active.
+- **Change** the plan, end date, owner email or internal notes, or **suspend** the workspace (everyone is signed out and the website API stops).
+- Every admin action is logged on the workspace page.
+
+If a managed workspace later subscribes through Dodo, the subscription takes over and the workspace becomes self-serve again.
+
+Create the first admin with `admin:create` (see [Useful scripts](#useful-scripts)). After that, admins can add each other under **Admins**.
 
 ## Known limitations (by design for now)
 

@@ -1,8 +1,8 @@
-# Narfu API: website integration guide
+# Wepilo API: website integration guide
 
-This guide is for developers building an agency's public website on top of Narfu. The website reads trips, departures, pages, posts and the rest from the API, and sends bookings, inquiries and newsletter sign-ups back to it.
+This guide is for developers building an agency's public website on top of Wepilo. The website reads trips, departures, pages, posts and the rest from the API, and sends bookings, inquiries and newsletter sign-ups back to it.
 
-- **Base URL (production):** `https://nerfuapi.basilpot.com/api/v1`
+- **Base URL (production):** `https://wepiloapi.basilpot.com/api/v1`
 - **Base URL (local):** `http://localhost:8787/api/v1`
 - **Format:** JSON in and out. Send `Content-Type: application/json` on `POST` requests.
 
@@ -20,8 +20,8 @@ Every request has to say which agency (tenant) it is for. Use one of these:
 Keep the API key on the server. It's shown **once** when generated. If it leaks, revoke it in the dashboard and create a new one.
 
 ```bash
-curl https://nerfuapi.basilpot.com/api/v1/activities \
-  -H "x-api-key: $NARFU_API_KEY"
+curl https://wepiloapi.basilpot.com/api/v1/activities \
+  -H "x-api-key: $WEPILO_API_KEY"
 ```
 
 Without either header, tenant-scoped endpoints return `400 {"error":"Tenant context required"}`.
@@ -67,7 +67,7 @@ Errors use a regular HTTP status with a JSON body:
 
 ### Images and media
 
-Media fields hold absolute URLs such as `https://nerfuapi.basilpot.com/media/file/<key>`. They're public, cached long-term, and safe to use straight in `<img src>`.
+Media fields hold absolute URLs such as `https://wepiloapi.basilpot.com/media/file/<key>`. They're public, cached long-term, and safe to use straight in `<img src>`.
 
 ### Rich text
 
@@ -240,14 +240,14 @@ To support reviews and wishlists, travellers can register on the agency's site. 
 ### Next.js (App Router, server component)
 
 ```ts
-// lib/narfu.ts
-const BASE = process.env.NARFU_API_URL ?? "https://nerfuapi.basilpot.com/api/v1";
+// lib/wepilo.ts
+const BASE = process.env.WEPILO_API_URL ?? "https://wepiloapi.basilpot.com/api/v1";
 
-export async function narfu<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function wepilo<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     headers: {
-      "x-api-key": process.env.NARFU_API_KEY!,
+      "x-api-key": process.env.WEPILO_API_KEY!,
       ...(init.body ? { "Content-Type": "application/json" } : {}),
       ...init.headers,
     },
@@ -262,17 +262,17 @@ export async function narfu<T>(path: string, init: RequestInit = {}): Promise<T>
 ```tsx
 // app/trips/[slug]/page.tsx
 import { notFound, permanentRedirect } from "next/navigation";
-import { narfu } from "@/lib/narfu";
+import { wepilo } from "@/lib/wepilo";
 
 export default async function TripPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const res = await narfu<{ activity: Trip; redirectTo?: string }>(`/activities/slug/${slug}`).catch((e) => {
+  const res = await wepilo<{ activity: Trip; redirectTo?: string }>(`/activities/slug/${slug}`).catch((e) => {
     if (e.status === 404) notFound();
     throw e;
   });
   if (res.redirectTo) permanentRedirect(res.redirectTo.replace("/activity/", "/trips/"));
 
-  const { data: departures } = await narfu<{ data: Departure[] }>(
+  const { data: departures } = await wepilo<{ data: Departure[] }>(
     `/departures?activityId=${res.activity.id}&status=OPEN&limit=50`,
   );
   const upcoming = departures.filter((d) => d.startDate >= new Date().toISOString().slice(0, 10));
@@ -285,11 +285,11 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
 
 ```ts
 "use server";
-import { narfu } from "@/lib/narfu";
+import { wepilo } from "@/lib/wepilo";
 
 export async function requestBooking(form: FormData) {
   try {
-    const { booking } = await narfu<{ booking: { id: number } }>("/bookings", {
+    const { booking } = await wepilo<{ booking: { id: number } }>("/bookings", {
       method: "POST",
       body: JSON.stringify({
         activityId: Number(form.get("activityId")),
@@ -313,7 +313,7 @@ export async function requestBooking(form: FormData) {
 ### Plain browser `fetch` (contact form)
 
 ```js
-await fetch("https://nerfuapi.basilpot.com/api/v1/inquiries", {
+await fetch("https://wepiloapi.basilpot.com/api/v1/inquiries", {
   method: "POST",
   headers: { "Content-Type": "application/json", "x-tenant-slug": "himalaya-trails" },
   body: JSON.stringify({ name, email, message, trip: document.title }),
@@ -328,7 +328,7 @@ await fetch("https://nerfuapi.basilpot.com/api/v1/inquiries", {
 
 ## 10. Checklist before launch
 
-- [ ] API key stored as a server-side secret (`NARFU_API_KEY`), never shipped to the browser
+- [ ] API key stored as a server-side secret (`WEPILO_API_KEY`), never shipped to the browser
 - [ ] Trip pages handle `404` and `redirectTo`
 - [ ] Past departures filtered out
 - [ ] Booking form explains that bookings are confirmed by the agency

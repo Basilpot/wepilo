@@ -6,5 +6,5 @@ export async function sha256Hex(input: string) {
 }
 
 export function randomApiKey() {
-  return `narfu_${crypto.randomUUID().replace(/-/g, "")}`;
+  return `wepilo_${crypto.randomUUID().replace(/-/g, "")}`;
 }
