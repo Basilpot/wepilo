@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiClientError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -75,12 +75,18 @@ export function AuthCard({
   );
 }
 
+/** Where to go after signing in: `?next=` when it is a path inside this app, otherwise home. */
+export function safeNextPath(next: string | null) {
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+}
+
 export function useAuthRedirect() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [params] = useSearchParams();
   return async () => {
     await queryClient.refetchQueries({ queryKey: ["session"] });
-    navigate("/", { replace: true });
+    navigate(safeNextPath(params.get("next")), { replace: true });
   };
 }
 

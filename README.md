@@ -83,6 +83,25 @@ The D1 database (`narfu-db`) and R2 bucket (`narfu-media`) keep their original n
 
 The dashboard Worker serves the built SPA and forwards `/api/*` to the API host, so staff cookies stay first-party on the dashboard domain.
 
+## AI connector (MCP)
+
+The API Worker also serves a remote MCP server at `/mcp` (production: `https://wepiloapi.basilpot.com/mcp`). One connector works in Claude, ChatGPT, Cursor and AI site builders such as Lovable and Base44.
+
+- **Sign-in:** OAuth 2.1 with dynamic client registration (`@cloudflare/workers-oauth-provider`, wrapping the Worker in `apps/api/src/index.ts`).
+  - `/oauth/authorize` parks the request in KV and sends the person to the dashboard's `/connect` page.
+  - On that page they sign in with their Wepilo login and choose Allow.
+  - Each connection belongs to one staff login and keeps that role's permissions.
+- **Tools** (`apps/api/src/mcp/`):
+  - They call the REST API in-process with a short-lived staff token, so role checks, the paywall, validation and plan limits are the same as in the dashboard.
+  - Staff tools read everything and make safe changes only: inquiry status, confirm/complete/cancel bookings, add or edit departures, and trips and posts created as hidden drafts.
+  - Nothing publishes, deletes, emails travellers, or touches billing, staff or API keys.
+  - Website-builder tools explain how to connect a public site to the API.
+- **Storage:** OAuth grants, tokens and pending requests live in the `OAUTH_KV` namespace (`wepilo-oauth`, bound in `apps/api/wrangler.jsonc`).
+- **Managing connections:** people see and disconnect their connected apps in Settings → API keys → Connected AI apps.
+- **Local testing:** run both apps, then point MCP Inspector (`npx @modelcontextprotocol/inspector`) at `http://localhost:8787/mcp`.
+
+`/llms.txt` serves `docs/API.md` as plain text for AI coding tools.
+
 ## Plans and limits
 
 Limits are defined once in `apps/api/src/lib/plans.ts` (`PLANS`). The Billing page reads them from `GET /tenant/billing`, and prices come live from Dodo.

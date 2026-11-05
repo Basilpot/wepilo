@@ -526,7 +526,97 @@ function ApiKeysTab() {
         )}
       </SettingsSection>
 
+      <ConnectedAppsSection />
     </>
+  );
+}
+
+// ── Connected AI apps ───────────────────────────────────────────────────────
+
+type ConnectedApp = { id: string; clientName: string; createdAt: number };
+
+function ConnectedAppsSection() {
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["connected-apps"],
+    queryFn: () => api<{ data: ConnectedApp[]; mcpUrl: string }>("/connect/grants"),
+  });
+
+  const revoke = useMutation({
+    meta: { success: "Disconnected. That app can no longer use your workspace." },
+    mutationFn: (id: string) => api(`/connect/grants/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["connected-apps"] }),
+  });
+
+  return (
+    <SettingsSection
+      title="Connected AI apps"
+      description={
+        <>
+          Connect Claude, ChatGPT or other AI apps to see what needs you today, handle inquiries and bookings, add departures and draft
+          trips by chat. Website builders like Lovable and Base44 can use the same connection to wire your website to Wepilo. Each person
+          connects with their own login and keeps their role&apos;s permissions.
+        </>
+      }
+    >
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Connector URL</p>
+        <div className="flex items-center gap-2">
+          <code className="min-w-0 flex-1 truncate rounded-xl border bg-muted/40 px-3 py-2.5 font-mono text-xs">
+            {data?.mcpUrl ?? "Loading…"}
+          </code>
+          {data?.mcpUrl && <CopyButton value={data.mcpUrl} />}
+        </div>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          In Claude: Settings → Connectors → Add custom connector. In ChatGPT: Settings → Connectors (developer mode). In Lovable:
+          Connectors → Add custom → MCP server. In Base44: Settings → MCP connections → Add custom MCP. Paste this URL, then sign in to
+          Wepilo and choose Allow.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border">
+        {isLoading ? (
+          <div className="space-y-2 p-4">
+            <Skeleton className="h-5 w-1/2" />
+            <Skeleton className="h-5 w-1/3" />
+          </div>
+        ) : data?.data.length ? (
+          <ul className="divide-y">
+            {data.data.map((app) => (
+              <li key={app.id} className="flex items-center gap-3 px-4 py-3">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  {app.clientName.slice(0, 1).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{app.clientName}</p>
+                  <p className="text-xs text-muted-foreground">Connected {formatDate(new Date(app.createdAt).toISOString())}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  disabled={revoke.isPending}
+                  onClick={() =>
+                    confirmDialog(
+                      {
+                        title: `Disconnect ${app.clientName}?`,
+                        description: "It will lose access to your workspace straight away. You can connect it again later.",
+                        confirmLabel: "Disconnect",
+                      },
+                      () => revoke.mutate(app.id),
+                    )
+                  }
+                >
+                  Disconnect
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="px-4 py-5 text-sm text-muted-foreground">No AI apps are connected with your login yet.</p>
+        )}
+      </div>
+    </SettingsSection>
   );
 }
 

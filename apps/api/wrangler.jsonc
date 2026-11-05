@@ -22,6 +22,10 @@
       "bucket_name": "narfu-media"
     }
   ],
+  // AI connector OAuth storage (grants, tokens, clients, pending connect requests).
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "463adf729cd64ba8b8cfd9567f335c35" }],
+  // docs/API.md is bundled as text for /llms.txt and the MCP builder tools.
+  "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
   "vars": {
     "ENVIRONMENT": "development",
     "DODO_ENVIRONMENT": "test_mode",
@@ -55,7 +59,8 @@
           "binding": "MEDIA",
           "bucket_name": "narfu-media"
         }
-      ]
+      ],
+      "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "463adf729cd64ba8b8cfd9567f335c35" }]
     }
   }
 }

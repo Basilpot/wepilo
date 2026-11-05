@@ -38,6 +38,7 @@ import { SupportTicketPage } from "@/pages/support/SupportTicketPage";
 import { BillingReturnPage, PaywallPage } from "@/pages/billing/PaywallPage";
 import type { Access } from "@/pages/billing/billing";
 import { AdminApp } from "@/pages/admin/AdminApp";
+import { ConnectPage } from "@/pages/connect/ConnectPage";
 
 export type Session = {
   staff: { id: number; name: string; email: string; role: string };
@@ -119,6 +120,7 @@ export default function App() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/setup-account" element={<ResetPasswordPage setup />} />
       <Route path="/admin/*" element={<AdminApp />} />
+      <Route path="/connect" element={<ConnectPage />} />
       <Route element={<RequireAuth />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/trips" element={<TripsPage />} />

@@ -336,3 +336,14 @@ await fetch("https://wepiloapi.basilpot.com/api/v1/inquiries", {
 - [ ] SEO: use `tripSeo.metaTitle` / `metaDescription` / `canonicalUrl` and inject `tripSeo.schema` as JSON-LD
 - [ ] `POST /activities/:id/view` called on trip pages
 - [ ] Redirects from the dashboard applied
+
+## 11. AI site builders and assistants
+
+- **Plain-text guide:** this document is served at `https://wepiloapi.basilpot.com/llms.txt` for AI coding tools and site builders that read docs from a URL.
+- **MCP connector:** builders that accept custom MCP servers (Lovable, Base44 and others) can connect to `https://wepiloapi.basilpot.com/mcp`. The agency signs in with its Wepilo login. The builder's AI then gets three read-only tools:
+  - `get_website_connection`: the API base URL, the agency slug and the header rules;
+  - `get_api_guide`: the sections of this guide;
+  - `sample_public_data`: real records in the exact response shape.
+
+  The connection only informs the builder while it writes code. The published site still talks to this API directly, using `x-tenant-slug` in browser code and `x-api-key` only on the server.
+

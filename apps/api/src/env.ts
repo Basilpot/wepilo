@@ -1,5 +1,11 @@
+import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
+
 export type Env = {
   DB: D1Database;
+  /** OAuth grants, tokens and clients for the AI connector, plus pending connect requests. */
+  OAUTH_KV: KVNamespace;
+  /** Injected by the OAuth provider wrapper (src/index.ts) on every request it forwards. */
+  OAUTH_PROVIDER?: OAuthHelpers;
   MEDIA: R2Bucket;
   JWT_SECRET: string;
   RESEND_API_KEY: string;
