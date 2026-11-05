@@ -11,7 +11,7 @@ export function FormDialog({
   description,
   children,
   onSubmit,
-  submitLabel = "Save",
+  submitLabel = "Save changes",
   pending = false,
 }: {
   open: boolean;
@@ -42,11 +42,11 @@ export function FormDialog({
           </div>
           <SheetFooter className="flex-row justify-end gap-2 border-t bg-muted/30 px-6 py-3">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-              Cancel
+              Cancel and close without saving
             </Button>
             <Button type="submit" disabled={pending} className="min-w-24">
               {pending && <Loader2 className="animate-spin" />}
-              {pending ? "Saving…" : submitLabel}
+              {pending ? "Saving, please wait…" : submitLabel}
             </Button>
           </SheetFooter>
         </form>

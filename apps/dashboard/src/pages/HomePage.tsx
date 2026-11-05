@@ -45,11 +45,11 @@ const shortDate = (iso: string) =>
 function relative(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.round(diff / 60_000);
-  if (mins < 60) return `${Math.max(1, mins)}m ago`;
+  if (mins < 60) return `${Math.max(1, mins)} min ago`;
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours} hr ago`;
   const days = Math.round(hours / 24);
-  return days < 30 ? `${days}d ago` : shortDate(iso);
+  return days < 30 ? `${days} days ago` : shortDate(iso);
 }
 
 function greeting() {
@@ -66,32 +66,32 @@ function SetupChecklist({ data }: { data: Analytics }) {
   const tenant = session?.tenant;
   const steps = [
     {
-      title: "Complete your business profile",
-      hint: "Description, phone and address appear on your site and emails.",
+      title: "Step 1: Finish your business profile",
+      hint: "Add your company description, phone number and address. Travellers see these on your website and in the emails you send them.",
       done: Boolean(tenant?.companyDescription && tenant?.phone),
       href: "/settings",
-      cta: "Edit profile",
+      cta: "Open business profile",
     },
     {
-      title: "Add your first trip",
-      hint: "Itinerary, price and photos. Save a draft and finish later.",
+      title: "Step 2: Create your first trip",
+      hint: "Enter the trip name, day-by-day itinerary, price and photos. You can save it as a draft and come back to finish it later.",
       done: data.trips.total > 0,
       href: "/trips/new",
-      cta: "Add trip",
+      cta: "Create a trip",
     },
     {
-      title: "Publish a trip",
-      hint: "Drafts stay hidden. Publishing puts the trip on your website.",
+      title: "Step 3: Publish a trip so travellers can see it",
+      hint: "Draft trips are hidden from your website. Open a trip and publish it to make it visible to the public.",
       done: data.trips.published > 0,
       href: "/trips",
-      cta: "Go to trips",
+      cta: "Open the trips list",
     },
     {
-      title: "Add departure dates",
-      hint: "Fixed dates let travellers book a seat online.",
+      title: "Step 4: Add departure dates and seats",
+      hint: "A departure is a specific start date with a set number of seats and a price. Travellers can only book online once a trip has at least one upcoming departure.",
       done: data.upcomingDepartures.length > 0,
       href: "/departures",
-      cta: "Add dates",
+      cta: "Add departure dates",
     },
   ];
   const completed = steps.filter((s) => s.done).length;
@@ -102,9 +102,9 @@ function SetupChecklist({ data }: { data: Analytics }) {
     <section className="rounded-lg border bg-card">
       <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-4 pb-3">
         <div>
-          <h2 className="text-sm font-semibold">Get your site taking inquiries</h2>
+          <h2 className="text-sm font-semibold">Finish these 4 steps to start receiving customers</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {completed} of {steps.length} done
+            {completed} of {steps.length} setup steps completed
           </p>
         </div>
         <div
@@ -113,7 +113,7 @@ function SetupChecklist({ data }: { data: Analytics }) {
           aria-valuemin={0}
           aria-valuemax={steps.length}
           aria-valuenow={completed}
-          aria-label="Setup progress"
+          aria-label="Account setup progress"
         >
           <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(completed / steps.length) * 100}%` }} />
         </div>
@@ -152,7 +152,7 @@ function SetupChecklist({ data }: { data: Analytics }) {
 function Panel({
   title,
   href,
-  linkLabel = "View all",
+  linkLabel = "See everything",
   children,
   className,
 }: {
@@ -219,10 +219,10 @@ export function HomePage() {
   const website = session?.tenant?.website;
 
   const stats = [
-    { label: "Live trips", value: data?.trips.published, sub: data ? `${data.trips.drafts} draft${data.trips.drafts === 1 ? "" : "s"}` : "", to: "/trips" },
-    { label: "Confirmed bookings", value: data?.bookings.confirmed, sub: data ? `${data.bookings.pending} pending` : "", to: "/bookings" },
-    { label: "New inquiries", value: data?.inquiriesNew, sub: "Awaiting a reply", to: "/inquiries" },
-    { label: "Confirmed value", value: data ? money(data.revenue) : undefined, sub: "All time", to: "/bookings" },
+    { label: "Trips visible on your website", value: data?.trips.published, sub: data ? `${data.trips.drafts} more ${data.trips.drafts === 1 ? "trip is a hidden draft" : "trips are hidden drafts"}` : "", to: "/trips" },
+    { label: "Confirmed customer bookings", value: data?.bookings.confirmed, sub: data ? `${data.bookings.pending} waiting for your confirmation` : "", to: "/bookings" },
+    { label: "New customer inquiries", value: data?.inquiriesNew, sub: "Travellers waiting for your reply", to: "/inquiries" },
+    { label: "Total value of confirmed bookings", value: data ? money(data.revenue) : undefined, sub: "Since you started, all time", to: "/bookings" },
   ];
 
   // The API only returns months that had bookings; plot all twelve.
@@ -244,22 +244,22 @@ export function HomePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={session ? (firstName ? `${greeting()}, ${firstName}` : greeting()) : "Dashboard"}
-        description="Here's how your trips and website are doing."
+        title={session ? (firstName ? `${greeting()}, ${firstName}` : greeting()) : "Business overview"}
+        description="A summary of your trips, customer bookings and inquiries. Click any number or list below to open the full page behind it."
         action={
           <div className="flex gap-2">
             {website && (
               <Button variant="outline" asChild>
                 <a href={website} target="_blank" rel="noopener noreferrer">
                   <ExternalLink />
-                  Open site
+                  Open my public website
                 </a>
               </Button>
             )}
             <Button asChild>
               <Link to="/trips/new">
                 <Plus />
-                New trip
+                Create a new trip
               </Link>
             </Button>
           </div>
@@ -268,10 +268,10 @@ export function HomePage() {
 
       {isError ? (
         <div role="alert" className="rounded-lg border p-8 text-center">
-          <p className="font-medium">We couldn't load your numbers.</p>
-          <p className="mt-1 text-sm text-muted-foreground">Check your connection and try again.</p>
+          <p className="font-medium">We could not load your business overview.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Check your internet connection, then select "Try loading again". If it keeps failing, contact Wepilo support.</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => void refetch()}>
-            Try again
+            Try loading again
           </Button>
         </div>
       ) : null}
@@ -305,7 +305,7 @@ export function HomePage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <Panel title="Bookings, last 12 months" href="/bookings" className="lg:col-span-3">
+        <Panel title="Customer bookings over the last 12 months" href="/bookings" className="lg:col-span-3">
           {isLoading ? (
             <div className="p-5">
               <Skeleton className="h-60 w-full" />
@@ -335,11 +335,11 @@ export function HomePage() {
               </ChartContainer>
             </div>
           ) : (
-            <PanelEmpty>Your booking trend appears here after the first booking.</PanelEmpty>
+            <PanelEmpty>This chart will show how many bookings you receive each month. It stays empty until your first customer booking arrives.</PanelEmpty>
           )}
         </Panel>
 
-        <Panel title="Recent inquiries" href="/inquiries" className="lg:col-span-2">
+        <Panel title="Latest customer inquiries" href="/inquiries" className="lg:col-span-2">
           {inquiries.isLoading ? (
             <ListSkeleton />
           ) : inquiries.data?.data.length ? (
@@ -365,14 +365,14 @@ export function HomePage() {
           ) : (
             <div className="flex flex-col items-center px-5 py-10 text-center">
               <Inbox className="size-5 text-muted-foreground" />
-              <p className="mt-2 text-sm text-muted-foreground">Inquiries from your site's forms land here.</p>
+              <p className="mt-2 text-sm text-muted-foreground">When a traveller sends a question through a form on your website, it will appear here so you can reply quickly.</p>
             </div>
           )}
         </Panel>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="Upcoming departures" href="/departures">
+        <Panel title="Next departures on your calendar" href="/departures">
           {isLoading ? (
             <ListSkeleton />
           ) : data?.upcomingDepartures.length ? (
@@ -389,13 +389,13 @@ export function HomePage() {
                       <span className="mt-0.5 text-base font-semibold tabular-nums">{new Date(d.startDate).getDate()}</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{d.activity.title ?? "Untitled trip"}</p>
+                      <p className="truncate text-sm font-medium">{d.activity.title ?? "Untitled trip (no title yet)"}</p>
                       <div className="mt-1.5 flex items-center gap-2">
                         <div className="h-1 w-24 overflow-hidden rounded-full bg-muted">
                           <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
                         </div>
                         <span className="text-xs text-muted-foreground tabular-nums">
-                          {booked}/{d.capacity} booked
+                          {booked} of {d.capacity} seats booked
                         </span>
                       </div>
                     </div>
@@ -406,15 +406,15 @@ export function HomePage() {
             </ul>
           ) : (
             <PanelEmpty>
-              No upcoming departures.{" "}
+              You have no upcoming departure dates, so travellers cannot book yet.{" "}
               <Link to="/departures" className="font-medium text-foreground underline underline-offset-4">
-                Add dates
+                Add a departure date
               </Link>
             </PanelEmpty>
           )}
         </Panel>
 
-        <Panel title="Top trips" href="/trips">
+        <Panel title="Your most popular trips" href="/trips">
           {isLoading ? (
             <ListSkeleton />
           ) : data?.topActivities.length ? (
@@ -424,8 +424,8 @@ export function HomePage() {
                   <Link to={`/trips/${t.id}`} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/40">
                     <span className="w-4 text-sm text-muted-foreground tabular-nums">{i + 1}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{t.title ?? "Untitled"}</p>
-                      <p className="text-xs text-muted-foreground tabular-nums">{t.views.toLocaleString()} views</p>
+                      <p className="truncate text-sm font-medium">{t.title ?? "Untitled trip (no title yet)"}</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">{t.views.toLocaleString()} page views on your website</p>
                     </div>
                     {t.averageRating > 0 && (
                       <span className="inline-flex items-center gap-1 text-sm tabular-nums">
@@ -438,7 +438,7 @@ export function HomePage() {
               ))}
             </ul>
           ) : (
-            <PanelEmpty>Publish a trip to see how it performs.</PanelEmpty>
+            <PanelEmpty>Once you publish a trip, the trips travellers view and rate most will be ranked here.</PanelEmpty>
           )}
         </Panel>
       </div>

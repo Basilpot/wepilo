@@ -15,7 +15,7 @@ export function SetupLinkPanel({ link, ownerEmail }: { link: SetupLink; ownerEma
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Couldn't copy. Select the link and copy it by hand.");
+      toast.error("The link could not be copied automatically. Select it with your mouse and copy it yourself.");
     }
   };
 
@@ -28,14 +28,14 @@ export function SetupLinkPanel({ link, ownerEmail }: { link: SetupLink; ownerEma
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">Setup link for {ownerEmail}</p>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {link.emailSent ? "Emailed to the client. " : "Not emailed. Send it to the client yourself. "}
+            {link.emailSent ? "We emailed this link to the client. " : "We did not email this link. Send it to the client yourself. "}
             It works once and expires {formatDate(link.expiresAt)}. This is the only time it's shown.
           </p>
           <div className="mt-3 flex gap-2">
             <Input readOnly value={link.url} onFocus={(e) => e.currentTarget.select()} className="bg-background font-mono text-xs" />
             <Button type="button" variant="outline" onClick={copy} className="shrink-0">
               {copied ? <Check /> : <Copy />}
-              {copied ? "Copied" : "Copy"}
+              {copied ? "Link copied" : "Copy the setup link"}
             </Button>
           </div>
         </div>

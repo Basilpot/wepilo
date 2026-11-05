@@ -26,10 +26,10 @@ export function ReviewsPage() {
   });
 
   const columns: Column<Review>[] = [
-    { key: "reviewer", header: "Reviewer", cell: (r) => <span className="font-medium">{r.reviewer?.name ?? "Guest"}</span> },
+    { key: "reviewer", header: "Who wrote the review", cell: (r) => <span className="font-medium">{r.reviewer?.name ?? "Guest (name not given)"}</span> },
     {
       key: "trip",
-      header: "Trip",
+      header: "Trip that was reviewed",
       cell: (r) =>
         r.activity ? (
           <Link
@@ -37,15 +37,15 @@ export function ReviewsPage() {
             className="text-muted-foreground hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
-            {r.activity.title ?? "Untitled trip"}
+            {r.activity.title ?? "Untitled trip (no title yet)"}
           </Link>
         ) : (
-          <span className="text-muted-foreground">—</span>
+          <span className="text-muted-foreground">Trip no longer exists</span>
         ),
     },
     {
       key: "rating",
-      header: "Rating",
+      header: "Star rating out of 5",
       cell: (r) => (
         <div className="flex items-center gap-1.5">
           <span className="flex items-center gap-0.5">
@@ -58,24 +58,24 @@ export function ReviewsPage() {
               />
             ))}
           </span>
-          <span className="text-xs text-muted-foreground">{r.rating}/5</span>
+          <span className="text-xs text-muted-foreground">{r.rating} out of 5</span>
         </div>
       ),
     },
     {
       key: "text",
-      header: "Review",
+      header: "What the guest wrote",
       className: "max-w-md",
       cell: (r) =>
         r.text ? (
           <span className="line-clamp-2 text-muted-foreground">{r.text}</span>
         ) : (
-          <span className="text-muted-foreground">—</span>
+          <span className="text-muted-foreground">The guest left a rating only, with no written review</span>
         ),
     },
     {
       key: "date",
-      header: "Date",
+      header: "Date the review was left",
       className: "text-muted-foreground",
       cell: (r) => new Date(r.createdAt).toLocaleDateString(),
     },
@@ -83,7 +83,7 @@ export function ReviewsPage() {
 
   return (
     <div>
-      <PageHeader title="Reviews" description="Guest reviews on your trips." />
+      <PageHeader title="Guest trip reviews" description="Star ratings and written reviews that travellers have left on your trips through your website. You cannot edit these, so travellers know they are honest. Click a review to open the trip it is about." />
 
       <DataTable
         columns={columns}
@@ -92,8 +92,8 @@ export function ReviewsPage() {
         isLoading={isLoading}
         onRowClick={(r) => r.activity && navigate(`/trips/${r.activity.id}`)}
         emptyIcon={Star}
-        emptyTitle="No reviews yet"
-        emptyHint="Reviews appear once guests leave them on your storefront."
+        emptyTitle="No guest reviews yet"
+        emptyHint="A review appears here after a traveller rates one of your trips on your website. To collect more, ask guests to leave a review after they return. For quotes you write yourself, use “Customer testimonials” instead."
         pagination={
           data
             ? {

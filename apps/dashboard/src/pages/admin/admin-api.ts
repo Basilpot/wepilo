@@ -76,10 +76,10 @@ export function workspaceState(w: Pick<WorkspaceSummary, "status" | "access">) {
 }
 
 export const AUDIT_LABELS: Record<string, string> = {
-  "workspace.created": "Created workspace",
-  "workspace.updated": "Updated workspace",
-  "workspace.setup_link": "New setup link",
-  "workspace.opened_as_owner": "Opened as owner",
+  "workspace.created": "Created the workspace",
+  "workspace.updated": "Changed the workspace settings",
+  "workspace.setup_link": "Created a new owner setup link",
+  "workspace.opened_as_owner": "Opened the workspace as its owner",
 };
 
 /** yyyy-mm-dd for <input type="date">, in local time. */

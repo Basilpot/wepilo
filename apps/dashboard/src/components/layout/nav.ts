@@ -32,61 +32,203 @@ import {
 export type NavItem = { title: string; url: string; icon: LucideIcon; keywords?: string };
 export type NavGroup = { label: string; items: NavItem[] };
 
-// Labels match each page's own title so the menu, header and ⌘K agree.
+// Labels match each page's own title so the sidebar, page header and ⌘K search all agree.
+// Groups follow the order an agency actually works in: handle customers first, then
+// build the trips they buy, then publish the website around them, then manage the account.
 export const QUICK_LINKS: NavItem[] = [
-  { title: "Dashboard", url: "/", icon: GaugeCircle, keywords: "home overview analytics" },
-  { title: "Inquiries", url: "/inquiries", icon: Inbox, keywords: "leads messages contact" },
-  { title: "Bookings", url: "/bookings", icon: Receipt, keywords: "orders sales" },
+  {
+    title: "Business overview",
+    url: "/",
+    icon: GaugeCircle,
+    keywords: "dashboard home overview analytics summary stats",
+  },
+  {
+    title: "Customer inquiries",
+    url: "/inquiries",
+    icon: Inbox,
+    keywords: "inquiries enquiries leads messages contact questions replies",
+  },
+  {
+    title: "Customer bookings",
+    url: "/bookings",
+    icon: Receipt,
+    keywords: "bookings orders sales reservations seats",
+  },
 ];
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Trips",
+    label: "Trips you sell",
     items: [
-      { title: "Trips", url: "/trips", icon: Footprints, keywords: "tours packages activities" },
-      { title: "Departures", url: "/departures", icon: CalendarCheck, keywords: "dates slots schedule" },
-      { title: "Trip categories", url: "/trip-categories", icon: Layers2 },
-      { title: "Destinations", url: "/locations", icon: MapPinHouse, keywords: "countries regions cities locations" },
-      { title: "Featured tags", url: "/featured-tags", icon: Tag },
-      { title: "Featured trips", url: "/featured-trips", icon: MapPinCheck },
-      { title: "Extras", url: "/extras", icon: Package, keywords: "add-ons upsell" },
+      {
+        title: "All trips",
+        url: "/trips",
+        icon: Footprints,
+        keywords: "trips tours packages activities itinerary create publish",
+      },
+      {
+        title: "Departure dates and seats",
+        url: "/departures",
+        icon: CalendarCheck,
+        keywords: "departures dates slots schedule availability capacity price",
+      },
+      {
+        title: "Optional add-ons",
+        url: "/extras",
+        icon: Package,
+        keywords: "extras add-ons upsell upgrades",
+      },
     ],
   },
   {
-    label: "Website",
+    label: "Organise your trips",
     items: [
-      { title: "Pages", url: "/info-pages", icon: NotebookPen },
-      { title: "Posts", url: "/posts", icon: Newspaper, keywords: "blog articles" },
-      { title: "Content categories", url: "/page-categories", icon: CopyX },
-      { title: "Media", url: "/media", icon: Image, keywords: "images uploads files" },
-      { title: "Redirects", url: "/redirects", icon: Redo },
+      {
+        title: "Destinations",
+        url: "/locations",
+        icon: MapPinHouse,
+        keywords: "destinations countries regions cities locations places",
+      },
+      {
+        title: "Trip categories",
+        url: "/trip-categories",
+        icon: Layers2,
+        keywords: "categories types treks tours expeditions",
+      },
+      {
+        title: "Homepage themes",
+        url: "/featured-tags",
+        icon: Tag,
+        keywords: "featured tags themes collections homepage",
+      },
+      {
+        title: "Homepage featured trips",
+        url: "/featured-trips",
+        icon: MapPinCheck,
+        keywords: "featured trips homepage highlight popular",
+      },
     ],
   },
   {
-    label: "About us",
+    label: "Website content",
     items: [
-      { title: "Team members", url: "/team", icon: Contact2 },
-      { title: "Departments", url: "/departments", icon: Building2 },
-      { title: "Authors", url: "/authors", icon: PenLine },
+      {
+        title: "Website pages",
+        url: "/info-pages",
+        icon: NotebookPen,
+        keywords: "pages info about terms privacy how to book",
+      },
+      {
+        title: "Blog posts",
+        url: "/posts",
+        icon: Newspaper,
+        keywords: "posts blog articles travel guides",
+      },
+      {
+        title: "Page and post categories",
+        url: "/page-categories",
+        icon: CopyX,
+        keywords: "categories group pages posts",
+      },
+      {
+        title: "Media library",
+        url: "/media",
+        icon: Image,
+        keywords: "media images uploads files photos pdf",
+      },
+      {
+        title: "Old-to-new link redirects",
+        url: "/redirects",
+        icon: Redo,
+        keywords: "redirects urls links 301 moved",
+      },
     ],
   },
   {
-    label: "Marketing",
+    label: "People on your website",
     items: [
-      { title: "Testimonials", url: "/testimonials", icon: Quote },
-      { title: "Reviews", url: "/reviews", icon: Star },
-      { title: "Documents", url: "/documents", icon: FileText, keywords: "certificates licenses" },
-      { title: "Newsletter", url: "/newsletter", icon: Mail, keywords: "subscribers" },
+      {
+        title: "Team members",
+        url: "/team",
+        icon: Contact2,
+        keywords: "team staff people guides profiles",
+      },
+      {
+        title: "Team departments",
+        url: "/departments",
+        icon: Building2,
+        keywords: "departments groups team",
+      },
+      {
+        title: "Blog authors",
+        url: "/authors",
+        icon: PenLine,
+        keywords: "authors writers bylines blog",
+      },
     ],
   },
   {
-    label: "Settings",
+    label: "Trust and marketing",
     items: [
-      { title: "Business profile", url: "/settings", icon: Settings, keywords: "company workspace" },
-      { title: "Staff logins", url: "/settings/staff", icon: Users2, keywords: "team users permissions" },
-      { title: "API keys", url: "/settings/api-keys", icon: KeyRound, keywords: "developer integration" },
-      { title: "Billing", url: "/settings/billing", icon: CreditCard, keywords: "plan subscription invoice" },
-      { title: "Support", url: "/support", icon: LifeBuoy, keywords: "help ticket" },
+      {
+        title: "Customer testimonials",
+        url: "/testimonials",
+        icon: Quote,
+        keywords: "testimonials quotes praise",
+      },
+      {
+        title: "Guest trip reviews",
+        url: "/reviews",
+        icon: Star,
+        keywords: "reviews ratings stars feedback guests",
+      },
+      {
+        title: "Licences and certificates",
+        url: "/documents",
+        icon: FileText,
+        keywords: "documents certificates licenses licences registration files",
+      },
+      {
+        title: "Newsletter subscribers",
+        url: "/newsletter",
+        icon: Mail,
+        keywords: "newsletter subscribers email broadcast send",
+      },
+    ],
+  },
+  {
+    label: "Account and help",
+    items: [
+      {
+        title: "Business profile",
+        url: "/settings",
+        icon: Settings,
+        keywords: "settings business profile company workspace name logo",
+      },
+      {
+        title: "Staff logins",
+        url: "/settings/staff",
+        icon: Users2,
+        keywords: "staff team users permissions invite logins access",
+      },
+      {
+        title: "Developer API keys",
+        url: "/settings/api-keys",
+        icon: KeyRound,
+        keywords: "api keys developer integration token",
+      },
+      {
+        title: "Plan and billing",
+        url: "/settings/billing",
+        icon: CreditCard,
+        keywords: "billing plan subscription invoice payment card",
+      },
+      {
+        title: "Contact Wepilo support",
+        url: "/support",
+        icon: LifeBuoy,
+        keywords: "support help ticket contact problem",
+      },
     ],
   },
 ];

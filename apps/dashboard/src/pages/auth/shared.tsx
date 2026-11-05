@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Mountain } from "lucide-react";
 
 const POINTS = [
-  { title: "Trips, departures and bookings", body: "Itineraries, dates, seats and payments in one place." },
-  { title: "A content API for your site", body: "Publish here, and your website updates on its own." },
-  { title: "Inquiries that don't get lost", body: "Every form lands in one inbox with a one-click reply." },
+  { title: "Trips, departure dates and bookings", body: "Build day-by-day itineraries, set dates and seats, and manage every customer booking in one place." },
+  { title: "Connect your own website", body: "Write or change something here, and your website shows the update automatically." },
+  { title: "Never lose a customer inquiry", body: "Every message from your website forms arrives in one inbox, with one-click reply by email, phone or WhatsApp." },
 ];
 
 export function AuthCard({
@@ -87,7 +87,7 @@ export function useAuthRedirect() {
 export function useErrorMessage() {
   const [error, setError] = useState<string | null>(null);
   const capture = (err: unknown) => {
-    setError(err instanceof ApiClientError ? err.message : "Something went wrong");
+    setError(err instanceof ApiClientError ? err.message : "Something went wrong on our side. Please try again in a moment.");
   };
   return { error, setError, capture };
 }

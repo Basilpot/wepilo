@@ -39,7 +39,7 @@ export function DocumentsPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["documents"] });
 
   const save = useMutation({
-    meta: { success: "Saved" },
+    meta: { success: "Document saved." },
     mutationFn: () => {
       const body = { title, path, published };
       return editing
@@ -58,7 +58,7 @@ export function DocumentsPage() {
   });
 
   const remove = useMutation({
-    meta: { success: "Deleted" },
+    meta: { success: "Document deleted." },
     mutationFn: (id: number) => api(`/documents/${id}`, { method: "DELETE" }),
     onSuccess: invalidate,
   });
@@ -75,7 +75,7 @@ export function DocumentsPage() {
   const columns: Column<Document>[] = [
     {
       key: "title",
-      header: "Title",
+      header: "Document name",
       cell: (d) => (
         <span className="flex items-center gap-2 font-medium">
           <FileText className="h-4 w-4 text-muted-foreground" />
@@ -83,10 +83,10 @@ export function DocumentsPage() {
         </span>
       ),
     },
-    { key: "path", header: "Path", className: "font-mono text-sm text-muted-foreground", cell: (d) => d.path },
+    { key: "path", header: "Where the file is stored", className: "font-mono text-sm text-muted-foreground", cell: (d) => d.path },
     {
       key: "status",
-      header: "Status",
+      header: "Visible to the public?",
       cell: (d) => <StatusBadge kind="content" status={d.published ? "published" : "draft"} />,
     },
     {
@@ -96,13 +96,13 @@ export function DocumentsPage() {
       cell: (doc) => (
         <RowActions
           actions={[
-            { label: "Edit document", icon: PenLine, onSelect: () => openEdit(doc) },
+            { label: "Edit this document", icon: PenLine, onSelect: () => openEdit(doc) },
             {
-              label: "Delete",
+              label: "Delete this document",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ description: `Delete "${doc.title}"?` }, () => remove.mutate(doc.id)),
+              onSelect: () => confirmDialog({ title: `Delete the document “${doc.title}”?`, description: "It will be removed from your website. The file itself stays in your media library.", confirmLabel: "Yes, delete this document", cancelLabel: "No, keep it" }, () => remove.mutate(doc.id)),
             },
           ]}
         />
@@ -113,8 +113,8 @@ export function DocumentsPage() {
   return (
     <div>
       <PageHeader
-        title="Documents"
-        description="Files referenced from pages and emails."
+        title="Licences and certificates"
+        description="Official papers that prove your business is trustworthy, such as your tourism licence, company registration, insurance and association memberships. Travellers can open the ones you publish from your website."
         action={
           <Button
             onClick={() => {
@@ -127,7 +127,7 @@ export function DocumentsPage() {
             }}
           >
             <Plus />
-            New document
+            Add a licence or certificate
           </Button>
         }
       />
@@ -139,27 +139,29 @@ export function DocumentsPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={FileText}
-        emptyTitle="No documents"
-        emptyHint="Add a path pointing to a media file or external URL."
+        emptyTitle="You have not added any licences or certificates yet"
+        emptyHint="First upload the PDF or image in the “Media library”. Then select “Add a licence or certificate” here and paste the file’s location."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit document" : "New document"}
+        title={editing ? "Edit this licence or certificate" : "Add a licence or certificate"}
+        description="Give the document a clear name and tell us where the file is."
+        submitLabel={editing ? "Save changes to this document" : "Add this document"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Title" required>
+        <Field label="Document name (what visitors will see)" required hint="Example: Nepal Tourism Board licence">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} />
         </Field>
-        <Field label="Path or URL" required>
+        <Field label="Where is the file? (file location or web address)" required hint="Upload the file in the “Media library” first, open it, choose “Copy the file link”, and paste that link here.">
           <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/media/file/..." />
         </Field>
         <label className="flex items-center gap-2 text-sm">
           <Checkbox checked={published} onCheckedChange={(v) => setPublished(v === true)} />
-          Published
+          Show this document on my public website
         </label>
       </FormDialog>
     </div>

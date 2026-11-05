@@ -89,7 +89,7 @@ const toOptions = (rows: OptionRow[] | undefined): { value: string; label: strin
 function AddImageButton({
   onSelect,
   multiple,
-  label = "Add image",
+  label = "Add an image from your media library",
   accept,
   className,
 }: {
@@ -113,7 +113,7 @@ function AddImageButton({
         <ImagePlus className="h-5 w-5" />
         <span className="text-xs font-medium">{label}</span>
       </button>
-      <MediaPicker open={open} onOpenChange={setOpen} multiple={multiple} accept={accept} onSelect={onSelect} confirmLabel="Add" />
+      <MediaPicker open={open} onOpenChange={setOpen} multiple={multiple} accept={accept} onSelect={onSelect} confirmLabel="Add the selected file" />
     </>
   );
 }
@@ -157,7 +157,7 @@ function AltitudeChartPreview({ points }: { points: { location: string; altitude
   if (data.length < 2) {
     return (
       <div className="flex h-56 items-center justify-center rounded-xl border border-dashed px-4 text-center text-sm text-muted-foreground">
-        Add at least two points to see the altitude profile.
+        Add at least two stops with an altitude each to see how the trail climbs and descends.
       </div>
     );
   }
@@ -198,19 +198,19 @@ function InfoDialog({
       <SheetContent className="sm:max-w-2xl">
         <SheetHeader className="border-b pr-14">
           <SheetTitle>{confirmLabel}</SheetTitle>
-          <SheetDescription>Add a heading and the details travelers should know.</SheetDescription>
+          <SheetDescription>Write a short heading, then the details travellers should read before they book.</SheetDescription>
         </SheetHeader>
         <div className="space-y-4 px-6 py-5">
-          <Field label="Heading" required>
-            <Input value={draft.title} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))} placeholder="Visa requirements" />
+          <Field label="Heading (what this note is about)" required>
+            <Input value={draft.title} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))} placeholder="Example: Visa requirements" />
           </Field>
-          <Field label="Details" tooltip="Rich text — bold, lists and links are supported.">
-            <RichTextEditor value={draft.description} onChange={(html) => setDraft((d) => ({ ...d, description: html }))} placeholder="Write the details…" />
+          <Field label="Details" tooltip="You can make text bold, add bulleted lists and add links, using the buttons above the text box.">
+            <RichTextEditor value={draft.description} onChange={(html) => setDraft((d) => ({ ...d, description: html }))} placeholder="Type the details travellers need to know here…" />
           </Field>
         </div>
         <SheetFooter className="border-t px-6 py-4">
           <div className="flex w-full gap-2">
-            <Button className="flex-1" type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button className="flex-1" type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel and close</Button>
             <Button className="flex-1"
             type="button"
             disabled={!draft.title.trim()}
@@ -245,19 +245,19 @@ function FaqItemDialog({
       <SheetContent className="sm:max-w-2xl">
         <SheetHeader className="border-b pr-14">
           <SheetTitle>{confirmLabel}</SheetTitle>
-          <SheetDescription>Add the question and its answer.</SheetDescription>
+          <SheetDescription>Type a question travellers often ask, then write your answer.</SheetDescription>
         </SheetHeader>
         <div className="space-y-4 px-6 py-5">
-          <Field label="Question" required>
-            <Input value={draft.q} onChange={(e) => setDraft((d) => ({ ...d, q: e.target.value }))} placeholder="e.g. How fit do I need to be?" />
+          <Field label="The question travellers ask" required>
+            <Input value={draft.q} onChange={(e) => setDraft((d) => ({ ...d, q: e.target.value }))} placeholder="Example: How fit do I need to be?" />
           </Field>
-          <Field label="Answer" tooltip="Rich text — bold, lists and links are supported.">
-            <RichTextEditor value={draft.a} onChange={(html) => setDraft((d) => ({ ...d, a: html }))} placeholder="Write the answer…" />
+          <Field label="Your answer" tooltip="You can make text bold, add bulleted lists and add links, using the buttons above the text box.">
+            <RichTextEditor value={draft.a} onChange={(html) => setDraft((d) => ({ ...d, a: html }))} placeholder="Type your answer here…" />
           </Field>
         </div>
         <SheetFooter className="border-t px-6 py-4">
           <div className="flex w-full gap-2">
-            <Button className="flex-1" type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button className="flex-1" type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel and close</Button>
             <Button className="flex-1"
             type="button"
             disabled={!draft.q.trim()}
@@ -292,21 +292,21 @@ function DayImageDialog({
     <Sheet open onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-md">
         <SheetHeader className="border-b pr-14">
-          <SheetTitle>Image details</SheetTitle>
-          <SheetDescription>Give this image a title and description.</SheetDescription>
+          <SheetTitle>Edit the details of this image</SheetTitle>
+          <SheetDescription>Add a short title and a caption. They help travellers and search engines understand the picture.</SheetDescription>
         </SheetHeader>
         <div className="space-y-4 px-6 py-5">
           <img src={draft.image} alt="" className="h-44 w-full rounded-xl border object-cover" />
-          <Field label="Title">
-            <Input value={draft.title} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))} placeholder="Sunrise over the ridge" />
+          <Field label="Image title (optional)">
+            <Input value={draft.title} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))} placeholder="Example: Sunrise over the ridge" />
           </Field>
-          <Field label="Description">
-            <Textarea rows={3} value={draft.description} onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))} placeholder="Short caption" />
+          <Field label="Caption (optional)">
+            <Textarea rows={3} value={draft.description} onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))} placeholder="A short sentence describing the picture" />
           </Field>
         </div>
         <SheetFooter className="border-t px-6 py-4">
           <div className="flex w-full gap-2">
-            <Button className="flex-1" type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button className="flex-1" type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel and close</Button>
             <Button className="flex-1"
             type="button"
             onClick={() => {
@@ -314,7 +314,7 @@ function DayImageDialog({
               onOpenChange(false);
             }}
           >
-            Save
+            Save these image details
           </Button>
           </div>
         </SheetFooter>
@@ -343,40 +343,40 @@ function DaySheet({
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
         <SheetHeader className="border-b px-6 py-4">
           <SheetTitle>Day {day.day}</SheetTitle>
-          <SheetDescription>Full details for this day of the itinerary.</SheetDescription>
+          <SheetDescription>Describe what happens on this day. Only the title is required. Fill in the rest if it applies.</SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
-          <Field label="Title" required>
-            <Input value={draft.title} onChange={(e) => set({ title: e.target.value })} placeholder="Sunrise hike to the ridge" />
+          <Field label="Title of this day" required>
+            <Input value={draft.title} onChange={(e) => set({ title: e.target.value })} placeholder="Example: Sunrise hike to the ridge" />
           </Field>
-          <Field label="Description">
-            <RichTextEditor value={draft.description} onChange={(html) => set({ description: html })} placeholder="What happens on this day…" />
+          <Field label="What happens on this day">
+            <RichTextEditor value={draft.description} onChange={(html) => set({ description: html })} placeholder="Describe the activities, places and experiences of this day…" />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Duration">
-              <Input value={draft.duration} onChange={(e) => set({ duration: e.target.value })} placeholder="4 hours" />
+            <Field label="Time spent travelling or walking">
+              <Input value={draft.duration} onChange={(e) => set({ duration: e.target.value })} placeholder="Example: 4 hours" />
             </Field>
-            <Field label="Distance">
-              <Input value={draft.distance} onChange={(e) => set({ distance: e.target.value })} placeholder="12 km" />
+            <Field label="Distance covered">
+              <Input value={draft.distance} onChange={(e) => set({ distance: e.target.value })} placeholder="Example: 12 km" />
             </Field>
-            <Field label="Ascent">
-              <Input value={draft.ascent} onChange={(e) => set({ ascent: e.target.value })} placeholder="600 m" />
+            <Field label="Total climb (going up)">
+              <Input value={draft.ascent} onChange={(e) => set({ ascent: e.target.value })} placeholder="Example: 600 m" />
             </Field>
-            <Field label="Descent">
-              <Input value={draft.descent} onChange={(e) => set({ descent: e.target.value })} placeholder="400 m" />
+            <Field label="Total descent (going down)">
+              <Input value={draft.descent} onChange={(e) => set({ descent: e.target.value })} placeholder="Example: 400 m" />
             </Field>
-            <Field label="Meals">
-              <Input value={draft.meals} onChange={(e) => set({ meals: e.target.value })} placeholder="Breakfast, Lunch" />
+            <Field label="Meals included this day">
+              <Input value={draft.meals} onChange={(e) => set({ meals: e.target.value })} placeholder="Example: Breakfast, Lunch" />
             </Field>
-            <Field label="Accommodation">
-              <Input value={draft.accommodations} onChange={(e) => set({ accommodations: e.target.value })} placeholder="Teahouse" />
+            <Field label="Where travellers sleep this night">
+              <Input value={draft.accommodations} onChange={(e) => set({ accommodations: e.target.value })} placeholder="Example: Mountain teahouse" />
             </Field>
           </div>
 
           <Section
-            title="Featured images"
-            description={`Up to ${MAX_DAY_IMAGES} images. Drag to reorder, or click an image to edit its title and description.`}
+            title="Pictures for this day"
+            description={`Add up to ${MAX_DAY_IMAGES} images. Drag an image to change the order, or click an image to edit its title and caption.`}
           >
             <SortableList
               grid
@@ -387,7 +387,7 @@ function DaySheet({
               footer={
                 draft.dayFeaturedImages.length < MAX_DAY_IMAGES ? (
                   <AddImageButton
-                    label="Add image"
+                    label="Add an image"
                     onSelect={(media) =>
                       setImages([...draft.dayFeaturedImages, { id: uid(), image: media.url, title: media.title ?? "", description: "" }])
                     }
@@ -396,7 +396,7 @@ function DaySheet({
               }
               renderItem={(img, index, handle) => (
                 <div className="group relative aspect-video overflow-hidden rounded-xl border bg-muted">
-                  <button type="button" className="h-full w-full" aria-label="Edit image" onClick={() => setImgIndex(index)}>
+                  <button type="button" className="h-full w-full" aria-label="Edit the title and caption of this image" onClick={() => setImgIndex(index)}>
                     <img src={img.image} alt="" className="h-full w-full object-cover" />
                   </button>
                   {img.title && (
@@ -410,12 +410,14 @@ function DaySheet({
                     </span>
                     <button
                       type="button"
-                      aria-label="Remove image"
+                      aria-label="Remove this image"
                       onClick={() =>
                         confirmDialog(
                           {
-                            title: "Remove image?",
-                            description: "This image will be removed from the day.",
+                            title: "Remove this image?",
+                            description: "The image will be taken off this day. It stays in your media library.",
+                            confirmLabel: "Yes, remove it",
+                            cancelLabel: "No, keep it",
                           },
                           () => setImages(draft.dayFeaturedImages.filter((_, xi) => xi !== index)),
                         )
@@ -433,7 +435,7 @@ function DaySheet({
 
         <SheetFooter className="border-t px-6 py-4">
           <div className="flex w-full gap-2">
-            <Button className="flex-1" type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button className="flex-1" type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel and close</Button>
             <Button className="flex-1"
             type="button"
             disabled={!draft.title.trim()}
@@ -442,7 +444,7 @@ function DaySheet({
               onOpenChange(false);
             }}
           >
-            Save changes
+            Save this day
           </Button>
           </div>
         </SheetFooter>
@@ -478,29 +480,29 @@ function VariantSheet({
     <Sheet open onOpenChange={onOpenChange}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
         <SheetHeader className="border-b px-6 py-4">
-          <SheetTitle>{mode === "add" ? "Add itinerary variant" : "Edit itinerary variant"}</SheetTitle>
-          <SheetDescription>Name the variant and describe how it differs from the others.</SheetDescription>
+          <SheetTitle>{mode === "add" ? "Add another version of the itinerary" : "Edit this version of the itinerary"}</SheetTitle>
+          <SheetDescription>An itinerary version is an alternative plan for the same trip, for example a faster or easier route. Give it a name and explain how it differs.</SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
-          <Field label="Name" required>
-            <Input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Standard itinerary" />
+          <Field label="Name of this version" required>
+            <Input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Example: Standard itinerary" />
           </Field>
-          <Field label="Description" tooltip="Optional. Explain what makes this variant different — route, pace, season or difficulty.">
-            <RichTextEditor value={draft.description} onChange={(html) => set({ description: html })} placeholder="Describe this itinerary variant…" />
+          <Field label="How this version is different (optional)" tooltip="Explain what makes this version different, for example the route, pace, season or difficulty.">
+            <RichTextEditor value={draft.description} onChange={(html) => set({ description: html })} placeholder="Describe what makes this version different…" />
           </Field>
           <label className="flex items-start gap-3">
             <Switch checked={draft.isDefault} onCheckedChange={(v) => set({ isDefault: v })} />
             <span>
-              <span className="block text-sm font-medium">Default variant</span>
-              <span className="block text-sm text-muted-foreground">Shown first when travelers open the trip.</span>
+              <span className="block text-sm font-medium">Show this version first</span>
+              <span className="block text-sm text-muted-foreground">This is the version travellers see first when they open the trip.</span>
             </span>
           </label>
         </div>
 
         <SheetFooter className="border-t px-6 py-4">
           <div className="flex w-full gap-2">
-            <Button className="flex-1" type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button className="flex-1" type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel and close</Button>
             <Button className="flex-1"
             type="button"
             disabled={!draft.name.trim()}
@@ -509,7 +511,7 @@ function VariantSheet({
               onOpenChange(false);
             }}
           >
-            {mode === "add" ? "Add variant" : "Save changes"}
+            {mode === "add" ? "Add this version" : "Save changes to this version"}
           </Button>
           </div>
         </SheetFooter>
@@ -535,17 +537,17 @@ function VariantEditor({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold">{variant.name.trim() || "Untitled variant"}</h3>
-          {variant.isDefault && <Badge variant="secondary">Default</Badge>}
+          <h3 className="text-sm font-semibold">{variant.name.trim() || "Untitled version (no name yet)"}</h3>
+          {variant.isDefault && <Badge variant="secondary">Shown first</Badge>}
         </div>
         <Button type="button" variant="outline" size="sm" onClick={onEdit}>
           <PenLine />
-          Edit variant
+          Edit this version
         </Button>
       </div>
 
       {variant.days.length === 0 ? (
-        <EmptyState title="No days yet" hint="Add the first day of this itinerary." />
+        <EmptyState title="No days added yet" hint="Select “Add a day” to describe the first day of this itinerary." />
       ) : (
         <SortableList
           className="space-y-2"
@@ -561,10 +563,10 @@ function VariantEditor({
                 className="min-w-0 flex-1 truncate text-left text-sm font-medium"
               >
                 <span className="mr-2 text-muted-foreground">#{dayIndex + 1}</span>
-                {day.title.trim() || <span className="font-normal text-muted-foreground italic">Untitled day</span>}
+                {day.title.trim() || <span className="font-normal text-muted-foreground italic">Untitled day (no title yet)</span>}
               </button>
               <Button type="button" variant="ghost" size="sm" className="shrink-0 text-xs" onClick={() => setSheet(dayIndex)}>
-                Edit
+                Edit this day
               </Button>
               {variant.days.length > 1 && (
                 <Button
@@ -576,13 +578,13 @@ function VariantEditor({
                     confirmDialog(
                       {
                         title: `Remove day ${dayIndex + 1}?`,
-                        description: "This day and its details will be deleted.",
+                        description: "This day and everything you wrote for it will be deleted. This cannot be undone.",
                       },
                       () => setDays(variant.days.filter((_, i) => i !== dayIndex)),
                     )
                   }
                 >
-                  Delete
+                  Delete this day
                 </Button>
               )}
             </div>
@@ -601,7 +603,7 @@ function VariantEditor({
           }}
         >
           <Plus className="h-4 w-4" />
-          Add Day
+          Add a day
         </Button>
       </div>
 
@@ -666,7 +668,7 @@ function ItineraryStep({ variants, onChange }: { variants: ItineraryVariant[]; o
                     confirmDialog(
                       {
                         title: `Remove "${v.name.trim() || `Variant ${i + 1}`}"?`,
-                        description: "This itinerary variant and all its days will be deleted.",
+                        description: "This version of the itinerary and all of its days will be deleted. This cannot be undone.",
                       },
                       () => removeVariant(i),
                     );
@@ -678,12 +680,12 @@ function ItineraryStep({ variants, onChange }: { variants: ItineraryVariant[]; o
         })}
         <Button type="button" variant="outline" size="sm" onClick={() => setSheet({ mode: "add" })}>
           <Plus />
-          Add Variant
+          Add another version of the itinerary
         </Button>
       </div>
 
       {variants.length === 0 || !active ? (
-        <EmptyState title="No itinerary" hint="Add an itinerary variant to get started." />
+        <EmptyState title="No itinerary yet" hint="Select “Add another version of the itinerary” to start planning your days." />
       ) : (
         <VariantEditor
           variant={active}
@@ -728,7 +730,7 @@ function FaqGroupBlock({ group, onChange, onRemove }: { group: FaqGroup; onChang
         <Input
           value={group.title}
           onChange={(e) => onChange({ ...group, title: e.target.value })}
-          placeholder="Group title (e.g. Booking)"
+          placeholder="Name of this group of questions, for example Booking"
           className="max-w-sm"
         />
         <Button
@@ -736,7 +738,7 @@ function FaqGroupBlock({ group, onChange, onRemove }: { group: FaqGroup; onChang
           variant="ghost"
           size="icon"
           className="ml-auto"
-          aria-label="Remove group"
+          aria-label="Remove this group of questions"
           onClick={() =>
             confirmDialog(
               {
@@ -752,17 +754,17 @@ function FaqGroupBlock({ group, onChange, onRemove }: { group: FaqGroup; onChang
       </div>
 
       {group.items.length === 0 ? (
-        <EmptyState title="No questions yet" hint="Add the first question for this group." />
+        <EmptyState title="No questions in this group yet" hint="Select “Add a question” to write the first one." />
       ) : (
         <div className="space-y-2">
           {group.items.map((item, i) => (
             <div key={i} className="flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-colors hover:bg-muted/30">
               <span className="min-w-0 flex-1 truncate text-sm font-medium">
                 <span className="mr-2 text-muted-foreground">#{i + 1}</span>
-                {item.q.trim() || <span className="font-normal text-muted-foreground italic">Untitled question</span>}
+                {item.q.trim() || <span className="font-normal text-muted-foreground italic">Untitled question (nothing typed yet)</span>}
               </span>
               <Button type="button" variant="ghost" size="sm" className="shrink-0 text-xs" onClick={() => setEditIdx(i)}>
-                Edit
+                Edit this question
               </Button>
               <Button
                 type="button"
@@ -772,14 +774,16 @@ function FaqGroupBlock({ group, onChange, onRemove }: { group: FaqGroup; onChang
                 onClick={() =>
                   confirmDialog(
                     {
-                      title: "Remove question?",
-                      description: "This question and its answer will be deleted.",
+                      title: "Remove this question?",
+                      description: "The question and its answer will be deleted. This cannot be undone.",
+                      confirmLabel: "Yes, remove it",
+                      cancelLabel: "No, keep it",
                     },
                     () => setItems(group.items.filter((_, xi) => xi !== i)),
                   )
                 }
               >
-                Delete
+                Delete this question
               </Button>
             </div>
           ))}
@@ -789,13 +793,13 @@ function FaqGroupBlock({ group, onChange, onRemove }: { group: FaqGroup; onChang
       <div className="flex justify-center pt-1">
         <Button type="button" variant="outline" className="flex items-center gap-2 rounded-xl" onClick={() => setAdd(true)}>
           <Plus className="h-4 w-4" />
-          Add question
+          Add a question
         </Button>
       </div>
 
       {add && (
         <FaqItemDialog
-          confirmLabel="Add question"
+          confirmLabel="Add this question"
           onSave={(data) => setItems([...group.items, data])}
           onOpenChange={(open) => {
             if (!open) setAdd(false);
@@ -886,12 +890,13 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
     const next: TripLayout = isPage ? "ITINERARY" : "PAGE";
     confirmDialog(
       {
-        title: next === "PAGE" ? "Switch to a simple page?" : "Switch to a multi-day itinerary?",
+        title: next === "PAGE" ? "Change this trip to a simple one-page trip?" : "Change this trip to a day-by-day itinerary?",
         description:
           next === "PAGE"
-            ? "The trip becomes one page of content. Day-by-day details are kept and come back if you switch again; your site just won't show them."
-            : "You'll get the step-by-step editor with a day-by-day itinerary. Your page content is kept and comes back if you switch again.",
-        confirmLabel: "Switch",
+            ? "The trip will be shown as one page of text, photos and prices. Nothing is deleted. Your day-by-day details are kept and come back if you switch again, but your website will not show them while the trip is a simple page."
+            : "You will get the step-by-step editor with a day-by-day itinerary. Nothing is deleted. The page content you wrote is kept and comes back if you switch again.",
+        confirmLabel: "Yes, change it",
+        cancelLabel: "No, keep it as it is",
         destructive: false,
       },
       () => {
@@ -911,7 +916,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
   const save = async (kind: "draft" | "publish") => {
     if (!titleReady) {
       setStep(0);
-      toast.error("Add a title with at least 3 characters.");
+      toast.error("Please type a trip title with at least 3 letters before saving. The title is the first box on the page.");
       return;
     }
     const nextStatus = kind === "draft" ? (status === "PUBLISHED" ? "PUBLISHED" : "DRAFT") : "PUBLISHED";
@@ -927,10 +932,10 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
       queryClient.invalidateQueries({ queryKey: ["trip", String(newId)] });
       setStatus(nextStatus);
       setBaseline(JSON.stringify(form));
-      toast.success(kind === "publish" ? (status === "PUBLISHED" ? "Changes saved" : "Trip published") : "Draft saved");
+      toast.success(kind === "publish" ? (status === "PUBLISHED" ? "Your changes were saved and are live on your website." : "Your trip is published and visible on your website.") : "Your draft was saved. It is not visible on your website yet.");
       if (mode === "create") navigate(`/trips/${newId}`, { replace: true });
     } catch (err) {
-      toastApiError(err, "Failed to save trip");
+      toastApiError(err, "The trip could not be saved. What you typed is still on this page, so check your internet connection and try saving again.");
     } finally {
       setSaving(null);
     }
@@ -976,27 +981,27 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {stepKey === "basics" && (
                 <div className="grid gap-4">
                   <Field
-                    label="Title"
+                    label="Trip title"
                     required
                     htmlFor="title"
-                    tooltip="Short, descriptive and attractive name travelers see first."
-                    error={!titleReady && form.title.length > 0 ? "At least 3 characters required" : undefined}
+                    tooltip="The name travellers see first. Keep it short, clear and appealing."
+                    error={!titleReady && form.title.length > 0 ? "The title must have at least 3 characters." : undefined}
                   >
-                    <Input id="title" value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Inca Trail to Machu Picchu" />
+                    <Input id="title" value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Example: Inca Trail to Machu Picchu" />
                   </Field>
                   <Field
-                    label="Slug"
+                    label="Web address ending (optional)"
                     htmlFor="slug"
-                    tooltip="URL-friendly handle. Lowercase, kebab-case, no spaces (e.g. inca-trail-to-machu-picchu)."
-                    hint="Leave blank to generate automatically from the title."
+                    tooltip="The last part of this trip’s web address. Use lowercase letters, numbers and dashes only, with no spaces. Example: inca-trail-to-machu-picchu"
+                    hint="Leave this empty and we create it automatically from the trip title."
                   >
                     <Input id="slug" value={form.slug} onChange={(e) => set("slug", e.target.value)} placeholder="inca-trail-to-machu-picchu" />
                   </Field>
                   <label className="flex items-center gap-3 rounded-xl border p-3">
                     <Switch checked={form.isFeatured} onCheckedChange={(v) => set("isFeatured", v)} />
                     <div>
-                      <p className="text-sm font-medium">Featured trip</p>
-                      <p className="text-xs text-muted-foreground">Highlight this trip on your homepage and featured listings.</p>
+                      <p className="text-sm font-medium">Feature this trip on my homepage</p>
+                      <p className="text-xs text-muted-foreground">Turn this on to highlight the trip on your website homepage and in featured lists.</p>
                     </div>
                   </label>
                 </div>
@@ -1005,10 +1010,10 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 2 — Overview */}
               {stepKey === "overview" && (
                 <>
-                  <Field label="Description" tooltip="Write 3–5 sentences describing what travelers will do and experience on the trip.">
-                    <RichTextEditor value={form.overview} onChange={(html) => set("overview", html)} placeholder="Take travelers through the trip…" />
+                  <Field label="Trip overview" tooltip="Write three to five sentences describing what travellers will do and experience on this trip.">
+                    <RichTextEditor value={form.overview} onChange={(html) => set("overview", html)} placeholder="Describe the trip as if you were telling a friend what they will see and do…" />
                   </Field>
-                  <InfoCard info="This is the short pitch shown on the trip page. Keep it clear, concrete and focused on the experience." />
+                  <InfoCard info="This is the short introduction shown at the top of the trip page. Keep it clear and specific, and focus on what travellers will experience." />
                 </>
               )}
 
@@ -1016,52 +1021,52 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {stepKey === "categorization" && (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Category" tooltip="Main high-level type of activity, e.g. Trekking, Tours, Luxury.">
+                    <Field label="Trip category" tooltip="The main type of trip, for example Trekking, Cultural tour or Luxury. Manage the list under “Trip categories” in the menu.">
                       <Combobox
                         value={form.tripCategoryId}
                         setValue={(v) => set("tripCategoryId", v)}
-                        placeholder="Select category"
+                        placeholder="Click to choose a category"
                         options={toOptions(categories.data?.data)}
                         onCreate={(label) => createRelation("/trip-categories", "tripCategories", label)}
                       />
                     </Field>
-                    <Field label="Country">
+                    <Field label="Country the trip is in">
                       <Combobox
                         value={form.countryId}
                         setValue={(v) => set("countryId", v)}
-                        placeholder="Select country"
+                        placeholder="Click to choose a country"
                         options={toOptions(countries.data?.data)}
                         onCreate={(label) => createRelation("/countries", "countries", label)}
                       />
                     </Field>
-                    <Field label="Destination (city)">
+                    <Field label="City or town it starts in">
                       <Combobox
                         value={form.cityId}
                         setValue={(v) => set("cityId", v)}
-                        placeholder="Select destination"
+                        placeholder="Click to choose a city or town"
                         options={toOptions(cities.data?.data)}
                         onCreate={(label) => createRelation("/cities", "cities", label)}
                       />
                     </Field>
-                    <Field label="Region">
+                    <Field label="Region inside the country">
                       <Combobox
                         value={form.regionId}
                         setValue={(v) => set("regionId", v)}
-                        placeholder="Select region"
+                        placeholder="Click to choose a region"
                         options={toOptions(regions.data?.data)}
                         onCreate={(label) => createRelation("/regions", "regions", label)}
                       />
                     </Field>
                   </div>
                   <Separator />
-                  <Section title="Featured tags" description="Tags used to group trips in featured sections.">
+                  <Section title="Homepage themes" description="Themes group trips together in collections on your website, such as “Family friendly”. Create themes under “Homepage themes” in the menu.">
                     <MultiSelect
                       selected={form.featuredTagIds.map(String)}
                       onChange={(v) => set("featuredTagIds", v.map(Number))}
                       options={toOptions(tags.data?.data)}
-                      placeholder="Select tags"
+                      placeholder="Click to choose one or more themes"
                     />
-                    <InfoCard info="Featured tags help travelers discover your trip through curated collections and themed browsing. Select as many as apply." />
+                    <InfoCard info="Themes help travellers discover this trip through collections on your website. Choose every theme that fits." />
                   </Section>
                 </>
               )}
@@ -1069,8 +1074,8 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 4 — Highlights */}
               {stepKey === "highlights" && (
                 <>
-                  <RichTextEditor value={form.highlights} onChange={(html) => set("highlights", html)} placeholder="List the best moments…" />
-                  <InfoCard info="Showcase the key experiences and memorable moments travelers can expect. Keep it concise, specific, and focused on what makes this trip worth taking." />
+                  <RichTextEditor value={form.highlights} onChange={(html) => set("highlights", html)} placeholder="List the best moments of the trip, one per line…" />
+                  <InfoCard info="Show the key experiences and memorable moments travellers can expect. Keep it short and specific, and focus on what makes this trip worth taking." />
                 </>
               )}
 
@@ -1084,13 +1089,13 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                 <>
                   <ListBox
                     list={[
-                      "Upload clear, high-resolution images that show the destination.",
+                      "Upload clear, high-quality pictures that show the destination.",
                       "Use JPEG, PNG or WebP. Bright, well-lit and properly framed works best.",
-                      "The first image is used as the trip's cover image in listings.",
-                      "Use real photos that represent the actual trip — at least 3 is recommended.",
+                      "The first picture is used as the trip’s cover picture in lists on your website.",
+                      "Use real photos of the actual trip. We recommend at least 3.",
                     ]}
                   />
-                  <Section title="Gallery" description="Drag to reorder. The first image is used as the cover.">
+                  <Section title="Photo gallery" description="Drag a photo to change the order. The first photo is used as the cover picture.">
                     <SortableList
                       grid
                       className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4"
@@ -1100,26 +1105,28 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                       footer={
                         <AddImageButton
                           multiple
-                          label="Add images"
+                          label="Add photos from your media library"
                           onSelect={(media) => set("images", form.images.includes(media.url) ? form.images : [...form.images, media.url])}
                         />
                       }
                       renderItem={(item, index, handle) => (
                         <div className="group relative aspect-video overflow-hidden rounded-xl border bg-muted">
                           <img src={item.url} alt="" className="h-full w-full object-cover" />
-                          {index === 0 && <Badge className="absolute top-1.5 left-1.5">Cover</Badge>}
+                          {index === 0 && <Badge className="absolute top-1.5 left-1.5">Cover photo</Badge>}
                           <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                             <span className="rounded bg-background/90">
                               <DragHandle handle={handle} />
                             </span>
                             <button
                               type="button"
-                              aria-label="Remove image"
+                              aria-label="Remove this image"
                               onClick={() =>
                                 confirmDialog(
                                   {
-                                    title: "Remove image?",
-                                    description: "This image will be removed from the gallery.",
+                                    title: "Remove this photo?",
+                                    description: "The photo will be taken out of this trip’s gallery. It stays in your media library.",
+                                    confirmLabel: "Yes, remove it",
+                                    cancelLabel: "No, keep it",
                                   },
                                   () => set("images", form.images.filter((u) => u !== item.url)),
                                 )
@@ -1133,10 +1140,10 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                       )}
                     />
                   </Section>
-                  <Section title="Video intro" description="Optional. Paste a YouTube or Vimeo link, or upload a video file.">
+                  <Section title="Introduction video (optional)" description="Paste a YouTube or Vimeo link, or upload a video file from your computer.">
                     <div className="grid gap-3 sm:max-w-sm">
-                      <Input value={form.videoUrl} onChange={(e) => set("videoUrl", e.target.value)} placeholder="https://youtube.com/watch?v=…" />
-                      <AddImageButton accept="video/*" label="Upload video file" onSelect={(media) => set("videoUrl", media.url)} />
+                      <Input value={form.videoUrl} onChange={(e) => set("videoUrl", e.target.value)} placeholder="Paste a YouTube or Vimeo web address here" />
+                      <AddImageButton accept="video/*" label="Upload a video file" onSelect={(media) => set("videoUrl", media.url)} />
                     </div>
                   </Section>
                 </>
@@ -1145,26 +1152,28 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 7 — Map */}
               {stepKey === "map" && (
                 <>
-                  <Field label="Map description" tooltip="Explain the route and what travelers can see on the map.">
+                  <Field label="Explain the map" tooltip="Explain the route and what travellers can see on the map.">
                     <RichTextEditor
                       value={form.mapDescription}
                       onChange={(html) => set("mapDescription", html)}
-                      placeholder="Describe the route, key landmarks and points of interest…"
+                      placeholder="Describe the route, the main landmarks and the points of interest…"
                     />
                   </Field>
-                  <Section title="Route map" description="Upload an image of the route map.">
+                  <Section title="Route map picture" description="Add a picture of the route map.">
                     <div className="grid gap-3 sm:max-w-md">
                       {form.routeMap ? (
                         <div className="relative aspect-video overflow-hidden rounded-xl border bg-muted">
-                          <img src={form.routeMap} alt="Route map" className="h-full w-full object-contain" />
+                          <img src={form.routeMap} alt="Picture of the route map" className="h-full w-full object-contain" />
                           <button
                             type="button"
-                            aria-label="Remove map image"
+                            aria-label="Remove the route map picture"
                             onClick={() =>
                               confirmDialog(
                                 {
-                                  title: "Remove map image?",
-                                  description: "The route map image will be removed.",
+                                  title: "Remove the route map picture?",
+                                  description: "The picture will be taken off this trip. It stays in your media library.",
+                                  confirmLabel: "Yes, remove it",
+                                  cancelLabel: "No, keep it",
                                 },
                                 () => set("routeMap", ""),
                               )
@@ -1175,9 +1184,9 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                           </button>
                         </div>
                       ) : (
-                        <AddImageButton label="Add map image" onSelect={(media) => set("routeMap", media.url)} />
+                        <AddImageButton label="Add a map picture" onSelect={(media) => set("routeMap", media.url)} />
                       )}
-                      <Input value={form.routeMap} onChange={(e) => set("routeMap", e.target.value)} placeholder="Or paste an image URL" />
+                      <Input value={form.routeMap} onChange={(e) => set("routeMap", e.target.value)} placeholder="Or paste the web address of a map picture" />
                     </div>
                   </Section>
                   <InfoCard info="A clear route map helps travelers visualise the journey before they book." />
@@ -1187,16 +1196,16 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 8 — Inclusions */}
               {stepKey === "inclusions" && (
                 <>
-                  <RichTextEditor value={form.inclusions} onChange={(html) => set("inclusions", html)} placeholder="Accommodation, meals, guide…" />
-                  <InfoCard info="Be clear and specific. Travelers should know exactly what they are paying for. A bulleted list works best." />
+                  <RichTextEditor value={form.inclusions} onChange={(html) => set("inclusions", html)} placeholder="List what is included, for example hotels, meals, guide, transport…" />
+                  <InfoCard info="Be clear and specific. Travellers should know exactly what they are paying for. A bulleted list works best." />
                 </>
               )}
 
               {/* 8 — Exclusions */}
               {stepKey === "exclusions" && (
                 <>
-                  <RichTextEditor value={form.exclusions} onChange={(html) => set("exclusions", html)} placeholder="Flights, insurance, tips…" />
-                  <InfoCard info="List what is not covered so travelers know what they'll need to pay for separately." />
+                  <RichTextEditor value={form.exclusions} onChange={(html) => set("exclusions", html)} placeholder="List what is not included, for example flights, insurance, tips…" />
+                  <InfoCard info="List what is not covered so travellers know what they will need to pay for separately." />
                 </>
               )}
 
@@ -1204,17 +1213,17 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {stepKey === "duration" && (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Duration" tooltip="Total length of the trip. E.g. '8 days / 7 nights' or '6 hours'.">
-                      <Input value={form.duration} onChange={(e) => set("duration", e.target.value)} placeholder="8 days / 7 nights" />
+                    <Field label="How long the trip lasts" tooltip="The total length of the trip, for example “8 days / 7 nights” or “6 hours”.">
+                      <Input value={form.duration} onChange={(e) => set("duration", e.target.value)} placeholder="Example: 8 days / 7 nights" />
                     </Field>
-                    <Field label="Maximum altitude (m)" tooltip="Highest point reached during the trip, in metres.">
-                      <Input type="number" min={0} value={form.maximumAltitude} onChange={(e) => set("maximumAltitude", e.target.value)} placeholder="5416" />
+                    <Field label="Highest point reached, in metres" tooltip="The highest altitude travellers reach during the trip, in metres above sea level.">
+                      <Input type="number" min={0} value={form.maximumAltitude} onChange={(e) => set("maximumAltitude", e.target.value)} placeholder="Example: 5416" />
                     </Field>
                   </div>
 
                   <Section
-                    title="Altitude chart"
-                    description="Plot altitude against each stop to show the climb profile."
+                    title="Altitude chart (optional)"
+                    description="Add each stop with its altitude to show travellers a chart of how the trail climbs and descends."
                     action={
                       <Button
                         type="button"
@@ -1223,32 +1232,32 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                         onClick={() => set("altitudeChart", [...form.altitudeChart, { id: uid(), location: "", altitude: "" }])}
                       >
                         <Plus />
-                        Add point
+                        Add a stop
                       </Button>
                     }
                   >
                     {form.altitudeChart.length === 0 ? (
-                      <EmptyState title="No altitude points" hint="Add at least two stops with altitudes to plot the profile." />
+                      <EmptyState title="No stops added yet" hint="Add at least two stops, each with an altitude, to draw the chart." />
                     ) : (
                       <div className="grid gap-6 lg:grid-cols-2">
                         <div className="space-y-2">
                           {form.altitudeChart.map((point, index) => (
                             <div key={point.id} className="flex items-end gap-2">
                               <div className="flex-1 space-y-1.5">
-                                <label className="text-xs text-muted-foreground">Location</label>
+                                <label className="text-xs text-muted-foreground">Name of the place</label>
                                 <Input
                                   value={point.location}
-                                  placeholder="Namche Bazaar"
+                                  placeholder="Example: Namche Bazaar"
                                   onChange={(e) => set("altitudeChart", form.altitudeChart.map((p, i) => (i === index ? { ...p, location: e.target.value } : p)))}
                                 />
                               </div>
                               <div className="w-28 space-y-1.5">
-                                <label className="text-xs text-muted-foreground">Altitude (m)</label>
+                                <label className="text-xs text-muted-foreground">Altitude in metres</label>
                                 <Input
                                   type="number"
                                   min={0}
                                   value={point.altitude}
-                                  placeholder="3440"
+                                  placeholder="Example: 3440"
                                   onChange={(e) => set("altitudeChart", form.altitudeChart.map((p, i) => (i === index ? { ...p, altitude: e.target.value } : p)))}
                                 />
                               </div>
@@ -1256,7 +1265,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                aria-label="Remove point"
+                                aria-label="Remove this stop"
                                 onClick={() => set("altitudeChart", form.altitudeChart.filter((_, i) => i !== index))}
                               >
                                 <X className="h-4 w-4" />
@@ -1274,16 +1283,16 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 10 — Capacity & difficulty */}
               {stepKey === "capacity" && (
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Guest capacity" tooltip="Maximum number of travellers for this trip.">
-                    <Input type="number" min={1} value={form.guestCapacity} onChange={(e) => set("guestCapacity", e.target.value)} placeholder="12" />
+                  <Field label="Largest group size" tooltip="The maximum number of travellers you take on this trip.">
+                    <Input type="number" min={1} value={form.guestCapacity} onChange={(e) => set("guestCapacity", e.target.value)} placeholder="Example: 12" />
                   </Field>
-                  <Field label="Difficulty" tooltip="Select the trip's difficulty level: Easy, Moderate, Hard or Extreme.">
+                  <Field label="How difficult the trip is" tooltip="Choose how physically demanding the trip is: Easy, Moderate, Hard or Extreme.">
                     <Select value={form.difficultyLevel || "none"} onValueChange={(v) => set("difficultyLevel", v === "none" ? "" : v)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select difficulty" />
+                        <SelectValue placeholder="Click to choose a difficulty level" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">Not set</SelectItem>
+                        <SelectItem value="none">Not chosen yet</SelectItem>
                         {DIFFICULTIES.map((d) => (
                           <SelectItem key={d.value} value={d.value}>
                             {d.label}
@@ -1298,11 +1307,11 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 11 — Meeting & drop-off */}
               {stepKey === "points" && (
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Meeting point" tooltip="Where travelers meet to start the trip.">
-                    <Input value={form.meetingPoint} onChange={(e) => set("meetingPoint", e.target.value)} placeholder="Tribhuvan International Airport" />
+                  <Field label="Where travellers meet you at the start" tooltip="The place where travellers meet your guide to begin the trip.">
+                    <Input value={form.meetingPoint} onChange={(e) => set("meetingPoint", e.target.value)} placeholder="Example: Tribhuvan International Airport" />
                   </Field>
-                  <Field label="Drop-off point" tooltip="Where the trip ends or travelers are dropped off.">
-                    <Input value={form.dropOffPoint} onChange={(e) => set("dropOffPoint", e.target.value)} placeholder="Same as meeting point" />
+                  <Field label="Where the trip ends" tooltip="The place where the trip finishes and travellers are dropped off.">
+                    <Input value={form.dropOffPoint} onChange={(e) => set("dropOffPoint", e.target.value)} placeholder="Example: Same as the meeting point" />
                   </Field>
                 </div>
               )}
@@ -1310,13 +1319,13 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 12 — Accommodation & meals */}
               {stepKey === "stay" && (
                 <>
-                  <Section title="Accommodations" description="Where travelers stay during the trip.">
-                    <StringArrayInput value={form.accommodations} onChange={(v) => set("accommodations", v)} placeholder="Teahouse, hotel… (Enter to add)" />
-                    <LabelDescription text="The types of accommodation travelers can expect. Type and press Enter to add each one." />
+                  <Section title="Places to stay" description="Where travellers sleep during the trip.">
+                    <StringArrayInput value={form.accommodations} onChange={(v) => set("accommodations", v)} placeholder="Type a kind of place to stay, for example Teahouse, then press Enter" />
+                    <LabelDescription text="List the kinds of accommodation travellers can expect. Type each one and press Enter to add it." />
                   </Section>
-                  <Section title="Meals" description="Meals included in the trip.">
+                  <Section title="Meals included" description="The meals that are included in the price.">
                     <div className="space-y-3">
-                      <StringArrayInput value={form.meals} onChange={(v) => set("meals", v)} placeholder="Add a meal and press Enter" />
+                      <StringArrayInput value={form.meals} onChange={(v) => set("meals", v)} placeholder="Type a meal, for example Breakfast, then press Enter" />
                       <div className="flex flex-wrap gap-1.5">
                         {MEAL_PRESETS.filter((m) => !form.meals.includes(m)).map((m) => (
                           <button key={m} type="button" onClick={() => set("meals", [...form.meals, m])}>
@@ -1336,18 +1345,18 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {stepKey === "pricing" && (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Price" tooltip="Price per person in your default currency.">
-                      <Input type="number" min={0} value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="1200" />
+                    <Field label="Price for one traveller" tooltip="The price for one person, in US dollars.">
+                      <Input type="number" min={0} value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="Example: 1200" />
                     </Field>
-                    <Field label="Maximum price" tooltip="Optional. Fill this in when the trip has a price range." hint="Optional — for trips with a price range.">
-                      <Input type="number" min={0} value={form.maxPrice} onChange={(e) => set("maxPrice", e.target.value)} placeholder="1800" />
+                    <Field label="Highest price (optional)" tooltip="Only fill this in if the price varies, for example by season or room type." hint="Only needed if the price is a range, for example $1200 to $1800.">
+                      <Input type="number" min={0} value={form.maxPrice} onChange={(e) => set("maxPrice", e.target.value)} placeholder="Example: 1800" />
                     </Field>
                   </div>
-                  <InfoCard info="Bookings are reservation requests only — travelers are not charged through the platform. Quote the price you expect to collect directly." />
+                  <InfoCard info="Bookings are reservation requests only. Travellers are not charged through Wepilo, so enter the price you plan to collect from them yourself." />
 
                   <Section
-                    title="Group discount"
-                    description="Offer discounted pricing for larger groups. Each rule applies a percentage off or a fixed per-person price."
+                    title="Discounts for larger groups (optional)"
+                    description="Offer a lower price when more people travel together. Each rule either takes a percentage off, or sets a fixed price for each person."
                     action={
                       <Button
                         type="button"
@@ -1356,45 +1365,45 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                         onClick={() => set("groupDiscount", [...form.groupDiscount, { id: uid(), groupSize: "", discount: "", discountType: "PERCENTAGE" }])}
                       >
                         <Plus />
-                        Add rule
+                        Add a discount rule
                       </Button>
                     }
                   >
                     <label className="flex items-start gap-3">
                       <Switch checked={form.showGroupDiscount} onCheckedChange={(v) => set("showGroupDiscount", v)} />
                       <span>
-                        <span className="block text-sm font-medium">Show group discount on website</span>
-                        <span className="block text-sm text-muted-foreground">Hide the rules while you are still tuning them.</span>
+                        <span className="block text-sm font-medium">Show the group discounts on my website</span>
+                        <span className="block text-sm text-muted-foreground">Turn this off to hide the discounts while you are still deciding them.</span>
                       </span>
                     </label>
                     {form.groupDiscount.length === 0 ? (
-                      <EmptyState title="No group discount rules" hint="Add a rule to offer discounted pricing for larger groups." />
+                      <EmptyState title="No group discounts yet" hint="Select “Add a discount rule” to offer a lower price to larger groups." />
                     ) : (
                       <div className="space-y-2">
                         {form.groupDiscount.map((rule, index) => (
                           <div key={rule.id} className="flex items-end gap-2">
                             <div className="flex-1 space-y-1.5">
-                              <label className="text-xs text-muted-foreground">Group size (max)</label>
+                              <label className="text-xs text-muted-foreground">Applies to groups of up to this many people</label>
                               <Input
                                 type="number"
                                 min={1}
                                 value={rule.groupSize}
-                                placeholder="e.g. 5"
+                                placeholder="Example: 5"
                                 onChange={(e) => set("groupDiscount", form.groupDiscount.map((r, i) => (i === index ? { ...r, groupSize: e.target.value } : r)))}
                               />
                             </div>
                             <div className="flex-1 space-y-1.5">
-                              <label className="text-xs text-muted-foreground">{rule.discountType === "FLAT" ? "Flat price" : "Percentage"}</label>
+                              <label className="text-xs text-muted-foreground">{rule.discountType === "FLAT" ? "Fixed price for each person" : "Percentage taken off"}</label>
                               <Input
                                 type="number"
                                 min={0}
                                 value={rule.discount}
-                                placeholder={rule.discountType === "FLAT" ? "e.g. 950" : "e.g. 10"}
+                                placeholder={rule.discountType === "FLAT" ? "Example: 950" : "Example: 10"}
                                 onChange={(e) => set("groupDiscount", form.groupDiscount.map((r, i) => (i === index ? { ...r, discount: e.target.value } : r)))}
                               />
                             </div>
                             <div className="w-40 space-y-1.5">
-                              <label className="text-xs text-muted-foreground">Type</label>
+                              <label className="text-xs text-muted-foreground">Kind of discount</label>
                               <Select
                                 value={rule.discountType}
                                 onValueChange={(v) =>
@@ -1405,8 +1414,8 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
-                                  <SelectItem value="FLAT">Flat price</SelectItem>
+                                  <SelectItem value="PERCENTAGE">Percentage taken off (%)</SelectItem>
+                                  <SelectItem value="FLAT">Fixed price for each person</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1414,7 +1423,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              aria-label="Remove rule"
+                              aria-label="Remove this discount rule"
                               onClick={() => set("groupDiscount", form.groupDiscount.filter((_, i) => i !== index))}
                             >
                               <X className="h-4 w-4" />
@@ -1430,9 +1439,9 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 14 — Extras & languages */}
               {stepKey === "extras" && (
                 <>
-                  <Section title="Extras" description="Optional add-ons travelers can select.">
+                  <Section title="Optional add-ons" description="Extra services travellers can add to their booking for this trip.">
                     {extras.data?.data.length === 0 ? (
-                      <EmptyState title="No extras yet" hint="Create extras from the Extras page." />
+                      <EmptyState title="You have no optional add-ons yet" hint="Create them first on the “Optional add-ons” page in the menu. They will then appear here for you to choose." />
                     ) : (
                       <div className="grid gap-2 sm:grid-cols-2">
                         {extras.data?.data.map((extra) => {
@@ -1462,10 +1471,10 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                       </div>
                     )}
                   </Section>
-                  <Section title="Languages" description="Languages the trip is offered in.">
+                  <Section title="Languages" description="The languages your guides speak on this trip.">
                     <div className="space-y-3">
-                      <StringArrayInput value={form.languages} onChange={(v) => set("languages", v)} placeholder="Add a language" />
-                      <LabelDescription text="Add the languages your guides can speak. Type and press Enter, or pick a common one below." />
+                      <StringArrayInput value={form.languages} onChange={(v) => set("languages", v)} placeholder="Type a language, for example English, then press Enter" />
+                      <LabelDescription text="Add every language your guides can speak. Type one and press Enter, or pick a common one below." />
                       <div className="flex flex-wrap gap-1.5">
                         {COMMON_LANGUAGES.filter((l) => !form.languages.includes(l)).map((l) => (
                           <button key={l} type="button" onClick={() => set("languages", [...form.languages, l])}>
@@ -1484,9 +1493,9 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 15 — Additional info */}
               {stepKey === "info" && (
                 <>
-                  <InfoCard info="Add notes travelers should know before booking — packing tips, visa requirements, health advice, cancellation notes. Drag to reorder." />
+                  <InfoCard info="Add notes travellers should read before booking, such as packing tips, visa rules, health advice or your cancellation policy. Drag a note to change the order." />
                   {form.additionalInfo.length === 0 ? (
-                    <EmptyState title="No additional info" hint="Add notes like packing tips or visa requirements." />
+                    <EmptyState title="No extra notes yet" hint="Select “Add a note” to add things like packing tips or visa requirements." />
                   ) : (
                     <SortableList
                       className="space-y-2"
@@ -1498,10 +1507,10 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                           <DragHandle handle={handle} />
                           <span className="min-w-0 flex-1 truncate text-sm font-medium">
                             <span className="mr-2 text-muted-foreground">#{index + 1}</span>
-                            {item.title.trim() || <span className="font-normal text-muted-foreground italic">Untitled</span>}
+                            {item.title.trim() || <span className="font-normal text-muted-foreground italic">Untitled note (no heading yet)</span>}
                           </span>
                           <Button type="button" variant="ghost" size="sm" className="shrink-0 text-xs" onClick={() => setInfoEdit(index)}>
-                            Edit
+                            Edit this note
                           </Button>
                           <Button
                             type="button"
@@ -1511,14 +1520,16 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                             onClick={() =>
                               confirmDialog(
                                 {
-                                  title: "Remove note?",
-                                  description: "This additional information note will be deleted.",
+                                  title: "Remove this note?",
+                                  description: "The note will be deleted. This cannot be undone.",
+                                  confirmLabel: "Yes, remove it",
+                                  cancelLabel: "No, keep it",
                                 },
                                 () => set("additionalInfo", form.additionalInfo.filter((_, xi) => xi !== index)),
                               )
                             }
                           >
-                            Delete
+                            Delete this note
                           </Button>
                         </div>
                       )}
@@ -1527,13 +1538,13 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                   <div className="flex justify-center pt-2">
                     <Button type="button" variant="outline" className="flex items-center gap-2 rounded-xl" onClick={() => setInfoAdd(true)}>
                       <Plus className="h-4 w-4" />
-                      Add Info
+                      Add a note
                     </Button>
                   </div>
 
                   {infoAdd && (
                     <InfoDialog
-                      confirmLabel="Add Info"
+                      confirmLabel="Add this note"
                       onSave={(data) => set("additionalInfo", [...form.additionalInfo, { id: uid(), ...data }])}
                       onOpenChange={(open) => {
                         if (!open) setInfoAdd(false);
@@ -1556,7 +1567,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 16 — FAQ */}
               {stepKey === "faq" && (
                 <>
-                  <InfoCard info="Group questions by topic. Each group can hold multiple questions." />
+                  <InfoCard info="Group questions by topic, for example Booking, Health or Packing. Each group can hold many questions." />
                   <Section
                     action={
                       <Button
@@ -1566,12 +1577,12 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                         onClick={() => set("faq", [...form.faq, { id: uid(), title: "", items: [{ q: "", a: "" }] }])}
                       >
                         <Plus />
-                        Add group
+                        Add a group of questions
                       </Button>
                     }
                   >
                     {form.faq.length === 0 ? (
-                      <EmptyState title="No FAQs yet" hint="Add question groups travelers commonly ask about." />
+                      <EmptyState title="No frequently asked questions yet" hint="Select “Add a group of questions”, then add the questions travellers ask you most often." />
                     ) : (
                       <div className="space-y-6">
                         {form.faq.map((group, i) => (
@@ -1593,29 +1604,31 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 17 — SEO */}
               {stepKey === "seo" && (
                 <>
-                  <Section title="Search metadata" description="How this trip appears in search results.">
+                  <Section title="How this trip appears on Google" description="Control the title and description shown in search results.">
                     <div className="grid gap-4">
-                      <Field label="Meta title" tooltip="The title shown in Google search results and browser tabs. Keep it 50–60 characters.">
+                      <Field label="Search result title" tooltip="The title shown in Google search results and in browser tabs. Keep it between 50 and 60 characters.">
                         <Input value={form.seo.metaTitle} onChange={(e) => setSeo({ metaTitle: e.target.value })} placeholder={form.title || "Inca Trail to Machu Picchu — 4 days"} />
                       </Field>
-                      <Field label="Meta description" tooltip="A short summary shown under the title in search results. Keep it 150–160 characters." hint={`${form.seo.metaDescription.length}/160 characters`}>
+                      <Field label="Search result description" tooltip="A short summary shown under the title in Google search results. Keep it between 150 and 160 characters." hint={`${form.seo.metaDescription.length} of 160 characters used`}>
                         <Textarea rows={3} maxLength={160} value={form.seo.metaDescription} onChange={(e) => setSeo({ metaDescription: e.target.value })} />
                       </Field>
                     </div>
                   </Section>
-                  <Section title="Featured media" description="Image used when this trip is shared on social media.">
+                  <Section title="Picture for social media" description="The picture shown when someone shares this trip on Facebook, WhatsApp or other social media.">
                     <div className="flex flex-wrap items-center gap-3">
                       {form.seo.featuredMedia ? (
                         <div className="relative">
                           <img src={form.seo.featuredMedia} alt="" className="h-24 w-40 rounded-xl border object-cover" />
                           <button
                             type="button"
-                            aria-label="Remove featured media"
+                            aria-label="Remove the social media picture"
                             onClick={() =>
                               confirmDialog(
                                 {
-                                  title: "Remove featured image?",
-                                  description: "The social share image will be removed.",
+                                  title: "Remove the social media picture?",
+                                  description: "The picture will be taken off this trip’s social media sharing. It stays in your media library.",
+                                  confirmLabel: "Yes, remove it",
+                                  cancelLabel: "No, keep it",
                                 },
                                 () => setSeo({ featuredMedia: "" }),
                               )
@@ -1626,7 +1639,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                           </button>
                         </div>
                       ) : (
-                        <AddImageButton className="w-40" label="Select image" onSelect={(media) => setSeo({ featuredMedia: media.url })} />
+                        <AddImageButton className="w-40" label="Choose a picture" onSelect={(media) => setSeo({ featuredMedia: media.url })} />
                       )}
                     </div>
                   </Section>
@@ -1635,27 +1648,27 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                       <Button type="button" variant="ghost" className="w-full justify-between px-0 hover:bg-transparent">
                         <span className="flex items-center gap-2 text-sm font-semibold">
                           <Info className="h-4 w-4 text-muted-foreground" />
-                          Advanced
+                          Advanced search settings (most people can skip these)
                         </span>
                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="grid gap-4 pt-4">
-                      <Field label="Meta keywords" tooltip="Comma-separated keywords. Most search engines ignore this, but it can help internal search.">
-                        <Input value={form.seo.metaKeywords} onChange={(e) => setSeo({ metaKeywords: e.target.value })} placeholder="trekking, nepal, himalaya" />
+                      <Field label="Keywords (optional)" tooltip="Words separated by commas. Most search engines ignore this, but it can help searches on your own website.">
+                        <Input value={form.seo.metaKeywords} onChange={(e) => setSeo({ metaKeywords: e.target.value })} placeholder="Example: trekking, nepal, himalaya" />
                       </Field>
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <Field label="Author" tooltip="Name of the content author or organisation, used for attribution.">
+                        <Field label="Content author (optional)" tooltip="The name of the person or company that wrote this content.">
                           <Input value={form.seo.metaAuthor} onChange={(e) => setSeo({ metaAuthor: e.target.value })} />
                         </Field>
-                        <Field label="Robots" tooltip="Controls search engine indexing, e.g. index,follow or noindex.">
+                        <Field label="Search engine instructions (advanced)" tooltip="Tells Google whether to list this page. Leave it as index,follow to appear in search results, or type noindex to hide it from Google.">
                           <Input value={form.seo.metaRobots} onChange={(e) => setSeo({ metaRobots: e.target.value })} placeholder="index,follow" />
                         </Field>
                       </div>
-                      <Field label="Canonical URL" tooltip="The preferred URL if this content is available on multiple pages.">
+                      <Field label="Original source link (advanced)" tooltip="Only fill this in if the same content is also published on another web address that you prefer Google to show.">
                         <Input value={form.seo.canonicalUrl} onChange={(e) => setSeo({ canonicalUrl: e.target.value })} placeholder="https://…" />
                       </Field>
-                      <Field label="Structured data (JSON-LD)" tooltip="Paste valid JSON-LD schema only (e.g. Article, Product, Organization). Invalid JSON can break rich results.">
+                      <Field label="Structured data for developers (JSON-LD)" tooltip="Only for developers. Paste valid JSON-LD only. Invalid code can stop Google from showing rich results.">
                         <Textarea rows={4} value={form.seo.schema} onChange={(e) => setSeo({ schema: e.target.value })} placeholder='{"@context":"https://schema.org",…}' />
                       </Field>
                     </CollapsibleContent>
@@ -1669,22 +1682,22 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
     <div className="space-y-4">
       {/* Header */}
       <div className="sticky top-12 z-10 -mx-4 -mt-6 flex flex-wrap items-center gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:-mx-8 md:-mt-8 md:px-8">
-        <Button variant="ghost" size="icon" aria-label="Back to trips" onClick={() => confirmLeave() && navigate("/trips")}>
+        <Button variant="ghost" size="icon" aria-label="Go back to the list of all trips" onClick={() => confirmLeave() && navigate("/trips")}>
           <ArrowLeft />
         </Button>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="truncate text-base font-semibold tracking-tight">{form.title.trim() || (mode === "create" ? "New trip" : "Untitled trip")}</h1>
+            <h1 className="truncate text-base font-semibold tracking-tight">{form.title.trim() || (mode === "create" ? "Create a new trip" : "Untitled trip (no title yet)")}</h1>
             <StatusBadge kind="trip" status={status} />
-            {form.isFeatured && <Badge variant="outline">Featured</Badge>}
+            {form.isFeatured && <Badge variant="outline">Featured on homepage</Badge>}
           </div>
           <p className="truncate text-xs text-muted-foreground">
             {dirty ? (
-              <span className="text-amber-600 dark:text-amber-400">Unsaved changes</span>
+              <span className="text-amber-600 dark:text-amber-400">You have unsaved changes. Save before leaving this page.</span>
             ) : form.slug ? (
               `/${form.slug}`
             ) : (
-              "Not saved yet"
+              "Not saved yet. Nothing is stored until you save."
             )}
           </p>
         </div>
@@ -1692,12 +1705,12 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
           {status !== "PUBLISHED" && (
             <Button variant="outline" onClick={() => save("draft")} disabled={saving !== null || (mode === "edit" && !dirty)}>
               {saving === "draft" ? <Loader2 className="animate-spin" /> : <Save />}
-              Save draft
+              Save as a hidden draft
             </Button>
           )}
           <Button onClick={() => save("publish")} disabled={saving !== null || (status === "PUBLISHED" && !dirty)}>
             {saving === "publish" ? <Loader2 className="animate-spin" /> : status === "PUBLISHED" ? <Save /> : <Upload />}
-            {status === "PUBLISHED" ? "Save changes" : "Publish"}
+            {status === "PUBLISHED" ? "Save changes to the live trip" : "Publish to my website"}
           </Button>
         </div>
       </div>
@@ -1711,7 +1724,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               slug={form.slug}
               onSlugChange={(v) => set("slug", v)}
               prefix={`${siteHost}/trips/`}
-              placeholder="Trip name, e.g. Sunset kayak tour"
+              placeholder="Type the name of your trip, for example Sunset kayak tour"
             />
             {PAGE_SECTIONS.map((section) => (
               <section key={section.key} id={`section-${section.key}`} className="scroll-mt-36 space-y-4 border-t pt-8">
@@ -1720,7 +1733,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                   <p className="mt-0.5 text-sm text-muted-foreground">{section.description}</p>
                 </div>
                 {section.key === "summary" ? (
-                  <RichTextEditor value={form.overview} onChange={(html) => set("overview", html)} minHeight={96} placeholder="A sunset paddle past sea caves, with a beach stop for snacks." />
+                  <RichTextEditor value={form.overview} onChange={(html) => set("overview", html)} minHeight={96} placeholder="Example: A sunset paddle past sea caves, with a beach stop for snacks." />
                 ) : section.key === "content" ? (
                   <RichTextEditor
                     value={form.content}
@@ -1728,7 +1741,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                     minHeight={420}
                     variant="document"
                     stickyToolbar="7.25rem"
-                    placeholder="Describe the experience: what you'll do, where you meet, what to bring… Use headings to organise it."
+                    placeholder="Describe the experience: what travellers will do, where you meet, what to bring… Use headings to organise it into sections."
                   />
                 ) : (
                   <div className="space-y-6">{renderStep(section.key)}</div>
@@ -1740,7 +1753,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
           <aside className="space-y-6 lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto">
             <div>
               <div className="flex items-baseline justify-between text-xs">
-                <span className="font-medium">Completeness</span>
+                <span className="font-medium">How complete this trip is</span>
                 <span className="text-muted-foreground tabular-nums">{score}%</span>
               </div>
               <Progress value={score} className="mt-2 h-1.5" />
@@ -1765,7 +1778,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                           {state === 1 && <Check className="size-2.5" />}
                         </span>
                         <span className="flex-1 truncate">{section.title}</span>
-                        {optional && <span className="text-[11px] text-muted-foreground/70">Optional</span>}
+                        {optional && <span className="text-[11px] text-muted-foreground/70">Optional, can be skipped</span>}
                       </button>
                     </li>
                   );
@@ -1774,31 +1787,31 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
             </div>
 
             <div className="space-y-4 border-t pt-6">
-              <h2 className="text-sm font-semibold">Details</h2>
-              <Field label="Duration" htmlFor="page-duration" hint="e.g. 3 hours, Full day, 2 days">
+              <h2 className="text-sm font-semibold">Practical details</h2>
+              <Field label="How long the trip lasts" htmlFor="page-duration" hint="Examples: 3 hours, Full day, 2 days">
                 <Input id="page-duration" value={form.duration} onChange={(e) => set("duration", e.target.value)} />
               </Field>
-              <Field label="Max group size" htmlFor="page-capacity">
+              <Field label="Largest group size" htmlFor="page-capacity">
                 <Input id="page-capacity" type="number" min={1} value={form.guestCapacity} onChange={(e) => set("guestCapacity", e.target.value)} />
               </Field>
-              <Field label="Meeting point" htmlFor="page-meeting">
+              <Field label="Where travellers meet you" htmlFor="page-meeting">
                 <Input id="page-meeting" value={form.meetingPoint} onChange={(e) => set("meetingPoint", e.target.value)} />
               </Field>
               <label className="flex items-start justify-between gap-3">
                 <span>
-                  <span className="block text-sm font-medium">Featured trip</span>
-                  <span className="block text-xs text-muted-foreground">Show it on your homepage.</span>
+                  <span className="block text-sm font-medium">Feature this trip on my homepage</span>
+                  <span className="block text-xs text-muted-foreground">Turn this on to show the trip on your website homepage.</span>
                 </span>
                 <Switch checked={form.isFeatured} onCheckedChange={(v) => set("isFeatured", v)} />
               </label>
             </div>
 
             <div className="space-y-2 border-t pt-6">
-              <h2 className="text-sm font-semibold">Layout</h2>
-              <p className="text-sm text-muted-foreground">Simple page. Need a day-by-day plan?</p>
+              <h2 className="text-sm font-semibold">Trip format</h2>
+              <p className="text-sm text-muted-foreground">This trip is a simple one-page trip. Need to show a day-by-day plan instead?</p>
               <Button variant="outline" size="sm" onClick={switchLayout}>
                 <CalendarDays />
-                Switch to itinerary
+                Change to a day-by-day itinerary
               </Button>
             </div>
           </aside>
@@ -1806,15 +1819,15 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
       ) : (
       <div className="grid gap-8 pt-2 lg:grid-cols-[232px_1fr]">
         {/* Stepper */}
-        <nav aria-label="Trip editor steps" className="min-w-0 lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto">
+        <nav aria-label="Steps for filling in this trip" className="min-w-0 lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto">
           <div className="mb-3 hidden px-2 lg:block">
             <div className="flex items-baseline justify-between text-xs">
-              <span className="font-medium">Completeness</span>
+              <span className="font-medium">How complete this trip is</span>
               <span className="text-muted-foreground tabular-nums">{score}%</span>
             </div>
             <Progress value={score} className="mt-2 h-1.5" />
             <p className="mt-1.5 text-xs text-muted-foreground">
-              {Object.values(progress).filter((p) => p === 1).length} of {TRIP_STEPS.length} sections complete
+              {Object.values(progress).filter((p) => p === 1).length} of {TRIP_STEPS.length} steps completed
             </p>
           </div>
           <ol className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 lg:pb-0">
@@ -1849,9 +1862,9 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
             })}
           </ol>
           <div className="mt-4 hidden border-t px-2 pt-4 lg:block">
-            <p className="text-xs text-muted-foreground">Short trip or day tour?</p>
+            <p className="text-xs text-muted-foreground">Is this a short trip or a day tour?</p>
             <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={switchLayout}>
-              Switch to a simple page
+              Change to a simple one-page trip
             </Button>
           </div>
         </nav>
@@ -1871,18 +1884,18 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
           <div className="flex items-center justify-between border-t pt-6 pb-8">
             <Button variant="outline" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}>
               <ArrowLeft />
-              Previous
+              Go to the previous step
             </Button>
             {step < TRIP_STEPS.length - 1 ? (
               <Button onClick={() => setStep((s) => Math.min(TRIP_STEPS.length - 1, s + 1))}>
-                <span className="sm:hidden">Next</span>
-                <span className="hidden sm:inline">Next: {TRIP_STEPS[step + 1].title}</span>
+                <span className="sm:hidden">Go to the next step</span>
+                <span className="hidden sm:inline">Go to the next step: {TRIP_STEPS[step + 1].title}</span>
                 <ArrowRight />
               </Button>
             ) : (
               <Button onClick={() => save("publish")} disabled={saving !== null}>
                 {saving === "publish" ? <Loader2 className="animate-spin" /> : <Upload />}
-                {status === "PUBLISHED" ? "Save changes" : "Publish trip"}
+                {status === "PUBLISHED" ? "Save changes to the live trip" : "Publish this trip to my website"}
               </Button>
             )}
           </div>
@@ -1904,16 +1917,16 @@ const LAYOUT_OPTIONS: {
   {
     layout: "ITINERARY",
     icon: CalendarDays,
-    title: "Multi-day itinerary",
-    body: "For trips with multiple days, day-by-day schedules, activities, accommodations, and other structured details.",
-    points: ["Day-by-day plan, with variants", "Meals, stays and altitude profile", "Guided step-by-step editor"],
+    title: "Day-by-day itinerary",
+    body: "Best for trips that last several days. You fill in the trip step by step: a plan for each day, places to stay, meals, a map, prices and more.",
+    points: ["A plan for each day, with optional alternative versions", "Meals, places to stay and an altitude chart", "A guided editor that walks you through 18 steps"],
   },
   {
     layout: "PAGE",
     icon: FileText,
-    title: "Simple page",
-    body: "For short trips, weekend getaways, day tours, and experiences that need flexible content rather than a day-by-day structure.",
-    points: ["One page of rich content", "Photos, price, FAQs", "Ready in a few minutes"],
+    title: "Simple one-page trip",
+    body: "Best for day tours, weekend getaways and experiences that do not need a plan for each day. You write everything on one flexible page.",
+    points: ["One page where you write freely, with headings and photos", "Photos, price and frequently asked questions", "Ready to publish in a few minutes"],
   },
 ];
 
@@ -1922,11 +1935,11 @@ function LayoutChooser({ onChoose, onBack }: { onChoose: (layout: TripLayout) =>
     <div className="mx-auto max-w-3xl py-4">
       <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground" onClick={onBack}>
         <ArrowLeft />
-        Trips
+        Back to all trips
       </Button>
-      <h1 className="mt-6 text-2xl font-semibold tracking-tight">What kind of trip is this?</h1>
+      <h1 className="mt-6 text-2xl font-semibold tracking-tight">Which format fits your new trip?</h1>
       <p className="mt-1.5 text-sm text-muted-foreground">
-        Pick the editor that fits. You can switch later without losing anything.
+        Choose the way you want to fill in this trip. If you change your mind later, you can switch formats and nothing you wrote is lost.
       </p>
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {LAYOUT_OPTIONS.map((option) => (
@@ -1950,7 +1963,7 @@ function LayoutChooser({ onChoose, onBack }: { onChoose: (layout: TripLayout) =>
               ))}
             </ul>
             <span className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-primary">
-              Start with this
+              Choose this format
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </span>
           </button>

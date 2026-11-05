@@ -24,7 +24,7 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["platform", "admins"] });
 
   const create = useMutation({
-    meta: { success: "Admin added" },
+    meta: { success: "The new Wepilo admin was added. Send them their password securely." },
     mutationFn: () => api("/platform/admins", { body: form }),
     onSuccess: () => {
       setOpen(false);
@@ -34,7 +34,7 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
     onError: (err) => setError(err instanceof ApiClientError ? err.message : "Something went wrong"),
   });
   const toggle = useMutation({
-    meta: { success: "Updated" },
+    meta: { success: "The admin account was updated." },
     mutationFn: (a: PlatformAdmin) => api(`/platform/admins/${a.id}`, { method: "PATCH", body: { isActive: !a.isActive } }),
     onSuccess: invalidate,
   });
@@ -42,7 +42,7 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
   const columns: Column<PlatformAdmin>[] = [
     {
       key: "name",
-      header: "Admin",
+      header: "Admin name and email",
       cell: (a) => (
         <div>
           <p className="font-medium">
@@ -53,10 +53,10 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
         </div>
       ),
     },
-    { key: "status", header: "Status", cell: (a) => <StatusBadge kind="account" status={a.isActive ? "active" : "disabled"} /> },
+    { key: "status", header: "Can sign in?", cell: (a) => <StatusBadge kind="account" status={a.isActive ? "active" : "disabled"} /> },
     {
       key: "last",
-      header: "Last sign-in",
+      header: "Last time they signed in",
       className: "text-muted-foreground",
       cell: (a) => (a.lastLoginAt ? formatDate(a.lastLoginAt) : "Never"),
     },
@@ -69,7 +69,7 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
           <RowActions
             actions={[
               {
-                label: a.isActive ? "Deactivate" : "Reactivate",
+                label: a.isActive ? "Turn off this admin’s access" : "Turn this admin’s access back on",
                 icon: a.isActive ? UserX : UserCheck,
                 onSelect: () => toggle.mutate(a),
               },
@@ -82,8 +82,8 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
   return (
     <div>
       <PageHeader
-        title="Admins"
-        description="People on the Wepilo team who can create and manage workspaces."
+        title="Wepilo admins"
+        description="The Wepilo team members who can create customer workspaces, change plans, suspend accounts and open any workspace. Only add people you fully trust, because every admin has full access to every customer."
         action={
           <Button
             onClick={() => {
@@ -92,7 +92,7 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
             }}
           >
             <Plus />
-            Add admin
+            Add a Wepilo admin
           </Button>
         }
       />
@@ -101,22 +101,22 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
       <FormDialog
         open={open}
         onOpenChange={setOpen}
-        title="Add admin"
-        description="They get full access to every workspace. Share the password with them securely."
-        submitLabel="Add admin"
+        title="Add a Wepilo admin"
+        description="This person gets full access to every customer workspace. Send them the password through a secure channel, never by plain email or chat."
+        submitLabel="Add this admin"
         pending={create.isPending}
         onSubmit={() => {
           setError(null);
           create.mutate();
         }}
       >
-        <Field label="Name" htmlFor="a-name" required>
+        <Field label="Their full name" htmlFor="a-name" required>
           <Input id="a-name" required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         </Field>
-        <Field label="Email" htmlFor="a-email" required>
+        <Field label="Their email address (used to sign in)" htmlFor="a-email" required>
           <Input id="a-email" type="email" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
         </Field>
-        <Field label="Password" htmlFor="a-password" required hint="At least 12 characters.">
+        <Field label="Password" htmlFor="a-password" required hint="Use at least 12 characters.">
           <Input
             id="a-password"
             type="password"

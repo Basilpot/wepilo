@@ -40,7 +40,7 @@ export async function api<T = unknown>(path: string, options: RequestOptions = {
     if (res.status === 402 && (data as { code?: string }).code === "PAYMENT_REQUIRED") {
       window.dispatchEvent(new Event("wepilo:payment-required"));
     }
-    throw new ApiClientError(res.status, (data as { error?: string }).error ?? "Request failed", (data as { code?: string }).code);
+    throw new ApiClientError(res.status, (data as { error?: string }).error ?? "The request did not go through. Check your internet connection and try again.", (data as { code?: string }).code);
   }
   return data as T;
 }
@@ -54,7 +54,7 @@ export async function uploadFile<T = unknown>(path: string, file: File): Promise
     body: form,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiClientError(res.status, (data as { error?: string }).error ?? "Upload failed");
+  if (!res.ok) throw new ApiClientError(res.status, (data as { error?: string }).error ?? "The file could not be uploaded. Check your internet connection and try again.");
   return data as T;
 }
 
@@ -64,10 +64,10 @@ export type Paginated<T> = {
 };
 
 /** Error toast for a failed API call; plan-limit errors get a shortcut to billing. */
-export function toastApiError(err: unknown, fallback = "Something went wrong. Try again.") {
+export function toastApiError(err: unknown, fallback = "Something went wrong and your change was not saved. Please try again in a moment.") {
   if (err instanceof ApiClientError && err.code === "PLAN_LIMIT") {
     toast.error(err.message, {
-      action: { label: "See plans", onClick: () => window.location.assign("/settings/billing") },
+      action: { label: "Compare plans and upgrade", onClick: () => window.location.assign("/settings/billing") },
     });
     return;
   }

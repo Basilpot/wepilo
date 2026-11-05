@@ -58,7 +58,7 @@ export function BookingsPage() {
   });
 
   const updateStatus = useMutation({
-    meta: { success: "Booking updated" },
+    meta: { success: "Booking status updated. The new status is now saved." },
     mutationFn: ({ id, next }: { id: number; next: Booking["status"] }) =>
       api(`/bookings/${id}/status`, { body: { status: next }, method: "PATCH" }),
     onSuccess: (_d, { next }) => {
@@ -71,10 +71,10 @@ export function BookingsPage() {
   const cancel = (b: Booking) =>
     confirmDialog(
       {
-        title: "Cancel booking?",
-        description: `${b.name}'s ${b.groupSize} seat${b.groupSize === 1 ? "" : "s"} go back on sale. Let the guest know separately.`,
-        confirmLabel: "Cancel booking",
-        cancelLabel: "Keep booking",
+        title: "Cancel this booking?",
+        description: `${b.name} booked ${b.groupSize} seat${b.groupSize === 1 ? "" : "s"}. If you cancel, ${b.groupSize === 1 ? "that seat goes" : "those seats go"} back on sale on the departure date. The traveller is not notified automatically, so contact ${b.name} yourself to explain.`,
+        confirmLabel: "Yes, cancel this booking",
+        cancelLabel: "No, keep the booking",
       },
       () => updateStatus.mutate({ id: b.id, next: "CANCELLED" }),
     );
@@ -82,7 +82,7 @@ export function BookingsPage() {
   const columns: Column<Booking>[] = [
     {
       key: "guest",
-      header: "Guest",
+      header: "Traveller who booked",
       cell: (b) => (
         <div className="min-w-0">
           <p className="truncate font-medium">{b.name}</p>
@@ -92,17 +92,17 @@ export function BookingsPage() {
     },
     {
       key: "trip",
-      header: "Trip",
+      header: "Trip and departure date",
       cell: (b) => (
         <div className="min-w-0">
-          <p className="truncate">{b.activity?.title ?? "—"}</p>
-          {b.departure && <p className="text-xs text-muted-foreground">Departs {day(b.departure.startDate)}</p>}
+          <p className="truncate">{b.activity?.title ?? "Trip no longer exists"}</p>
+          {b.departure && <p className="text-xs text-muted-foreground">Leaves on {day(b.departure.startDate)}</p>}
         </div>
       ),
     },
-    { key: "group", header: "Guests", align: "right", className: "tabular-nums", cell: (b) => b.groupSize },
-    { key: "total", header: "Total", align: "right", className: "font-medium tabular-nums", cell: (b) => money(b.totalPrice) },
-    { key: "status", header: "Status", cell: (b) => <StatusBadge kind="booking" status={b.status} /> },
+    { key: "group", header: "Number of travellers", align: "right", className: "tabular-nums", cell: (b) => b.groupSize },
+    { key: "total", header: "Total price", align: "right", className: "font-medium tabular-nums", cell: (b) => money(b.totalPrice) },
+    { key: "status", header: "Booking status", cell: (b) => <StatusBadge kind="booking" status={b.status} /> },
     {
       key: "actions",
       headClassName: "w-12",
@@ -110,19 +110,19 @@ export function BookingsPage() {
         <RowActions
           actions={[
             {
-              label: "Confirm booking",
+              label: "Confirm this booking",
               icon: CheckCircle2,
               hidden: booking.status !== "PENDING",
               onSelect: () => updateStatus.mutate({ id: booking.id, next: "CONFIRMED" }),
             },
             {
-              label: "Mark completed",
+              label: "Mark the trip as completed",
               icon: CircleCheckBig,
               hidden: booking.status === "COMPLETED" || booking.status === "CANCELLED",
               onSelect: () => updateStatus.mutate({ id: booking.id, next: "COMPLETED" }),
             },
             {
-              label: "Cancel booking",
+              label: "Cancel this booking",
               icon: XCircle,
               variant: "destructive",
               separatorBefore: true,
@@ -137,7 +137,7 @@ export function BookingsPage() {
 
   return (
     <div>
-      <PageHeader title="Bookings" description="Seats travellers reserved on your departures." />
+      <PageHeader title="Customer bookings" description="Every seat a traveller has reserved on one of your departures. Click a booking to see the traveller's details, then confirm it, mark it completed after the trip, or cancel it." />
 
       <Tabs
         value={status}
@@ -149,7 +149,7 @@ export function BookingsPage() {
       >
         <TabsList>
           <TabsTrigger value="all" className="px-3">
-            All
+            All bookings
           </TabsTrigger>
           {statusOptions("booking").map((o) => (
             <TabsTrigger key={o.value} value={o.value} className="px-3">
@@ -164,7 +164,7 @@ export function BookingsPage() {
         rows={data?.data ?? []}
         getRowId={(b) => b.id}
         isLoading={isLoading}
-        error={isError ? "We couldn't load bookings." : null}
+        error={isError ? "We could not load your customer bookings. Check your internet connection and try again." : null}
         onRetry={() => void refetch()}
         onRowClick={setOpen}
         search={{
@@ -174,13 +174,13 @@ export function BookingsPage() {
             setPage(1);
           },
         }}
-        searchPlaceholder="Search by guest name or email…"
+        searchPlaceholder="Search by the traveller's name or email address…"
         emptyIcon={Receipt}
-        emptyTitle="No bookings yet"
-        emptyHint="Bookings appear here when travellers reserve a seat on one of your departures."
+        emptyTitle="No customer bookings yet"
+        emptyHint="A booking appears here when a traveller reserves a seat on one of your departures. To receive bookings, make sure at least one trip is published and has an upcoming departure date."
         emptyAction={
           <Button asChild size="sm" variant="outline">
-            <Link to="/departures">Manage departures</Link>
+            <Link to="/departures">Add or edit departure dates</Link>
           </Button>
         }
         pagination={
@@ -209,62 +209,62 @@ export function BookingsPage() {
                   <SheetTitle className="text-base">Booking #{open.id}</SheetTitle>
                   <StatusBadge kind="booking" status={open.status} />
                 </div>
-                <SheetDescription>Made {day(String(open.createdAt))}</SheetDescription>
+                <SheetDescription>Booked on {day(String(open.createdAt))}</SheetDescription>
               </SheetHeader>
               <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
                 <section className="space-y-3">
-                  <h3 className="text-sm font-medium">Guest</h3>
+                  <h3 className="text-sm font-medium">Traveller details</h3>
                   <dl className="grid grid-cols-[6rem_1fr] gap-x-4 gap-y-2 text-sm">
-                    <dt className="text-muted-foreground">Name</dt>
+                    <dt className="text-muted-foreground">Full name</dt>
                     <dd>{open.name}</dd>
-                    <dt className="text-muted-foreground">Email</dt>
+                    <dt className="text-muted-foreground">Email address</dt>
                     <dd className="truncate">{open.email}</dd>
-                    <dt className="text-muted-foreground">Phone</dt>
-                    <dd>{open.phone || "—"}</dd>
+                    <dt className="text-muted-foreground">Phone number</dt>
+                    <dd>{open.phone || "Not provided"}</dd>
                   </dl>
                   <ContactActions name={open.name} email={open.email} phone={open.phone} subject={open.activity?.title ?? undefined} />
                 </section>
                 <section className="space-y-3 border-t pt-6">
-                  <h3 className="text-sm font-medium">Trip</h3>
+                  <h3 className="text-sm font-medium">Trip they booked</h3>
                   <dl className="grid grid-cols-[6rem_1fr] gap-x-4 gap-y-2 text-sm">
-                    <dt className="text-muted-foreground">Trip</dt>
+                    <dt className="text-muted-foreground">Trip name</dt>
                     <dd>
                       {open.activity ? (
                         <Link to={`/trips/${open.activity.id}`} className="hover:underline">
                           {open.activity.title}
                         </Link>
                       ) : (
-                        "—"
+                        "This trip has been deleted"
                       )}
                     </dd>
-                    <dt className="text-muted-foreground">Departure</dt>
+                    <dt className="text-muted-foreground">Travel dates</dt>
                     <dd>
                       {open.departure
                         ? `${day(open.departure.startDate)}${open.departure.endDate ? ` – ${day(open.departure.endDate)}` : ""}`
-                        : "—"}
+                        : "Departure date not available"}
                     </dd>
-                    <dt className="text-muted-foreground">Guests</dt>
+                    <dt className="text-muted-foreground">Travellers</dt>
                     <dd className="tabular-nums">{open.groupSize}</dd>
                   </dl>
                 </section>
                 <section className="flex items-baseline justify-between border-t pt-6">
-                  <span className="text-sm font-medium">Total</span>
+                  <span className="text-sm font-medium">Total price for this booking</span>
                   <span className="text-xl font-semibold tracking-tight tabular-nums">{money(open.totalPrice)}</span>
                 </section>
               </div>
               {(open.status === "PENDING" || open.status === "CONFIRMED") && (
                 <div className="flex justify-between gap-2 border-t bg-muted/30 px-6 py-3">
                   <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => cancel(open)} disabled={updateStatus.isPending}>
-                    Cancel booking
+                    Cancel this booking
                   </Button>
                   {open.status === "PENDING" ? (
                     <Button onClick={() => updateStatus.mutate({ id: open.id, next: "CONFIRMED" })} disabled={updateStatus.isPending}>
                       <CheckCircle2 />
-                      Confirm booking
+                      Confirm this booking
                     </Button>
                   ) : (
                     <Button variant="outline" onClick={() => updateStatus.mutate({ id: open.id, next: "COMPLETED" })} disabled={updateStatus.isPending}>
-                      Mark completed
+                      Mark the trip as completed
                     </Button>
                   )}
                 </div>

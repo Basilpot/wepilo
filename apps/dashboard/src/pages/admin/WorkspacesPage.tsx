@@ -40,7 +40,7 @@ export function WorkspacesPage() {
   const columns: Column<WorkspaceSummary>[] = [
     {
       key: "name",
-      header: "Workspace",
+      header: "Customer workspace",
       cell: (w) => (
         <div className="min-w-0">
           <p className="truncate font-medium">{w.companyName ?? w.slug}</p>
@@ -48,10 +48,10 @@ export function WorkspacesPage() {
         </div>
       ),
     },
-    { key: "state", header: "Status", cell: (w) => <StatusBadge kind="workspace" status={workspaceState(w)} /> },
+    { key: "state", header: "Account state", cell: (w) => <StatusBadge kind="workspace" status={workspaceState(w)} /> },
     {
       key: "plan",
-      header: "Plan",
+      header: "Plan they are on",
       cell: (w) => (
         <span className="whitespace-nowrap">
           {PLAN_NAMES[w.plan]}
@@ -61,13 +61,13 @@ export function WorkspacesPage() {
     },
     {
       key: "ends",
-      header: "Access until",
+      header: "Access runs until",
       className: "whitespace-nowrap text-muted-foreground",
-      cell: (w) => (w.planExpiresAt ? formatDate(w.planExpiresAt) : w.access.locked ? "—" : "No end date"),
+      cell: (w) => (w.planExpiresAt ? formatDate(w.planExpiresAt) : w.access.locked ? "Locked, no access" : "No end date"),
     },
     {
       key: "created",
-      header: "Created",
+      header: "Date they joined",
       className: "whitespace-nowrap text-muted-foreground",
       cell: (w) => formatDate(w.createdAt),
     },
@@ -76,24 +76,24 @@ export function WorkspacesPage() {
   const o = overview.data;
   const stats = o
     ? [
-        { label: "Workspaces", value: o.total },
-        { label: "Active", value: o.active },
-        { label: "On trial", value: o.trial },
-        { label: "Locked", value: o.locked },
-        { label: "Managed plans", value: o.managed },
+        { label: "Total customer workspaces", value: o.total },
+        { label: "Active and paying", value: o.active },
+        { label: "On a trial", value: o.trial },
+        { label: "Locked (no access)", value: o.locked },
+        { label: "Plans arranged by hand", value: o.managed },
       ]
     : null;
 
   return (
     <div>
       <PageHeader
-        title="Workspaces"
-        description="Every agency on Wepilo. Create one here to set up an enterprise deal and hand it over."
+        title="Customer workspaces"
+        description="Every travel agency that uses Wepilo. Select one to see its usage, change its plan or suspend it. To set up an enterprise customer, create a workspace here and then hand it over to them with a one-time setup link."
         action={
           <Button asChild>
             <Link to="/admin/workspaces/new">
               <Plus />
-              New workspace
+              Create a customer workspace
             </Link>
           </Button>
         }
@@ -115,14 +115,14 @@ export function WorkspacesPage() {
         rows={list.data?.data ?? []}
         getRowId={(w) => w.id}
         isLoading={list.isLoading}
-        error={list.isError ? "Couldn't load workspaces." : null}
+        error={list.isError ? "We could not load the customer workspaces. Check your internet connection and try again." : null}
         onRetry={() => list.refetch()}
         onRowClick={(w) => navigate(`/admin/workspaces/${w.id}`)}
         search={{ value: search, onChange: setSearch }}
-        searchPlaceholder="Search name, slug or email…"
+        searchPlaceholder="Search by company name, workspace address or email…"
         emptyIcon={Building2}
-        emptyTitle={query ? "No workspaces match" : "No workspaces yet"}
-        emptyHint={query ? undefined : "Agencies appear here when they sign up or when you create one."}
+        emptyTitle={query ? "No customer workspace matches your search" : "There are no customer workspaces yet"}
+        emptyHint={query ? undefined : "A workspace appears here when an agency signs up, or when you select “Create a customer workspace”."}
         pagination={
           list.data
             ? {

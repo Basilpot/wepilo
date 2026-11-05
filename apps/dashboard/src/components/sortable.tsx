@@ -31,7 +31,7 @@ export function DragHandle({ handle, className }: { handle: DragHandleProps; cla
     <button
       type="button"
       ref={handle.setActivatorNodeRef}
-      aria-label="Drag to reorder"
+      aria-label="Press and drag to change the order of this item"
       className={cn(
         "flex h-6 w-6 cursor-grab items-center justify-center rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground active:cursor-grabbing",
         className,

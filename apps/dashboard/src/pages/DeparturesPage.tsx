@@ -81,7 +81,7 @@ export function DeparturesPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["departures"] });
 
   const save = useMutation({
-    meta: { success: "Saved" },
+    meta: { success: "Departure saved. Travellers can now see these dates on your website." },
     mutationFn: () => {
       const body = {
         activityId: Number(form.activityId),
@@ -105,13 +105,13 @@ export function DeparturesPage() {
   });
 
   const remove = useMutation({
-    meta: { success: "Deleted" },
+    meta: { success: "Departure deleted. It no longer appears on your website." },
     mutationFn: (id: number) => api(`/departures/${id}`, { method: "DELETE" }),
     onSuccess: invalidate,
   });
 
   const delay = useMutation({
-    meta: { success: "Departure updated" },
+    meta: { success: "Departure marked as delayed." },
     mutationFn: (id: number) => api(`/departures/${id}/delay`, { method: "PATCH" }),
     onSuccess: invalidate,
   });
@@ -140,20 +140,20 @@ export function DeparturesPage() {
   const columns: Column<Departure>[] = [
     {
       key: "trip",
-      header: "Trip",
+      header: "Trip this departure belongs to",
       cell: (d) => (
         <Link
           to={`/trips/${d.activity.id}`}
           className="font-medium hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
-          {d.activity.title ?? "Untitled"}
+          {d.activity.title ?? "Untitled trip (no title yet)"}
         </Link>
       ),
     },
     {
       key: "dates",
-      header: "Dates",
+      header: "Start and end dates",
       className: "whitespace-nowrap",
       cell: (d) => (
         <span>
@@ -164,7 +164,7 @@ export function DeparturesPage() {
     },
     {
       key: "seats",
-      header: "Seats booked",
+      header: "Seats booked out of total seats",
       cell: (d) => {
         const booked = d.capacity - d.availableSpots;
         return (
@@ -173,16 +173,16 @@ export function DeparturesPage() {
               <div className="h-full rounded-full bg-primary" style={{ width: `${d.capacity ? (booked / d.capacity) * 100 : 0}%` }} />
             </div>
             <span className="text-xs text-muted-foreground tabular-nums">
-              {booked}/{d.capacity}
+              {booked} of {d.capacity} seats
             </span>
           </div>
         );
       },
     },
-    { key: "price", header: "Price", align: "right", className: "tabular-nums", cell: (d) => money(d.price) },
+    { key: "price", header: "Price per traveller", align: "right", className: "tabular-nums", cell: (d) => money(d.price) },
     {
       key: "status",
-      header: "Status",
+      header: "Availability",
       cell: (d) => (
         <StatusBadge kind="departure" status={d.status} />
       ),
@@ -194,19 +194,19 @@ export function DeparturesPage() {
       cell: (departure) => (
         <RowActions
           actions={[
-            { label: "Edit departure", icon: PenLine, onSelect: () => openEdit(departure) },
+            { label: "Edit dates, seats and price", icon: PenLine, onSelect: () => openEdit(departure) },
             {
-              label: "Mark delayed",
+              label: "Mark this departure as delayed",
               icon: Clock,
               hidden: departure.status === "DELAYED",
               onSelect: () => delay.mutate(departure.id),
             },
             {
-              label: "Delete",
+              label: "Delete this departure",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ description: "Delete this departure?" }, () => remove.mutate(departure.id)),
+              onSelect: () => confirmDialog({ title: "Delete this departure?", description: "The date will disappear from your website and travellers will no longer be able to book it. Existing bookings for this date are not deleted, but you should contact those travellers yourself.", confirmLabel: "Yes, delete this departure", cancelLabel: "No, keep it" }, () => remove.mutate(departure.id)),
             },
           ]}
         />
@@ -217,21 +217,21 @@ export function DeparturesPage() {
   return (
     <div>
       <PageHeader
-        title="Departures"
-        description="Date-based inventory your guests can book."
+        title="Departure dates and seats"
+        description="A departure is one specific start date for a trip, with a set number of seats and a price. Travellers can only book your trips online if the trip has an upcoming departure with seats left. Add, edit or delay departures here."
         action={
           <Button onClick={openCreate}>
             <Plus />
-            New departure
+            Add a departure date
           </Button>
         }
       />
 
       <Tabs className="mb-3" value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
         <TabsList>
-          <TabsTrigger value="all" className="px-3">All</TabsTrigger>
-          <TabsTrigger value="OPEN" className="px-3">Open</TabsTrigger>
-          <TabsTrigger value="FULL" className="px-3">Full</TabsTrigger>
+          <TabsTrigger value="all" className="px-3">All departures</TabsTrigger>
+          <TabsTrigger value="OPEN" className="px-3">Seats available</TabsTrigger>
+          <TabsTrigger value="FULL" className="px-3">Fully booked</TabsTrigger>
           <TabsTrigger value="DELAYED" className="px-3">Delayed</TabsTrigger>
         </TabsList>
       </Tabs>
@@ -242,8 +242,8 @@ export function DeparturesPage() {
         getRowId={(d) => d.id}
         isLoading={isLoading}
         onRowClick={openEdit}
-        emptyTitle="No departures yet"
-        emptyHint="Create a trip first, then open a departure for it."
+        emptyTitle="No departure dates added yet"
+        emptyHint="Travellers can only book a trip once it has a departure date. If you have not created a trip yet, start with “All trips” in the menu. Then come back here and select “Add a departure date”."
         emptyIcon={CalendarCheck}
         pagination={
           data
@@ -262,38 +262,40 @@ export function DeparturesPage() {
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit departure" : "New departure"}
+        title={editing ? "Edit this departure" : "Add a new departure date"}
+        description={editing ? "Change the dates, number of seats, price or availability. Changes show on your website straight away." : "Choose the trip, the dates it runs, how many seats you can sell and the price for one traveller."}
+        submitLabel={editing ? "Save changes to this departure" : "Add this departure"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Trip" required>
+        <Field label="Which trip is this departure for?" required>
           <Select value={form.activityId || "none"} onValueChange={(v) => setForm((f) => ({ ...f, activityId: v === "none" ? "" : v }))}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a trip" />
+              <SelectValue placeholder="Click to choose a trip" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Select…</SelectItem>
+              <SelectItem value="none">Choose a trip…</SelectItem>
               {trips?.data.map((trip) => (
                 <SelectItem key={trip.id} value={String(trip.id)}>
-                  {trip.title ?? "Untitled"}
+                  {trip.title ?? "Untitled trip (no title yet)"}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Start date" required>
+          <Field label="Day the trip starts" required>
             <Input
               type="date"
               value={form.startDate}
               onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
             />
           </Field>
-          <Field label="End date">
+          <Field label="Day the trip ends (optional)">
             <Input type="date" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} />
           </Field>
-          <Field label="Capacity" required>
+          <Field label="Total seats you can sell" required>
             <Input
               type="number"
               min={0}
@@ -301,7 +303,7 @@ export function DeparturesPage() {
               onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
             />
           </Field>
-          <Field label="Price (USD)" required>
+          <Field label="Price for one traveller (in US dollars)" required>
             <Input
               type="number"
               min={0}
@@ -311,22 +313,22 @@ export function DeparturesPage() {
             />
           </Field>
         </div>
-        <Field label="Status">
+        <Field label="Availability shown to travellers">
           <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as FormState["status"] }))}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="OPEN">Open</SelectItem>
-              <SelectItem value="FULL">Full</SelectItem>
-              <SelectItem value="DELAYED">Delayed</SelectItem>
+              <SelectItem value="OPEN">Seats available for booking</SelectItem>
+              <SelectItem value="FULL">Fully booked, no more seats</SelectItem>
+              <SelectItem value="DELAYED">Delayed, new dates to be announced</SelectItem>
             </SelectContent>
           </Select>
         </Field>
         {editing && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Checkbox checked disabled />
-            Currently {editing.availableSpots} of {editing.capacity} spots available
+            Right now {editing.availableSpots} of {editing.capacity} seats are still available to book
           </div>
         )}
       </FormDialog>

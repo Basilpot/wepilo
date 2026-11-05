@@ -29,7 +29,7 @@ export function PageCategoriesPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["page-categories"] });
 
   const save = useMutation({
-    meta: { success: "Saved" },
+    meta: { success: "Category saved." },
     mutationFn: () => {
       const body = { name, handle: handle || undefined };
       return editing
@@ -47,7 +47,7 @@ export function PageCategoriesPage() {
   });
 
   const remove = useMutation({
-    meta: { success: "Deleted" },
+    meta: { success: "Category deleted." },
     mutationFn: (id: number) => api(`/info-page-categories/${id}`, { method: "DELETE" }),
     onSuccess: invalidate,
   });
@@ -61,8 +61,8 @@ export function PageCategoriesPage() {
   };
 
   const columns: Column<Category>[] = [
-    { key: "name", header: "Name", cell: (c) => <span className="font-medium">{c.name ?? c.handle}</span> },
-    { key: "handle", header: "Handle", className: "text-muted-foreground", cell: (c) => c.handle },
+    { key: "name", header: "Category name", cell: (c) => <span className="font-medium">{c.name ?? c.handle}</span> },
+    { key: "handle", header: "Web address ending (URL slug)", className: "text-muted-foreground", cell: (c) => c.handle },
     {
       key: "actions",
       headClassName: "w-12",
@@ -70,13 +70,13 @@ export function PageCategoriesPage() {
       cell: (category) => (
         <RowActions
           actions={[
-            { label: "Edit category", icon: PenLine, onSelect: () => openEdit(category) },
+            { label: "Edit this category", icon: PenLine, onSelect: () => openEdit(category) },
             {
-              label: "Delete",
+              label: "Delete this category",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ description: "Delete this category?" }, () => remove.mutate(category.id)),
+              onSelect: () => confirmDialog({ title: "Delete this category?", description: "Pages and blog posts in this category will not be deleted, but they will no longer belong to any category.", confirmLabel: "Yes, delete this category", cancelLabel: "No, keep it" }, () => remove.mutate(category.id)),
             },
           ]}
         />
@@ -87,8 +87,8 @@ export function PageCategoriesPage() {
   return (
     <div>
       <PageHeader
-        title="Page categories"
-        description="Group info pages and posts."
+        title="Page and post categories"
+        description="Categories are labels used to group your website pages and blog posts, for example “Travel guides”, “Visa information” or “Company policies”. Create the categories here, then choose one when you edit a page or post."
         action={
           <Button
             onClick={() => {
@@ -100,7 +100,7 @@ export function PageCategoriesPage() {
             }}
           >
             <Plus />
-            New category
+            Create a new category
           </Button>
         }
       />
@@ -112,22 +112,24 @@ export function PageCategoriesPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={FolderTree}
-        emptyTitle="No categories yet"
-        emptyHint="Group info pages and posts into categories."
+        emptyTitle="You have not created any categories yet"
+        emptyHint="Categories help visitors find related pages and posts. Select “Create a new category” to add your first one."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit category" : "New category"}
+        title={editing ? "Edit this category" : "Create a new category"}
+        description="Choose a short, clear name that describes the pages and posts that will belong to it."
+        submitLabel={editing ? "Save changes to this category" : "Create this category"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Name" required>
+        <Field label="Category name (what visitors will see)" required>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label="Handle" hint="URL slug; blank = generated from name.">
+        <Field label="Web address ending (optional)" hint="This becomes part of the category link on your website. Leave it empty and we create it automatically from the name.">
           <Input value={handle} onChange={(e) => setHandle(e.target.value)} />
         </Field>
       </FormDialog>

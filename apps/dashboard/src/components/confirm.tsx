@@ -47,15 +47,15 @@ export function ConfirmHost() {
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{state?.title ?? "Are you sure?"}</AlertDialogTitle>
+          <AlertDialogTitle>{state?.title ?? "Are you sure you want to continue?"}</AlertDialogTitle>
           {state?.description ? (
             <AlertDialogDescription>{state.description}</AlertDialogDescription>
           ) : (
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogDescription>This cannot be undone. Once you confirm, it is gone for good.</AlertDialogDescription>
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{state?.cancelLabel ?? "Cancel"}</AlertDialogCancel>
+          <AlertDialogCancel>{state?.cancelLabel ?? "No, go back"}</AlertDialogCancel>
           <AlertDialogAction
             variant={state?.destructive === false ? "default" : "destructive"}
             onClick={() => {
@@ -63,7 +63,7 @@ export function ConfirmHost() {
               setState(null);
             }}
           >
-            {state?.confirmLabel ?? "Delete"}
+            {state?.confirmLabel ?? "Yes, delete it"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

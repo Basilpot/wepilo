@@ -42,7 +42,7 @@ export function FeaturedTagsPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["featured-tags"] });
 
   const save = useMutation({
-    meta: { success: "Saved" },
+    meta: { success: "Homepage theme saved." },
     mutationFn: () => {
       const body = {
         name: form.name,
@@ -64,7 +64,7 @@ export function FeaturedTagsPage() {
   });
 
   const remove = useMutation({
-    meta: { success: "Deleted" },
+    meta: { success: "Homepage theme deleted." },
     mutationFn: (id: number) => api(`/featured-tags/${id}`, { method: "DELETE" }),
     onSuccess: invalidate,
   });
@@ -99,13 +99,13 @@ export function FeaturedTagsPage() {
   const columns: Column<FeaturedTag>[] = [
     {
       key: "tag",
-      header: "Tag",
+      header: "Theme name, link ending and description",
       cell: (t) => (
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium">{t.name}</span>
             <span className="font-mono text-xs text-muted-foreground">/{t.slug}</span>
-            {t.showOnHomepage && <Badge variant="secondary">Homepage</Badge>}
+            {t.showOnHomepage && <Badge variant="secondary">Shown on homepage</Badge>}
           </div>
           {t.description && <p className="truncate text-sm text-muted-foreground">{t.description}</p>}
         </div>
@@ -121,26 +121,26 @@ export function FeaturedTagsPage() {
           <RowActions
             actions={[
               {
-                label: "Move up",
+                label: "Move up (show earlier)",
                 icon: ArrowUp,
                 hidden: index === 0,
                 disabled: move.isPending,
                 onSelect: () => moveTag(index, -1),
               },
               {
-                label: "Move down",
+                label: "Move down (show later)",
                 icon: ArrowDown,
                 hidden: index === tags.length - 1,
                 disabled: move.isPending,
                 onSelect: () => moveTag(index, 1),
               },
-              { label: "Edit tag", icon: PenLine, separatorBefore: true, onSelect: () => openEdit(tag) },
+              { label: "Edit this theme", icon: PenLine, separatorBefore: true, onSelect: () => openEdit(tag) },
               {
-                label: "Delete",
+                label: "Delete this theme",
                 icon: Trash2,
                 variant: "destructive",
                 separatorBefore: true,
-                onSelect: () => confirmDialog({ description: `Delete tag "${tag.name}"?` }, () => remove.mutate(tag.id)),
+                onSelect: () => confirmDialog({ title: `Delete the theme "${tag.name}"?`, description: "It will be removed from your homepage and from any trip that uses it. The trips themselves are not deleted.", confirmLabel: "Yes, delete this theme", cancelLabel: "No, keep it" }, () => remove.mutate(tag.id)),
               },
             ]}
           />
@@ -152,8 +152,8 @@ export function FeaturedTagsPage() {
   return (
     <div>
       <PageHeader
-        title="Featured tags"
-        description="Taggable themes shown on the homepage."
+        title="Homepage themes"
+        description="Themes are short labels such as “Family friendly”, “Honeymoon” or “Budget adventures” that group trips together. Turn on “Show this on my website homepage” for the themes you want visitors to see first. Use the actions menu to change the order they appear in."
         action={
           <Button
             onClick={() => {
@@ -164,7 +164,7 @@ export function FeaturedTagsPage() {
             }}
           >
             <Plus />
-            New tag
+            Create a new theme
           </Button>
         }
       />
@@ -176,25 +176,27 @@ export function FeaturedTagsPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={Tag}
-        emptyTitle="No featured tags yet"
-        emptyHint="Add taggable themes to show on the homepage."
+        emptyTitle="You have not created any homepage themes yet"
+        emptyHint="A theme groups trips by what travellers are looking for, for example “Family friendly” or “Short getaways”. Select “Create a new theme” to add your first one, then attach it to trips in the trip editor."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit tag" : "New tag"}
+        title={editing ? "Edit this theme" : "Create a new theme"}
+        description="Give the theme a clear name that travellers will understand at a glance."
+        submitLabel={editing ? "Save changes to this theme" : "Create this theme"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Name" required>
+        <Field label="Theme name (what travellers will see)" required>
           <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         </Field>
-        <Field label="Slug" hint="Blank = generated from name.">
+        <Field label="Web address ending (optional)" hint="This becomes part of the theme's link on your website. Leave it empty and we create it automatically from the name.">
           <Input value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} />
         </Field>
-        <Field label="Description">
+        <Field label="Short description (optional)" hint="One or two sentences explaining what kind of trips belong in this theme.">
           <Textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
         </Field>
         <Label className="flex items-center gap-2 text-sm">
@@ -202,7 +204,7 @@ export function FeaturedTagsPage() {
             checked={form.showOnHomepage}
             onCheckedChange={(v) => setForm((f) => ({ ...f, showOnHomepage: v === true }))}
           />
-          Show on homepage
+          Show this on my website homepage
         </Label>
       </FormDialog>
     </div>

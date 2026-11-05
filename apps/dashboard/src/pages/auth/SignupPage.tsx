@@ -14,11 +14,11 @@ const schema = z
     companyName: z.string().min(2),
     slug: z.string().min(2).regex(/^[a-z0-9-]+$/, "lowercase letters, numbers and dashes only"),
     email: z.string().email(),
-    password: z.string().min(8, "At least 8 characters"),
+    password: z.string().min(8, "Your password must be at least 8 characters long"),
     confirmPassword: z.string(),
   })
   .refine((v) => v.password === v.confirmPassword, {
-    message: "Passwords do not match",
+    message: "The two passwords you typed are not the same. Type the same password in both boxes.",
     path: ["confirmPassword"],
   });
 
@@ -48,11 +48,11 @@ export function SignupPage() {
 
   return (
     <AuthCard
-      title="Create your workspace"
-      description="Then start a 3-day trial for $1. No subscription, nothing renews automatically."
+      title="Create your Wepilo workspace"
+      description="First, create your workspace here. Next, you start a 3-day trial for a one-time payment of $1. It is not a subscription, and nothing renews automatically."
       footer={
         <>
-          Already have an account?{" "}
+          Already have a workspace?{" "}
           <Link to="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
             Sign in
           </Link>
@@ -61,7 +61,7 @@ export function SignupPage() {
     >
       <form onSubmit={form.handleSubmit((v) => signup.mutate(v))} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="companyName">Company name</Label>
+          <Label htmlFor="companyName">Your company name</Label>
           <Input
             id="companyName"
             required
@@ -83,26 +83,26 @@ export function SignupPage() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="slug">Workspace URL</Label>
+          <Label htmlFor="slug">Your workspace address</Label>
           <Input id="slug" placeholder="acme-expeditions" required {...form.register("slug")} />
-          <p className="text-xs text-muted-foreground">Lowercase letters, numbers and dashes. Used in your API and links.</p>
+          <p className="text-xs text-muted-foreground">Use only lowercase letters, numbers and dashes, with no spaces. It becomes your workspace’s unique name in links. It is filled in for you from your company name, and you can change it.</p>
           {form.formState.errors.slug && (
             <p className="text-sm text-destructive">{form.formState.errors.slug.message}</p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Your email address</Label>
           <Input id="email" type="email" autoComplete="email" required {...form.register("email")} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Choose a password (at least 8 characters)</Label>
           <Input id="password" type="password" autoComplete="new-password" required {...form.register("password")} />
           {form.formState.errors.password && (
             <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm password</Label>
+          <Label htmlFor="confirmPassword">Type the same password again</Label>
           <Input id="confirmPassword" type="password" autoComplete="new-password" required {...form.register("confirmPassword")} />
           {form.formState.errors.confirmPassword && (
             <p className="text-sm text-destructive">{form.formState.errors.confirmPassword.message}</p>
@@ -110,7 +110,7 @@ export function SignupPage() {
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <Button type="submit" className="w-full" disabled={signup.isPending}>
-          {signup.isPending ? "Creating…" : "Create workspace"}
+          {signup.isPending ? "Creating your workspace…" : "Create my workspace"}
         </Button>
       </form>
     </AuthCard>

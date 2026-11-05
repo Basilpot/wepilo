@@ -21,7 +21,7 @@ export function EditorHeader({
 }) {
   return (
     <div className="sticky top-12 z-10 -mx-4 -mt-6 flex flex-wrap items-center gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:-mx-8 md:-mt-8 md:px-8">
-      <Button variant="ghost" size="icon" aria-label="Back" onClick={onBack}>
+      <Button variant="ghost" size="icon" aria-label="Go back to the list without leaving unsaved work" onClick={onBack}>
         <ArrowLeft />
       </Button>
       <div className="min-w-0 flex-1">
@@ -30,7 +30,7 @@ export function EditorHeader({
           {badge}
         </div>
         <p className="truncate text-xs text-muted-foreground">
-          {dirty ? <span className="text-amber-600 dark:text-amber-400">Unsaved changes</span> : subtitle}
+          {dirty ? <span className="text-amber-600 dark:text-amber-400">You have unsaved changes. Save before leaving this page.</span> : subtitle}
         </p>
       </div>
       <div className="flex gap-2">{actions}</div>
@@ -60,11 +60,11 @@ export function PublishActions({
       <>
         <Button variant="ghost" onClick={() => onSave("unpublish")} disabled={busy || !canSave}>
           {saving === "unpublish" && <Loader2 className="animate-spin" />}
-          Unpublish
+          Unpublish (hide from website)
         </Button>
         <Button onClick={() => onSave("publish")} disabled={busy || !canSave || !dirty}>
           {saving === "publish" ? <Loader2 className="animate-spin" /> : <Save />}
-          Save changes
+          Save changes to the live page
         </Button>
       </>
     );
@@ -73,11 +73,11 @@ export function PublishActions({
     <>
       <Button variant="outline" onClick={() => onSave("draft")} disabled={busy || !canSave || (!isNew && !dirty)}>
         {saving === "draft" ? <Loader2 className="animate-spin" /> : <Save />}
-        Save draft
+        Save as a hidden draft
       </Button>
       <Button onClick={() => onSave("publish")} disabled={busy || !canSave}>
         {saving === "publish" ? <Loader2 className="animate-spin" /> : <Upload />}
-        Publish
+        Publish to my website
       </Button>
     </>
   );
@@ -123,10 +123,10 @@ export function SerpPreview({ title, url, description }: { title: string; url: s
     <div className="rounded-lg border bg-muted/30 p-3">
       <p className="truncate text-xs text-muted-foreground">{url}</p>
       <p className="mt-0.5 line-clamp-1 text-[15px] leading-snug text-[#1a0dab] dark:text-[#8ab4f8]">
-        {title || "Page title"}
+        {title || "Your page title will appear here"}
       </p>
       <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-        {description || "Add a meta description so search engines show a useful summary instead of guessing one."}
+        {description || "Write a short search description (about 150 characters) so Google shows a clear summary of this page instead of guessing one."}
       </p>
     </div>
   );
@@ -136,7 +136,7 @@ export function SerpPreview({ title, url, description }: { title: string; url: s
 export function TagInput({
   value,
   onChange,
-  placeholder = "Add a tag…",
+  placeholder = "Type a tag and press Enter to add it…",
 }: {
   value: string[];
   onChange: (tags: string[]) => void;
@@ -216,7 +216,7 @@ export function TitleBlock({
         value={title}
         onChange={(e) => onTitleChange(e.target.value.replace(/\n/g, ""))}
         placeholder={placeholder}
-        aria-label="Title"
+        aria-label="Title of this page"
         className="field-sizing-content w-full resize-none bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50"
       />
       <label className="flex max-w-full items-center gap-0 rounded-md text-sm text-muted-foreground">
@@ -224,8 +224,8 @@ export function TitleBlock({
         <input
           value={slug}
           onChange={(e) => onSlugChange(e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-"))}
-          placeholder="generated-from-title"
-          aria-label="Web address"
+          placeholder="created-automatically-from-the-title"
+          aria-label="Web address ending for this page (lowercase letters, numbers and dashes only)"
           className="min-w-0 flex-1 rounded-sm bg-transparent px-0.5 text-foreground outline-none placeholder:text-muted-foreground/60 hover:bg-muted focus:bg-muted"
         />
       </label>

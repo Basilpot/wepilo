@@ -66,7 +66,7 @@ export function useStartTrial() {
   return useMutation({
     mutationFn: (plan: SelfServePlan) => api<{ url: string }>("/tenant/billing/trial", { body: { plan } }),
     onSuccess: goTo,
-    onError: (err) => toastApiError(err, "Couldn't open checkout. Try again."),
+    onError: (err) => toastApiError(err, "The payment page could not be opened. Please check your internet connection and try again."),
   });
 }
 
@@ -75,7 +75,7 @@ export function useCheckout(onChanged?: () => void) {
     mutationFn: (input: { plan: SelfServePlan; interval: BillingInterval }) =>
       api<{ url?: string; changed?: boolean }>("/tenant/billing/checkout", { body: input }),
     onSuccess: (r) => (r.changed ? onChanged?.() : goTo(r)),
-    onError: (err) => toastApiError(err, "Couldn't open checkout. Try again."),
+    onError: (err) => toastApiError(err, "The payment page could not be opened. Please check your internet connection and try again."),
   });
 }
 
@@ -83,7 +83,7 @@ export function useBillingPortal() {
   return useMutation({
     mutationFn: () => api<{ url: string }>("/tenant/billing/portal", { body: {} }),
     onSuccess: goTo,
-    onError: (err) => toastApiError(err, "Couldn't open billing. Try again."),
+    onError: (err) => toastApiError(err, "Your billing page could not be opened. Please check your internet connection and try again."),
   });
 }
 
@@ -94,18 +94,18 @@ export function formatPrice(price: Price, interval?: BillingInterval) {
     currency: price.currency,
     maximumFractionDigits: price.amount % 1 === 0 ? 0 : 2,
   }).format(price.amount);
-  return interval ? `${amount}/${interval === "annual" ? "yr" : "mo"}` : amount;
+  return interval ? `${amount} per ${interval === "annual" ? "year" : "month"}` : amount;
 }
 
 export function planFeatures(plan: PlanInfo, opts: { trial?: boolean } = {}) {
   const l = plan.limits;
-  const gb = (b: number | null) => (b === null ? "Unlimited storage" : `${Math.round(b / 1024 ** 3)} GB media storage`);
+  const gb = (b: number | null) => (b === null ? "Unlimited storage for photos and files" : `${Math.round(b / 1024 ** 3)} GB of storage for photos and files`);
   return [
-    l.trips === null ? "Unlimited trips" : `Up to ${l.trips} trips`,
-    l.posts === null ? "Unlimited posts and pages" : `${l.posts} posts`,
-    l.staff === null ? "Unlimited staff logins" : `${l.staff} staff login${l.staff === 1 ? "" : "s"}`,
+    l.trips === null ? "Unlimited trips" : `Up to ${l.trips} trips you can sell`,
+    l.posts === null ? "Unlimited blog posts and website pages" : `Up to ${l.posts} blog posts`,
+    l.staff === null ? "Unlimited staff logins" : `Up to ${l.staff} staff login${l.staff === 1 ? "" : "s"} for your team`,
     gb(l.storageBytes),
-    opts.trial ? "Website API unlocks with a paid plan" : "Website API access",
+    opts.trial ? "Connect your own website (needs a paid plan)" : "Connect your own website with a developer API key",
   ];
 }
 

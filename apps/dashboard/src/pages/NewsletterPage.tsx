@@ -38,16 +38,16 @@ export function NewsletterPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["newsletter"] });
 
   const toggle = useMutation({
-    meta: { success: "Updated" },
+    meta: { success: "Subscriber updated." },
     mutationFn: (id: number) => api(`/newsletter/${id}/toggle`, { method: "PATCH" }),
     onSuccess: invalidate,
   });
 
   const send = useMutation({
-    meta: { success: "Sent" },
+    meta: { success: "Your email was sent to your subscribers." },
     mutationFn: () => api<{ sent: number; total: number }>("/newsletter/send", { body: { subject, html } }),
     onSuccess: (result) => {
-      setSent(`Sent to ${result.sent} of ${result.total} active subscribers.`);
+      setSent(`Your email was delivered to ${result.sent} of ${result.total} subscribers who are still subscribed.`);
       setSendOpen(false);
       setSubject("");
       setHtml("");
@@ -58,17 +58,17 @@ export function NewsletterPage() {
   const activeCount = data?.data.filter((s) => s.isActive).length;
 
   const columns: Column<Subscriber>[] = [
-    { key: "email", header: "Email", cell: (s) => <span className="font-medium">{s.email}</span> },
+    { key: "email", header: "Subscriber’s email address", cell: (s) => <span className="font-medium">{s.email}</span> },
     {
       key: "status",
-      header: "Status",
+      header: "Receives your emails?",
       cell: (s) => (
         <StatusBadge kind="account" status={s.isActive ? "active" : "unsubscribed"} />
       ),
     },
     {
       key: "subscribed",
-      header: "Subscribed",
+      header: "Date they signed up",
       className: "text-muted-foreground",
       cell: (s) => new Date(s.createdAt).toLocaleDateString(),
     },
@@ -80,7 +80,7 @@ export function NewsletterPage() {
         <RowActions
           actions={[
             {
-              label: subscriber.isActive ? "Unsubscribe" : "Reactivate",
+              label: subscriber.isActive ? "Stop sending emails to this person" : "Start sending emails to this person again",
               icon: subscriber.isActive ? MailX : MailCheck,
               onSelect: () => toggle.mutate(subscriber.id),
             },
@@ -93,11 +93,11 @@ export function NewsletterPage() {
   return (
     <div>
       <PageHeader
-        title="Newsletter"
-        description={data ? `${data.pagination.total} subscribers` : "Manage subscribers and send broadcasts."}
+        title="Newsletter subscribers"
+        description={data ? `${data.pagination.total} ${data.pagination.total === 1 ? "person has" : "people have"} signed up for your newsletter on your website. Use “Write an email to all subscribers” to send them news, offers or new trips. You can also stop emailing anyone from the actions menu on their row.` : "People who signed up for your newsletter on your website. Send them news, offers or new trips."}
         action={
           <Button onClick={() => { setSent(null); setError(null); setSendOpen(true); }} disabled={!activeCount}>
-            Send broadcast
+            Write an email to all subscribers
           </Button>
         }
       />
@@ -112,8 +112,8 @@ export function NewsletterPage() {
         getRowId={(s) => s.id}
         isLoading={isLoading}
         emptyIcon={Mail}
-        emptyTitle="No subscribers yet"
-        emptyHint="Subscribers come from your storefront signup form."
+        emptyTitle="Nobody has subscribed to your newsletter yet"
+        emptyHint="People appear here after they enter their email in the newsletter sign-up form on your website. Make sure your website shows that form, for example in the footer."
         pagination={
           data
             ? {
@@ -131,17 +131,17 @@ export function NewsletterPage() {
       <FormDialog
         open={sendOpen}
         onOpenChange={setSendOpen}
-        title="Send broadcast"
-        description={`Goes to ${activeCount ?? 0} active subscribers via Resend.`}
+        title="Write an email to all subscribers"
+        description="This email is sent right away to everyone who is still subscribed. You cannot unsend it, so read it carefully, including the spelling, before you send."
         onSubmit={() => send.mutate()}
         pending={send.isPending}
-        submitLabel="Send"
+        submitLabel="Send this email to all subscribers now"
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Subject" required>
+        <Field label="Email subject line" required hint="This is the first thing subscribers see in their inbox. Keep it short and specific.">
           <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
         </Field>
-        <Field label="HTML body" required hint="Plain text is wrapped in a simple layout automatically.">
+        <Field label="Email message" required hint="Type your message. Plain text is fine, and it is placed in a simple, clean email layout automatically. Advanced users can paste HTML.">
           <Textarea rows={10} value={html} onChange={(e) => setHtml(e.target.value)} />
         </Field>
       </FormDialog>

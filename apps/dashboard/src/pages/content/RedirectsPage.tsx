@@ -37,7 +37,7 @@ export function RedirectsPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["redirects"] });
 
   const save = useMutation({
-    meta: { success: "Saved" },
+    meta: { success: "Redirect saved. Visitors who open the old link will now be sent to the new one." },
     mutationFn: () => api("/redirects", { body: { from, to, permanent }, method: "PUT" }),
     onSuccess: () => {
       invalidate();
@@ -49,18 +49,18 @@ export function RedirectsPage() {
   });
 
   const remove = useMutation({
-    meta: { success: "Deleted" },
+    meta: { success: "Redirect deleted. The old link will no longer forward visitors." },
     mutationFn: (id: number) => api(`/redirects/${id}`, { method: "DELETE" }),
     onSuccess: invalidate,
   });
 
   const columns: Column<Redirect>[] = [
-    { key: "from", header: "From", className: "font-mono text-sm", cell: (r) => r.from },
-    { key: "to", header: "To", className: "font-mono text-sm", cell: (r) => r.to },
+    { key: "from", header: "Old link visitors open (starts with /)", className: "font-mono text-sm", cell: (r) => r.from },
+    { key: "to", header: "New page they are sent to", className: "font-mono text-sm", cell: (r) => r.to },
     {
       key: "type",
-      header: "Type",
-      cell: (r) => <Badge variant={r.permanent ? "default" : "secondary"}>{r.permanent ? "301" : "302"}</Badge>,
+      header: "How long the move lasts",
+      cell: (r) => <Badge variant={r.permanent ? "default" : "secondary"}>{r.permanent ? "Permanent move" : "Temporary move"}</Badge>,
     },
     {
       key: "actions",
@@ -70,11 +70,11 @@ export function RedirectsPage() {
         <RowActions
           actions={[
             {
-              label: "Delete",
+              label: "Delete this redirect",
               icon: Trash2,
               variant: "destructive",
               onSelect: () =>
-                confirmDialog({ description: `Delete redirect ${redirect.from}?` }, () => remove.mutate(redirect.id)),
+                confirmDialog({ title: `Delete the redirect from ${redirect.from}?`, description: "Anyone who opens the old link, including from Google results or bookmarks, will see a “page not found” error instead of being sent to the new page.", confirmLabel: "Yes, delete this redirect", cancelLabel: "No, keep it" }, () => remove.mutate(redirect.id)),
             },
           ]}
         />
@@ -85,8 +85,8 @@ export function RedirectsPage() {
   return (
     <div>
       <PageHeader
-        title="Redirects"
-        description="Send old URLs to new ones. Existing redirect sources are updated in place."
+        title="Old-to-new link redirects"
+        description="When you rename or delete a page, the old link stops working and visitors see an error. A redirect automatically sends anyone who opens the old link to the new page instead, and keeps your Google ranking. If you add a redirect for an old link that already has one, the existing redirect is replaced."
         action={
           <Button
             onClick={() => {
@@ -97,7 +97,7 @@ export function RedirectsPage() {
             }}
           >
             <Plus />
-            New redirect
+            Add a new redirect
           </Button>
         }
       />
@@ -108,27 +108,29 @@ export function RedirectsPage() {
         getRowId={(r) => r.id}
         isLoading={isLoading}
         emptyIcon={Redo}
-        emptyTitle="No redirects"
-        emptyHint="Send old URLs to new ones."
+        emptyTitle="You have not added any redirects yet"
+        emptyHint="Add one whenever you change the web address of a page or trip, or remove a page that people still link to. Select “Add a new redirect” to begin."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title="New redirect"
+        title="Add a new redirect"
+        description="Tell your website where to send visitors who open an old link."
+        submitLabel="Save this redirect"
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="From path" required>
-          <Input value={from} onChange={(e) => setFrom(e.target.value)} placeholder="/old-page" />
+        <Field label="Old link (the one that should forward visitors)" required hint="Type only the part after your website address, starting with a slash. Example: /old-trek-name">
+          <Input value={from} onChange={(e) => setFrom(e.target.value)} placeholder="/old-trek-name" />
         </Field>
-        <Field label="To path" required>
-          <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="/new-page" />
+        <Field label="New link (where visitors should end up)" required hint="Type only the part after your website address, starting with a slash. Example: /trips/everest-base-camp">
+          <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="/trips/everest-base-camp" />
         </Field>
         <label className="flex items-center gap-2 text-sm">
           <Checkbox checked={permanent} onCheckedChange={(v) => setPermanent(v === true)} />
-          Permanent (301)
+          This move is permanent (recommended). Search engines will replace the old link with the new one.
         </label>
       </FormDialog>
     </div>

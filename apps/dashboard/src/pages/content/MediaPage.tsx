@@ -70,13 +70,13 @@ export function MediaPage() {
   });
 
   const remove = useMutation({
-    meta: { success: "File deleted" },
+    meta: { success: "File deleted from your media library." },
     mutationFn: (id: number) => api(`/media/${id}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["media"] }),
   });
 
   const saveMeta = useMutation({
-    meta: { success: "Details saved" },
+    meta: { success: "File details saved." },
     mutationFn: () =>
       api(`/media/${editing!.id}`, {
         method: "PATCH",
@@ -99,12 +99,12 @@ export function MediaPage() {
     const tooBig = files.filter((f) => f.size > MAX_BYTES);
     const wrongType = files.filter((f) => !ACCEPT.split(",").includes(f.type));
     const ok = files.filter((f) => !tooBig.includes(f) && !wrongType.includes(f));
-    if (tooBig.length) toast.error(`${tooBig.length} file${tooBig.length === 1 ? " is" : "s are"} over 10 MB and ${tooBig.length === 1 ? "was" : "were"} skipped.`);
-    if (wrongType.length) toast.error(`Only images and PDFs can be uploaded. Skipped ${wrongType.map((f) => f.name).join(", ")}.`);
+    if (tooBig.length) toast.error(`${tooBig.length} file${tooBig.length === 1 ? " is" : "s are"} larger than the 10 MB limit and ${tooBig.length === 1 ? "was" : "were"} not uploaded. Make the file smaller and try again.`);
+    if (wrongType.length) toast.error(`Only images (JPG, PNG, WebP, GIF, SVG) and PDF files can be uploaded. These files were not uploaded: ${wrongType.map((f) => f.name).join(", ")}.`);
     if (!ok.length) return;
 
     setUploading(true);
-    const id = toast.loading(`Uploading ${ok.length} file${ok.length === 1 ? "" : "s"}…`);
+    const id = toast.loading(`Uploading ${ok.length} file${ok.length === 1 ? "" : "s"}, please wait…`);
     let done = 0;
     let failed = 0;
     for (const f of ok) {
@@ -114,11 +114,11 @@ export function MediaPage() {
       } catch {
         failed++;
       }
-      toast.loading(`Uploading ${done + failed + 1 > ok.length ? ok.length : done + failed + 1} of ${ok.length}…`, { id });
+      toast.loading(`Uploading file ${done + failed + 1 > ok.length ? ok.length : done + failed + 1} of ${ok.length}, please wait…`, { id });
     }
     if (done) void queryClient.invalidateQueries({ queryKey: ["media"] });
-    if (failed) toast.error(`${done} uploaded, ${failed} failed. Try the failed ones again.`, { id });
-    else toast.success(`${done} file${done === 1 ? "" : "s"} uploaded`, { id });
+    if (failed) toast.error(`${done} uploaded successfully, but ${failed} could not be uploaded. Check your internet connection and upload the failed files again.`, { id });
+    else toast.success(`${done} file${done === 1 ? " was" : "s were"} uploaded to your media library.`, { id });
     setUploading(false);
   };
 
@@ -129,8 +129,8 @@ export function MediaPage() {
 
   const copyUrl = (url: string) =>
     navigator.clipboard.writeText(url).then(
-      () => toast.success("Link copied"),
-      () => toast.error("Couldn't copy the link"),
+      () => toast.success("The file link was copied. You can paste it anywhere you need it."),
+      () => toast.error("The link could not be copied automatically. Open the file and copy its address from your browser instead."),
     );
 
   const hasFiles = (e: React.DragEvent) => Array.from(e.dataTransfer.types).includes("Files");
@@ -157,9 +157,9 @@ export function MediaPage() {
       }}
     >
       <PageHeader
-        title="Media"
+        title="Media library"
         description={
-          data ? `${formatBytes(data.storageUsedBytes)} used · ${data.pagination.total} file${data.pagination.total === 1 ? "" : "s"}` : "Images and PDFs for your site."
+          data ? `Photos and PDF files you can reuse on trips, pages and blog posts. You are using ${formatBytes(data.storageUsedBytes)} of storage across ${data.pagination.total} file${data.pagination.total === 1 ? "" : "s"}. You can also drag files from your computer anywhere on this page to upload them.` : "Photos and PDF files you can reuse on trips, pages and blog posts. You can also drag files from your computer anywhere on this page to upload them."
         }
         action={
           <>
@@ -176,7 +176,7 @@ export function MediaPage() {
             />
             <Button disabled={uploading} onClick={() => fileRef.current?.click()}>
               <Upload />
-              {uploading ? "Uploading…" : "Upload"}
+              {uploading ? "Uploading your files, please wait…" : "Upload images or PDFs"}
             </Button>
           </>
         }
@@ -186,8 +186,8 @@ export function MediaPage() {
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
-          aria-label="Search files"
-          placeholder="Search by file name…"
+          aria-label="Search your media library by file name"
+          placeholder="Type part of a file name to search…"
           className="pl-8"
           value={search}
           onChange={(e) => {
@@ -208,7 +208,7 @@ export function MediaPage() {
         </div>
       ) : !data?.data.length ? (
         term ? (
-          <EmptyState icon={Search} title={`No files match “${term}”`} hint="Try another name." />
+          <EmptyState icon={Search} title={`No files match “${term}”`} hint="Check the spelling or try a shorter part of the file name." />
         ) : (
           <button
             type="button"
@@ -218,8 +218,8 @@ export function MediaPage() {
             <span className="flex size-10 items-center justify-center rounded-lg border bg-background text-muted-foreground shadow-xs">
               <Images className="size-5" />
             </span>
-            <span className="mt-3 text-sm font-medium">Drop images here or click to upload</span>
-            <span className="mt-1 text-sm text-muted-foreground">JPG, PNG, WebP, GIF, SVG or PDF up to 10 MB each.</span>
+            <span className="mt-3 text-sm font-medium">Drag images or PDFs here, or click to choose files from your computer</span>
+            <span className="mt-1 text-sm text-muted-foreground">Accepted: JPG, PNG, WebP, GIF, SVG and PDF files, up to 10 MB each. Uploaded files stay here so you can reuse them on trips, pages and posts.</span>
           </button>
         )
       ) : (
@@ -233,7 +233,7 @@ export function MediaPage() {
                     type="button"
                     onClick={() => openEdit(item)}
                     className="block size-full focus-visible:outline-none"
-                    aria-label={`Edit details for ${item.filename}`}
+                    aria-label={`Edit the description and details of ${item.filename}`}
                   >
                     {isImage ? (
                       <img
@@ -251,16 +251,16 @@ export function MediaPage() {
                   </button>
                   <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-end gap-1 p-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100">
                     {[
-                      { label: "Edit details", icon: Pencil, onClick: () => openEdit(item) },
-                      { label: "Copy link", icon: Link2, onClick: () => void copyUrl(item.url) },
+                      { label: "Edit description and details", icon: Pencil, onClick: () => openEdit(item) },
+                      { label: "Copy the file link", icon: Link2, onClick: () => void copyUrl(item.url) },
                       {
-                        label: "Delete file",
+                        label: "Delete this file",
                         icon: Trash2,
                         onClick: () =>
                           confirmDialog(
                             {
-                              title: "Delete file?",
-                              description: `${item.filename} will be removed. Pages that use it will show a broken image.`,
+                              title: "Delete this file permanently?",
+                              description: `${item.filename} will be removed from your media library for good. Any trip, page or post that still uses it will show a broken image until you choose a new one.`,
                             },
                             () => remove.mutate(item.id),
                           ),
@@ -280,7 +280,7 @@ export function MediaPage() {
                   </div>
                   {isImage && !item.alt && (
                     <span className="absolute bottom-1.5 left-1.5 rounded bg-amber-100/95 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">
-                      No alt text
+                      Missing image description
                     </span>
                   )}
                 </div>
@@ -322,16 +322,17 @@ export function MediaPage() {
       >
         <div className="flex flex-col items-center rounded-xl border-2 border-dashed border-primary bg-background px-16 py-12 text-center shadow-lg">
           <Upload className="size-6 text-primary" />
-          <p className="mt-3 font-medium">Drop to upload</p>
-          <p className="mt-1 text-sm text-muted-foreground">Images and PDFs up to 10 MB</p>
+          <p className="mt-3 font-medium">Release your mouse to upload these files</p>
+          <p className="mt-1 text-sm text-muted-foreground">Images and PDF files up to 10 MB each</p>
         </div>
       </div>
 
       <FormDialog
         open={!!editing}
         onOpenChange={(o) => !o && setEditing(null)}
-        title="File details"
+        title="Edit the details of this file"
         description={editing?.filename}
+        submitLabel="Save file details"
         onSubmit={() => saveMeta.mutate()}
         pending={saveMeta.isPending}
       >
@@ -354,21 +355,21 @@ export function MediaPage() {
               </span>
               <Button type="button" variant="outline" size="sm" onClick={() => void copyUrl(editing.url)}>
                 <Link2 />
-                Copy link
+                Copy the file link
               </Button>
             </div>
           </div>
         )}
-        <Field label="Alt text" htmlFor="alt" hint="Describe the image for screen readers and search engines.">
-          <Input id="alt" value={editForm.alt} onChange={(e) => setEditForm({ ...editForm, alt: e.target.value })} placeholder="e.g. Hikers crossing a suspension bridge at sunrise" />
+        <Field label="Image description (alt text)" htmlFor="alt" hint="Describe what the picture shows in one sentence. Google and screen readers for blind visitors use this text. Skip it for PDFs.">
+          <Input id="alt" value={editForm.alt} onChange={(e) => setEditForm({ ...editForm, alt: e.target.value })} placeholder="Example: Hikers crossing a suspension bridge at sunrise" />
         </Field>
-        <Field label="Title" htmlFor="title">
+        <Field label="Title (optional)" htmlFor="title">
           <Input id="title" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
         </Field>
-        <Field label="Caption" htmlFor="caption">
+        <Field label="Caption shown under the image (optional)" htmlFor="caption">
           <Input id="caption" value={editForm.caption} onChange={(e) => setEditForm({ ...editForm, caption: e.target.value })} />
         </Field>
-        <Field label="Description" htmlFor="description">
+        <Field label="Internal notes about this file (optional)" htmlFor="description">
           <Textarea id="description" rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
         </Field>
       </FormDialog>

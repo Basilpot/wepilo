@@ -54,7 +54,7 @@ export function SupportTicketPage() {
   });
 
   const addReply = useMutation({
-    meta: { success: "Reply sent" },
+    meta: { success: "Your reply was sent to the Wepilo team." },
     mutationFn: () => api(`/support/${id}/replies`, { body: { message: reply } }),
     onSuccess: () => {
       setReply("");
@@ -63,7 +63,7 @@ export function SupportTicketPage() {
   });
 
   const setStatus = useMutation({
-    meta: { success: "Status updated" },
+    meta: { success: "The request status was updated." },
     mutationFn: (status: string) => api(`/support/${id}/status`, { body: { status }, method: "PATCH" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["support-ticket", id] }),
   });
@@ -83,11 +83,11 @@ export function SupportTicketPage() {
     <div className="mx-auto max-w-4xl">
       <PageHeader
         title={ticket.subject}
-        description={`${ticket.category} · opened ${new Date(ticket.createdAt).toLocaleString()}`}
+        description={`Topic: ${ticket.category} · Sent on ${new Date(ticket.createdAt).toLocaleString()}`}
         action={
           <Button variant="outline" onClick={() => navigate("/support")}>
             <ArrowLeft />
-            Back
+            Back to all support requests
           </Button>
         }
       />
@@ -95,16 +95,16 @@ export function SupportTicketPage() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <StatusBadge kind="ticket" status={ticket.status} />
         <StatusBadge kind="priority" status={ticket.priority} />
-        {ticket.callbackNumber && <span className="text-sm text-muted-foreground">Callback: {ticket.callbackNumber}</span>}
+        {ticket.callbackNumber && <span className="text-sm text-muted-foreground">Phone number for a call back: {ticket.callbackNumber}</span>}
         <Select value={ticket.status} onValueChange={(status) => setStatus.mutate(status)}>
-          <SelectTrigger className="ml-auto h-8 w-40">
+          <SelectTrigger className="ml-auto h-8 w-56" aria-label="Change the status of this request">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="OPEN">Open</SelectItem>
-            <SelectItem value="IN_PROGRESS">In progress</SelectItem>
-            <SelectItem value="RESOLVED">Resolved</SelectItem>
-            <SelectItem value="CLOSED">Closed</SelectItem>
+            <SelectItem value="OPEN">Open, waiting for Wepilo</SelectItem>
+            <SelectItem value="IN_PROGRESS">Wepilo is working on it</SelectItem>
+            <SelectItem value="RESOLVED">Resolved, problem fixed</SelectItem>
+            <SelectItem value="CLOSED">Closed, nothing more to do</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -141,12 +141,12 @@ export function SupportTicketPage() {
 
       <Card>
         <CardContent className="space-y-3 pt-6">
-          <Field label="Reply">
+          <Field label="Write a reply to the Wepilo team">
             <Textarea rows={4} value={reply} onChange={(e) => setReply(e.target.value)} />
           </Field>
           <Button onClick={() => addReply.mutate()} disabled={addReply.isPending || !reply.trim()}>
             <Send />
-            {addReply.isPending ? "Sending…" : "Send reply"}
+            {addReply.isPending ? "Sending your reply…" : "Send my reply"}
           </Button>
         </CardContent>
       </Card>

@@ -78,8 +78,8 @@ function initials(name: string) {
 
 function planLabel(session: Session) {
   const a = session.access;
-  if (!a) return "—";
-  return a.state === "TRIAL" ? `${PLAN_NAMES[a.plan]} trial` : PLAN_NAMES[a.plan];
+  if (!a) return "No plan selected";
+  return a.state === "TRIAL" ? `${PLAN_NAMES[a.plan]} free trial` : PLAN_NAMES[a.plan];
 }
 
 async function signOut() {
@@ -124,7 +124,7 @@ function NavLinkItem({ item, badge }: { item: NavItem; badge?: number }) {
 
 function WorkspaceHeader({ session }: { session: Session }) {
   const tenant = session.tenant;
-  const name = tenant?.companyName ?? tenant?.slug ?? "Workspace";
+  const name = tenant?.companyName ?? tenant?.slug ?? "Your workspace";
   const paid = session.access?.state === "ACTIVE" || session.access?.state === "PAST_DUE";
   return (
     <SidebarMenu>
@@ -216,25 +216,25 @@ function UserMenu({ session }: { session: Session }) {
               <DropdownMenuItem asChild>
                 <Link to="/settings/billing">
                   <CreditCard />
-                  Billing
+                  Plan and billing
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/settings/api-keys">
                   <KeyRound />
-                  API keys
+                  Developer API keys
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/support">
                   <LifeBuoy />
-                  Support
+                  Contact Wepilo support
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <div className="flex items-center justify-between px-2 py-1.5 text-sm">
-              <span className="text-muted-foreground">Theme</span>
+              <span className="text-muted-foreground">Colour mode (light or dark)</span>
               <div className="flex rounded-md border p-0.5">
                 {(
                   [
@@ -245,7 +245,7 @@ function UserMenu({ session }: { session: Session }) {
                   <button
                     key={value}
                     type="button"
-                    aria-label={`${value} theme`}
+                    aria-label={`Switch to ${value} mode`}
                     aria-pressed={theme === value}
                     onClick={() => setTheme(value)}
                     className={cn(
@@ -261,7 +261,7 @@ function UserMenu({ session }: { session: Session }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut}>
               <LogOut />
-              Sign out
+              Sign out of this workspace
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -294,6 +294,7 @@ function AppSidebar({ session }: { session: Session }) {
       </SidebarHeader>
       <SidebarContent className="gap-1">
         <SidebarGroup className="py-1">
+          <SidebarGroupLabel>Daily work</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {QUICK_LINKS.map((item) => (
@@ -351,7 +352,7 @@ function ImpersonationBanner({ session }: { session: Session }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b bg-primary px-4 py-2 text-center text-sm text-primary-foreground">
       <span>
-        Platform admin view: you're signed in as the owner of <strong>{session.tenant?.companyName ?? session.tenant?.slug}</strong>. Expires within an hour.
+        You are viewing this workspace as a Wepilo platform admin, signed in with the owner's full access to <strong>{session.tenant?.companyName ?? session.tenant?.slug}</strong>. Any change you make is a real change to the customer's account. This session ends automatically within one hour.
       </span>
       <button
         type="button"
@@ -361,7 +362,7 @@ function ImpersonationBanner({ session }: { session: Session }) {
           window.location.href = session.tenant ? `/admin/workspaces/${session.tenant.id}` : "/admin";
         }}
       >
-        Back to admin
+        Leave this workspace and return to the admin console
       </button>
     </div>
   );
@@ -386,20 +387,20 @@ function BillingBanner({ session }: { session: Session }) {
   if (access.state === "TRIAL") {
     text =
       days === 0
-        ? "Your trial ends today."
-        : `Your trial ends in ${days} day${days === 1 ? "" : "s"}. Nothing renews automatically.`;
+        ? "Your free trial ends today. Choose a plan now to keep access to your trips, bookings and website content."
+        : `Your free trial ends in ${days} day${days === 1 ? "" : "s"}. You will not be charged automatically. Choose a plan before the trial ends to keep access.`;
     action = billingLink("Choose a plan");
   } else if (access.state === "PAST_DUE") {
     tone = "danger";
-    text = "Your last payment failed. Update your card to keep access.";
+    text = "Your last payment did not go through. Update your payment card now so your account is not locked.";
     action = isOwner ? (
       <button type="button" className="font-medium underline underline-offset-4" onClick={() => portal.mutate()}>
-        Update card
+        Update payment card
       </button>
     ) : null;
   } else if (access.cancelAtPeriodEnd && days !== null && days <= 14) {
-    text = `Your plan is cancelled and ends in ${days} day${days === 1 ? "" : "s"}.`;
-    action = billingLink("Renew");
+    text = `You cancelled your plan, and access ends in ${days} day${days === 1 ? "" : "s"}. Renew to keep your account running.`;
+    action = billingLink("Renew my plan");
   }
   if (!text) return null;
 
@@ -436,19 +437,19 @@ function SiteHeader({ session, onSearch }: { session: Session; onSearch: () => v
             className="hidden w-56 justify-start gap-2 px-2.5 font-normal text-muted-foreground md:flex"
           >
             <Search />
-            <span className="flex-1 text-left">Search or jump to…</span>
+            <span className="flex-1 text-left">Search pages, trips or actions…</span>
             <kbd className="pointer-events-none rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
               ⌘K
             </kbd>
           </Button>
-          <Button variant="ghost" size="icon" onClick={onSearch} className="md:hidden" aria-label="Search">
+          <Button variant="ghost" size="icon" onClick={onSearch} className="md:hidden" aria-label="Search pages, trips or actions">
             <Search />
           </Button>
           {website ? (
             <Button asChild variant="outline" size="sm">
               <a href={website} target="_blank" rel="noopener noreferrer">
                 <Globe />
-                <span className="hidden sm:inline">View site</span>
+                <span className="hidden sm:inline">Open my public website</span>
                 <ExternalLink className="hidden opacity-60 sm:inline" />
               </a>
             </Button>

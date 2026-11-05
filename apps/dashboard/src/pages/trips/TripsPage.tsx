@@ -99,20 +99,20 @@ export function TripsPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["trips"] });
 
   const remove = useMutation({
-    meta: { success: "Trip deleted" },
+    meta: { success: "The trip was deleted and removed from your website." },
     mutationFn: (id: number) => api(`/activities/${id}`, { method: "DELETE" }),
     onSuccess: invalidate,
   });
 
   const patch = useMutation({
-    meta: { success: "Trip updated" },
+    meta: { success: "The trip was updated. Changes are live on your website straight away." },
     mutationFn: ({ id, body }: { id: number; body: Record<string, unknown> }) =>
       api(`/activities/${id}`, { method: "PATCH", body }),
     onSuccess: invalidate,
   });
 
   const duplicate = useMutation({
-    meta: { success: "Copy created as a draft" },
+    meta: { success: "A copy of the trip was created as a hidden draft. You can now edit it before publishing." },
     mutationFn: async (trip: Trip) => {
       const { activity } = await api<{ activity: Record<string, unknown> }>(`/activities/${trip.id}`);
       const body: Record<string, unknown> = {};
@@ -121,7 +121,7 @@ export function TripsPage() {
           continue;
         body[key] = value;
       }
-      body.title = `${trip.title ?? "Untitled"} (copy)`;
+      body.title = `${trip.title ?? "Untitled trip"} (copy)`;
       return api<{ activity: { id: number } }>("/activities", { body });
     },
     onSuccess: (res) => {
@@ -133,7 +133,7 @@ export function TripsPage() {
   const columns: Column<Trip>[] = [
     {
       key: "title",
-      header: "Trip",
+      header: "Trip name and format",
       cell: (trip) => {
         const cover = trip.tripSeo?.featuredMedia || trip.images?.[0];
         return (
@@ -152,16 +152,16 @@ export function TripsPage() {
                   className="truncate font-medium hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {trip.title || "Untitled trip"}
+                  {trip.title || "Untitled trip (no title yet)"}
                 </Link>
                 {trip.isFeatured && (
-                  <Star aria-label="Featured" className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
+                  <Star aria-label="This trip is featured on your homepage" className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
                 )}
               </div>
               <p className="flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground">
                 {trip.layout === "PAGE" ? <FileText className="size-3 shrink-0" /> : <CalendarDays className="size-3 shrink-0" />}
                 <span className="truncate">
-                  {[trip.layout === "PAGE" ? "Simple page" : "Itinerary", trip.city?.name, trip.duration].filter(Boolean).join(" · ")}
+                  {[trip.layout === "PAGE" ? "Simple one-page trip" : "Day-by-day itinerary", trip.city?.name, trip.duration].filter(Boolean).join(" · ")}
                 </span>
               </p>
             </div>
@@ -171,21 +171,21 @@ export function TripsPage() {
     },
     {
       key: "category",
-      header: "Category",
+      header: "Trip category",
       className: "text-muted-foreground",
-      cell: (t) => t.tripCategory?.name ?? "—",
+      cell: (t) => t.tripCategory?.name ?? "No category chosen",
     },
     {
       key: "price",
-      header: "From",
+      header: "Starting price per traveller",
       align: "right",
       className: "tabular-nums",
-      cell: (t) => (t.price != null ? money(t.price) : <span className="text-muted-foreground">—</span>),
+      cell: (t) => (t.price != null ? money(t.price) : <span className="text-muted-foreground">No price set</span>),
     },
-    { key: "status", header: "Status", cell: (t) => <StatusBadge kind="trip" status={t.status} /> },
+    { key: "status", header: "Visible to the public?", cell: (t) => <StatusBadge kind="trip" status={t.status} /> },
     {
       key: "views",
-      header: "Views",
+      header: "Website page views",
       align: "right",
       className: "text-muted-foreground tabular-nums",
       cell: (t) => t.views.toLocaleString(),
@@ -196,24 +196,26 @@ export function TripsPage() {
       cell: (trip) => (
         <RowActions
           actions={[
-            { label: "Edit trip", icon: PenLine, onSelect: () => navigate(`/trips/${trip.id}`) },
-            { label: "Duplicate", icon: Copy, onSelect: () => duplicate.mutate(trip), disabled: duplicate.isPending },
+            { label: "Open this trip to edit it", icon: PenLine, onSelect: () => navigate(`/trips/${trip.id}`) },
+            { label: "Make a copy of this trip", icon: Copy, onSelect: () => duplicate.mutate(trip), disabled: duplicate.isPending },
             trip.status === "PUBLISHED"
-              ? { label: "Unpublish", icon: EyeOff, onSelect: () => patch.mutate({ id: trip.id, body: { status: "DRAFT" } }) }
-              : { label: "Publish", icon: Upload, onSelect: () => patch.mutate({ id: trip.id, body: { status: "PUBLISHED" } }) },
+              ? { label: "Unpublish (hide from website)", icon: EyeOff, onSelect: () => patch.mutate({ id: trip.id, body: { status: "DRAFT" } }) }
+              : { label: "Publish (show on website)", icon: Upload, onSelect: () => patch.mutate({ id: trip.id, body: { status: "PUBLISHED" } }) },
             trip.isFeatured
-              ? { label: "Remove from featured", icon: StarOff, onSelect: () => patch.mutate({ id: trip.id, body: { isFeatured: false } }) }
-              : { label: "Feature on homepage", icon: Star, onSelect: () => patch.mutate({ id: trip.id, body: { isFeatured: true } }) },
+              ? { label: "Stop featuring on homepage", icon: StarOff, onSelect: () => patch.mutate({ id: trip.id, body: { isFeatured: false } }) }
+              : { label: "Feature this trip on homepage", icon: Star, onSelect: () => patch.mutate({ id: trip.id, body: { isFeatured: true } }) },
             {
-              label: "Delete",
+              label: "Delete this trip",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
               onSelect: () =>
                 confirmDialog(
                   {
-                    title: "Delete trip?",
-                    description: `“${trip.title ?? "This trip"}” and its departures will be removed from your site. This can't be undone.`,
+                    title: "Delete this trip permanently?",
+                    description: `“${trip.title ?? "This trip"}” and all of its departure dates will be removed from your website for good. This cannot be undone. If you only want to hide the trip for now, choose "Unpublish" instead.`,
+                    confirmLabel: "Yes, delete this trip permanently",
+                    cancelLabel: "No, keep this trip",
                   },
                   () => remove.mutate(trip.id),
                 ),
@@ -238,13 +240,13 @@ export function TripsPage() {
   return (
     <div>
       <PageHeader
-        title="Trips"
-        description="Create, publish and manage your trip catalog."
+        title="All trips"
+        description="Every trip you sell, in one list. Create new trips, publish them so travellers can see them on your website, hide them again, copy them, or open one to edit its itinerary, photos and price."
         action={
           <Button asChild>
             <Link to="/trips/new">
               <Plus />
-              New trip
+              Create a new trip
             </Link>
           </Button>
         }
@@ -259,9 +261,9 @@ export function TripsPage() {
         className="mb-3"
       >
         <TabsList>
-          {tab("all", "All")}
-          {tab("PUBLISHED", "Live")}
-          {tab("DRAFT", "Drafts")}
+          {tab("all", "All trips")}
+          {tab("PUBLISHED", "Published on website")}
+          {tab("DRAFT", "Hidden drafts")}
         </TabsList>
       </Tabs>
 
@@ -270,7 +272,7 @@ export function TripsPage() {
         rows={data?.data ?? []}
         getRowId={(t) => t.id}
         isLoading={isLoading}
-        error={isError ? "We couldn't load your trips." : null}
+        error={isError ? "We could not load your trips. Check your internet connection and try again." : null}
         onRetry={() => void refetch()}
         onRowClick={(t) => navigate(`/trips/${t.id}`)}
         search={{
@@ -280,7 +282,7 @@ export function TripsPage() {
             setPage(1);
           },
         }}
-        searchPlaceholder="Search trips…"
+        searchPlaceholder="Search your trips by name…"
         toolbar={
           <Select
             value={layout}
@@ -289,29 +291,29 @@ export function TripsPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-44" aria-label="Trip type">
+            <SelectTrigger className="w-44" aria-label="Show only trips of this format">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All trip types</SelectItem>
-              <SelectItem value="ITINERARY">Multi-day itinerary</SelectItem>
-              <SelectItem value="PAGE">Simple page</SelectItem>
+              <SelectItem value="all">All trip formats</SelectItem>
+              <SelectItem value="ITINERARY">Day-by-day itinerary</SelectItem>
+              <SelectItem value="PAGE">Simple one-page trip</SelectItem>
             </SelectContent>
           </Select>
         }
         emptyIcon={Footprints}
-        emptyTitle={status === "DRAFT" ? "No drafts" : status === "PUBLISHED" ? "Nothing live yet" : "No trips yet"}
+        emptyTitle={status === "DRAFT" ? "You have no hidden drafts" : status === "PUBLISHED" ? "No trips are published on your website yet" : "You have not created any trips yet"}
         emptyHint={
           status === "PUBLISHED"
-            ? "Publish a trip to put it on your website."
-            : "Add your first trip: itinerary, price and photos. You can save a draft and finish later."
+            ? "Open one of your draft trips and choose “Publish” to make it visible to travellers on your website."
+            : "Create your first trip by adding its name, day-by-day itinerary, price and photos. You can save it as a hidden draft and come back to finish it later."
         }
         emptyAction={
           status !== "PUBLISHED" ? (
             <Button asChild size="sm">
               <Link to="/trips/new">
                 <Plus />
-                New trip
+                Create a new trip
               </Link>
             </Button>
           ) : undefined

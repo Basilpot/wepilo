@@ -30,7 +30,7 @@ export function DepartmentsPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["departments"] });
 
   const save = useMutation({
-    meta: { success: "Saved" },
+    meta: { success: "Department saved." },
     mutationFn: () => {
       const body = { name, description: description || null };
       return editing
@@ -48,7 +48,7 @@ export function DepartmentsPage() {
   });
 
   const remove = useMutation({
-    meta: { success: "Deleted" },
+    meta: { success: "Department deleted." },
     mutationFn: (id: number) => api(`/departments/${id}`, { method: "DELETE" }),
     onSuccess: invalidate,
   });
@@ -62,8 +62,8 @@ export function DepartmentsPage() {
   };
 
   const columns: Column<Department>[] = [
-    { key: "name", header: "Name", cell: (d) => <span className="font-medium">{d.name ?? d.id}</span> },
-    { key: "description", header: "Description", className: "text-muted-foreground", cell: (d) => d.description ?? "—" },
+    { key: "name", header: "Department name", cell: (d) => <span className="font-medium">{d.name ?? d.id}</span> },
+    { key: "description", header: "What this department does", className: "text-muted-foreground", cell: (d) => d.description ?? "No description added" },
     {
       key: "actions",
       headClassName: "w-12",
@@ -71,13 +71,13 @@ export function DepartmentsPage() {
       cell: (dept) => (
         <RowActions
           actions={[
-            { label: "Edit department", icon: PenLine, onSelect: () => openEdit(dept) },
+            { label: "Edit this department", icon: PenLine, onSelect: () => openEdit(dept) },
             {
-              label: "Delete",
+              label: "Delete this department",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ description: "Delete this department?" }, () => remove.mutate(dept.id)),
+              onSelect: () => confirmDialog({ title: "Delete this department?", description: "Team members in this department are not deleted. They will simply no longer belong to any department.", confirmLabel: "Yes, delete this department", cancelLabel: "No, keep it" }, () => remove.mutate(dept.id)),
             },
           ]}
         />
@@ -88,8 +88,8 @@ export function DepartmentsPage() {
   return (
     <div>
       <PageHeader
-        title="Departments"
-        description="Organize team members into departments."
+        title="Team departments"
+        description="Groups such as Guides, Operations or Sales that organise the people on your website’s team page. Create a department here first, then choose it when you add or edit a team member."
         action={
           <Button
             onClick={() => {
@@ -101,7 +101,7 @@ export function DepartmentsPage() {
             }}
           >
             <Plus />
-            New department
+            Create a new department
           </Button>
         }
       />
@@ -113,22 +113,23 @@ export function DepartmentsPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={Building2}
-        emptyTitle="No departments yet"
-        emptyHint="Group team members into departments."
+        emptyTitle="You have not created any departments yet"
+        emptyHint="Departments are optional. They help visitors see who does what on your team. Select “Create a new department” to add the first one."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit department" : "New department"}
+        title={editing ? "Edit this department" : "Create a new department"}
+        submitLabel={editing ? "Save changes to this department" : "Create this department"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Name" required>
+        <Field label="Department name" required hint="Example: Guides, Operations, Customer support">
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label="Description">
+        <Field label="Short description (optional)" hint="One or two sentences explaining what this team is responsible for.">
           <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
       </FormDialog>

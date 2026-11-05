@@ -11,9 +11,9 @@ export function MultiSelect({
   options,
   selected,
   onChange,
-  placeholder = "Select items…",
-  searchPlaceholder = "Search…",
-  emptyText = "No items found.",
+  placeholder = "Click to choose one or more items…",
+  searchPlaceholder = "Type to find an item…",
+  emptyText = "No items match what you typed.",
   className,
 }: {
   options: ComboOption[];

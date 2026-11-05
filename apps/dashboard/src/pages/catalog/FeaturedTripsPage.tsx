@@ -28,25 +28,25 @@ export function FeaturedTripsPage() {
   });
 
   const toggle = useMutation({
-    meta: { success: "Updated" },
+    meta: { success: "Homepage featured trips updated. The change is live on your website." },
     mutationFn: ({ id, isFeatured }: { id: number; isFeatured: boolean }) =>
       api(`/activities/${id}`, { body: { isFeatured }, method: "PATCH" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["featured-trips"] }),
   });
 
   const columns: Column<Trip>[] = [
-    { key: "title", header: "Trip", cell: (t) => <span className="font-medium">{t.title ?? "Untitled"}</span> },
+    { key: "title", header: "Trip name", cell: (t) => <span className="font-medium">{t.title ?? "Untitled trip (no title yet)"}</span> },
     {
       key: "status",
-      header: "Status",
+      header: "Visible to the public?",
       cell: (t) => <StatusBadge kind="trip" status={t.status} />,
     },
-    { key: "category", header: "Category", className: "text-muted-foreground", cell: (t) => t.tripCategory?.name ?? "—" },
-    { key: "price", header: "Price", align: "right", cell: (t) => (t.price != null ? money(t.price) : "—") },
+    { key: "category", header: "Trip category", className: "text-muted-foreground", cell: (t) => t.tripCategory?.name ?? "No category chosen" },
+    { key: "price", header: "Starting price", align: "right", cell: (t) => (t.price != null ? money(t.price) : "No price set") },
     {
       key: "featured",
-      header: "Featured",
-      cell: (t) => (t.isFeatured ? <Badge>Featured</Badge> : <span className="text-muted-foreground">—</span>),
+      header: "Shown as featured on homepage?",
+      cell: (t) => (t.isFeatured ? <Badge>Featured</Badge> : <span className="text-muted-foreground">Not featured</span>),
     },
     {
       key: "actions",
@@ -56,7 +56,7 @@ export function FeaturedTripsPage() {
         <RowActions
           actions={[
             {
-              label: trip.isFeatured ? "Unfeature" : "Feature",
+              label: trip.isFeatured ? "Stop featuring this trip" : "Feature this trip on the homepage",
               icon: trip.isFeatured ? StarOff : Star,
               disabled: toggle.isPending,
               onSelect: () => toggle.mutate({ id: trip.id, isFeatured: !trip.isFeatured }),
@@ -69,7 +69,7 @@ export function FeaturedTripsPage() {
 
   return (
     <div>
-      <PageHeader title="Featured trips" description="Toggle which trips show as featured." />
+      <PageHeader title="Homepage featured trips" description="Choose which trips are highlighted as featured on your website, usually on the homepage. Open the actions menu on any row to start or stop featuring a trip. Click a row to edit the trip itself." />
 
       <DataTable
         columns={columns}
@@ -78,8 +78,8 @@ export function FeaturedTripsPage() {
         isLoading={isLoading}
         onRowClick={(t) => navigate(`/trips/${t.id}`)}
         emptyIcon={MapPinCheck}
-        emptyTitle="No trips yet"
-        emptyHint="Create a trip first."
+        emptyTitle="You have no trips to feature yet"
+        emptyHint="Create and publish a trip first. After that, it will appear in this list and you can choose to feature it on your homepage."
       />
     </div>
   );

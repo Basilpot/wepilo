@@ -55,13 +55,13 @@ export function DataTable<T>({
   isLoading = false,
   error,
   onRetry,
-  emptyTitle = "No results.",
+  emptyTitle = "There is nothing to show here yet.",
   emptyHint,
   emptyAction,
   emptyIcon: EmptyIcon = Inbox,
   onRowClick,
   search,
-  searchPlaceholder = "Search…",
+  searchPlaceholder = "Type to search this list…",
   toolbar,
   pagination,
   maxHeight,
@@ -136,7 +136,7 @@ export function DataTable<T>({
                       <span className="text-sm text-foreground">{error}</span>
                       {onRetry && (
                         <Button variant="outline" size="sm" onClick={onRetry}>
-                          Try again
+                          Try loading again
                         </Button>
                       )}
                     </div>
@@ -190,14 +190,14 @@ export function DataTable<T>({
                         {search?.value ? <SearchX className="size-5" /> : <EmptyIcon className="size-5" />}
                       </span>
                       <span className="text-sm font-medium text-foreground">
-                        {search?.value ? `No matches for “${search.value}”` : emptyTitle}
+                        {search?.value ? `Nothing in this list matches “${search.value}”` : emptyTitle}
                       </span>
                       <span className="mt-1 text-sm text-muted-foreground">
-                        {search?.value ? "Try a different search or clear the filter." : emptyHint}
+                        {search?.value ? "Check the spelling, try a shorter or different word, or clear the search to see the full list again." : emptyHint}
                       </span>
                       {search?.value ? (
                         <Button variant="outline" size="sm" className="mt-4" onClick={() => search.onChange("")}>
-                          Clear search
+                          Clear the search and show everything
                         </Button>
                       ) : emptyAction ? (
                         <div className="mt-4">{emptyAction}</div>
@@ -224,16 +224,16 @@ export function TablePagination({ pagination }: { pagination: DataTablePaginatio
       <span className="tabular-nums">
         {typeof pagination.total === "number" && pagination.limit
           ? pagination.total === 0
-            ? "No results"
-            : `${(pagination.page - 1) * pagination.limit + 1}–${Math.min(pagination.page * pagination.limit, pagination.total)} of ${pagination.total}`
+            ? "No results to show"
+            : `Showing ${(pagination.page - 1) * pagination.limit + 1} to ${Math.min(pagination.page * pagination.limit, pagination.total)} of ${pagination.total}`
           : typeof pagination.total === "number"
-            ? `${pagination.total} result${pagination.total === 1 ? "" : "s"}`
+            ? `${pagination.total} ${pagination.total === 1 ? "item" : "items"} in total`
             : `Page ${pagination.page} of ${pagination.totalPages}`}
       </span>
       <div className="flex items-center gap-2">
         {pagination.onLimit && pagination.limit && (
           <Select value={String(pagination.limit)} onValueChange={(v) => pagination.onLimit!(Number(v))}>
-            <SelectTrigger size="sm" className="w-[4.5rem]" aria-label="Rows per page">
+            <SelectTrigger size="sm" className="w-[4.5rem]" aria-label="How many rows to show on each page">
               <SelectValue />
             </SelectTrigger>
             <SelectContent side="top">
@@ -249,20 +249,20 @@ export function TablePagination({ pagination }: { pagination: DataTablePaginatio
           variant="outline"
           size="icon"
           className="h-8 w-8"
-          aria-label="Previous page"
+          aria-label="Go to the previous page"
           disabled={pagination.page <= 1}
           onClick={() => pagination.onPage(pagination.page - 1)}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="tabular-nums">
-          {pagination.page} / {pagination.totalPages}
+          Page {pagination.page} of {pagination.totalPages}
         </span>
         <Button
           variant="outline"
           size="icon"
           className="h-8 w-8"
-          aria-label="Next page"
+          aria-label="Go to the next page"
           disabled={pagination.page >= pagination.totalPages}
           onClick={() => pagination.onPage(pagination.page + 1)}
         >
@@ -283,7 +283,7 @@ export type RowAction = {
   hidden?: boolean;
 };
 
-export function RowActions({ actions, label = "Open menu" }: { actions: RowAction[]; label?: string }) {
+export function RowActions({ actions, label = "Open the actions menu for this row" }: { actions: RowAction[]; label?: string }) {
   const visible = actions.filter((a) => !a.hidden);
   if (!visible.length) return null;
   return (

@@ -19,7 +19,7 @@ export function Combobox({
   value,
   setValue,
   placeholder,
-  notFoundPlaceholder = "No results found.",
+  notFoundPlaceholder = "Nothing matches what you typed.",
   error,
   onCreate,
   optional,
@@ -90,7 +90,7 @@ export function Combobox({
                   className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-accent disabled:opacity-50"
                 >
                   <Plus className="h-4 w-4" />
-                  {creating ? "Adding…" : `Add "${trimmed}"`}
+                  {creating ? "Adding it now…" : `Create a new entry called "${trimmed}"`}
                 </button>
               ) : (
                 <span className="text-sm text-muted-foreground">{notFoundPlaceholder}</span>

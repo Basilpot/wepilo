@@ -34,33 +34,33 @@ export function LoginPage() {
 
   return (
     <AuthCard
-      title={welcome ? "You're all set" : "Sign in"}
-      description={welcome ? "Password saved. Sign in to open your workspace." : "Sign in to your Wepilo workspace."}
+      title={welcome ? "Your password is saved" : "Sign in to your dashboard"}
+      description={welcome ? "Now sign in with your email and the password you just chose to open your workspace." : "Enter your email address and password to open your Wepilo workspace."}
       footer={
         <>
-          No account yet?{" "}
+          You do not have a workspace yet?{" "}
           <Link to="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
-            Start a free trial
+            Create a workspace and start a trial
           </Link>
         </>
       }
     >
       <form onSubmit={form.handleSubmit((v) => login.mutate(v))} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Your email address</Label>
           <Input id="email" type="email" autoComplete="email" required {...form.register("email")} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Your password</Label>
           <Input id="password" type="password" autoComplete="current-password" required {...form.register("password")} />
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <Button type="submit" className="w-full" disabled={login.isPending}>
-          {login.isPending ? "Signing in…" : "Sign in"}
+          {login.isPending ? "Signing you in…" : "Sign in"}
         </Button>
         <p className="text-center text-sm">
           <Link to="/forgot-password" className="text-muted-foreground hover:text-foreground">
-            Forgot password?
+            I forgot my password
           </Link>
         </p>
       </form>

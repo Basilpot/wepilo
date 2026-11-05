@@ -72,7 +72,7 @@ export function NewWorkspacePage() {
       setCreated(result);
       queryClient.invalidateQueries({ queryKey: ["platform"] });
     },
-    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Something went wrong"),
+    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Something went wrong. Please try again in a moment."),
   });
 
   const back = (
@@ -89,14 +89,14 @@ export function NewWorkspacePage() {
       <div className="max-w-2xl">
         {back}
         <PageHeader
-          title={`${created.tenant.companyName} is ready`}
-          description="The workspace is live on the plan you chose. The client takes over by setting a password through the link below."
+          title={`${created.tenant.companyName} is ready to hand over`}
+          description="The workspace is live on the plan you chose. The client takes it over by choosing a password through the one-time setup link below."
         />
         <SetupLinkPanel link={created.setup} ownerEmail={created.tenant.email} />
         <div className="mt-6 flex flex-wrap gap-2">
           <Button onClick={() => navigate(`/admin/workspaces/${created.tenant.id}`)}>Open workspace details</Button>
           <Button variant="outline" asChild>
-            <Link to="/admin/workspaces">Back to all workspaces</Link>
+            <Link to="/admin/workspaces">Go back to all customer workspaces</Link>
           </Button>
         </div>
       </div>
@@ -107,8 +107,8 @@ export function NewWorkspacePage() {
     <div className="max-w-2xl">
       {back}
       <PageHeader
-        title="New workspace"
-        description="Set up an agency on a plan you've agreed with them, then hand it over with a one-time setup link."
+        title="Create a customer workspace"
+        description="Set up a travel agency on the plan you have agreed with them. When you finish, you get a one-time setup link that lets the client choose a password and take over the workspace."
       />
       <form
         className="space-y-8"
@@ -118,8 +118,8 @@ export function NewWorkspacePage() {
           create.mutate();
         }}
       >
-        <Section title="Agency">
-          <Field label="Company name" htmlFor="companyName" required>
+        <Section title="Agency details">
+          <Field label="Agency company name" htmlFor="companyName" required>
             <Input
               id="companyName"
               required
@@ -130,7 +130,7 @@ export function NewWorkspacePage() {
               }}
             />
           </Field>
-          <Field label="Slug" htmlFor="slug" required hint="Used by the website API (x-tenant-slug). Lowercase letters, numbers and dashes.">
+          <Field label="Workspace address (slug)" htmlFor="slug" required hint="The unique name the client’s website uses to load its content (sent as x-tenant-slug). Use only lowercase letters, numbers and dashes. It is hard to change later.">
             <Input
               id="slug"
               required
@@ -144,29 +144,29 @@ export function NewWorkspacePage() {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Phone" htmlFor="phone">
+            <Field label="Agency phone number" htmlFor="phone">
               <Input id="phone" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
             </Field>
-            <Field label="Website" htmlFor="website">
+            <Field label="Agency website address" htmlFor="website">
               <Input id="website" type="url" placeholder="https://" value={form.website} onChange={(e) => set("website", e.target.value)} />
             </Field>
           </div>
         </Section>
 
-        <Section title="Owner" description="The client's main login. They can add their own staff after taking over.">
+        <Section title="Workspace owner" description="The client’s main login, who has full control. After taking over, they can add their own staff logins.">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name" htmlFor="ownerName" required>
+            <Field label="Owner’s full name" htmlFor="ownerName" required>
               <Input id="ownerName" required value={form.ownerName} onChange={(e) => set("ownerName", e.target.value)} />
             </Field>
-            <Field label="Email" htmlFor="ownerEmail" required>
+            <Field label="Owner’s email address (used to sign in)" htmlFor="ownerEmail" required>
               <Input id="ownerEmail" type="email" required value={form.ownerEmail} onChange={(e) => set("ownerEmail", e.target.value)} />
             </Field>
           </div>
         </Section>
 
-        <Section title="Plan" description="Billed outside Wepilo's checkout. The workspace and website API stay on until the end date.">
+        <Section title="Plan and access" description="This plan is arranged by hand and billed outside Wepilo’s online checkout. The workspace and the client’s website connection stay on until the end date you choose.">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Plan" required>
+            <Field label="Which plan did you agree?" required>
               <Select value={form.plan} onValueChange={(v) => set("plan", v as PlanKey)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -180,7 +180,7 @@ export function NewWorkspacePage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Access until" htmlFor="endDate" required={!openEnded}>
+            <Field label="Access runs until" htmlFor="endDate" required={!openEnded}>
               <Input
                 id="endDate"
                 type="date"
@@ -198,18 +198,18 @@ export function NewWorkspacePage() {
               No end date (runs until you change it)
             </label>
           )}
-          <Field label="Internal notes" htmlFor="notes" hint="Deal terms, contacts, invoice reference. Only Wepilo admins see this.">
+          <Field label="Private notes for the Wepilo team" htmlFor="notes" hint="Write down deal terms, contacts or an invoice reference. Only Wepilo admins can see this. The client never sees it.">
             <Textarea id="notes" rows={3} value={form.internalNotes} onChange={(e) => set("internalNotes", e.target.value)} />
           </Field>
         </Section>
 
-        <Section title="Handover">
+        <Section title="Handing over to the client">
           <label className="flex items-start gap-3 text-sm">
             <Switch className="mt-0.5" checked={form.sendSetupEmail} onCheckedChange={(v) => set("sendSetupEmail", v)} />
             <span>
               Email the setup link to the owner now
               <span className="block text-muted-foreground">
-                Turn off to prepare the workspace first. You'll get the link to send yourself, and can issue a new one any time.
+                Turn this off if you want to prepare the workspace first. You will then get the link to send yourself, and you can create a new link at any time.
               </span>
             </span>
           </label>
@@ -219,10 +219,10 @@ export function NewWorkspacePage() {
         <div className="flex gap-2 border-t pt-6">
           <Button type="submit" disabled={create.isPending}>
             {create.isPending && <Loader2 className="animate-spin" />}
-            Create workspace
+            Create this customer workspace
           </Button>
           <Button type="button" variant="outline" asChild>
-            <Link to="/admin/workspaces">Cancel</Link>
+            <Link to="/admin/workspaces">Cancel and go back</Link>
           </Button>
         </div>
       </form>

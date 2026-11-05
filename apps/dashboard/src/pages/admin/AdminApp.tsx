@@ -72,21 +72,21 @@ function AdminShell({ admin, children }: { admin: PlatformAdmin; children: React
               <ShieldCheck className="size-4" />
             </span>
             <span className="text-sm font-semibold tracking-tight">Wepilo</span>
-            <span className="hidden text-sm text-muted-foreground sm:inline">Platform</span>
+            <span className="hidden text-sm text-muted-foreground sm:inline">Platform admin console</span>
           </Link>
           <nav className="flex items-center gap-1">
             <NavLink to="/admin/workspaces" className={navClass}>
-              Workspaces
+              Customer workspaces
             </NavLink>
             <NavLink to="/admin/admins" className={navClass}>
-              Admins
+              Wepilo admins
             </NavLink>
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <span className="hidden text-sm text-muted-foreground md:inline">{admin.email}</span>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut />
-              <span className="sr-only sm:not-sr-only">Sign out</span>
+              <span className="sr-only sm:not-sr-only">Sign out of the admin console</span>
             </Button>
           </div>
         </div>
@@ -109,7 +109,7 @@ function AdminLoginPage() {
       await queryClient.refetchQueries({ queryKey: ["platform", "me"] });
       navigate("/admin/workspaces", { replace: true });
     },
-    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Something went wrong"),
+    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Something went wrong. Please try again in a moment."),
   });
 
   return (
@@ -122,7 +122,7 @@ function AdminLoginPage() {
           <span className="text-sm font-semibold tracking-tight">Wepilo Platform</span>
         </div>
         <h1 className="mt-6 text-xl font-semibold tracking-tight">Admin sign in</h1>
-        <p className="mt-1 text-sm text-muted-foreground">For the Wepilo team. Agencies sign in at the main login.</p>
+        <p className="mt-1 text-sm text-muted-foreground">This sign in page is only for the Wepilo team. Travel agencies sign in on the main sign in page instead.</p>
         <form
           className="mt-6 space-y-4"
           onSubmit={(e) => {
@@ -132,11 +132,11 @@ function AdminLoginPage() {
           }}
         >
           <div className="space-y-2">
-            <Label htmlFor="admin-email">Email</Label>
+            <Label htmlFor="admin-email">Your admin email address</Label>
             <Input id="admin-email" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="admin-password">Password</Label>
+            <Label htmlFor="admin-password">Your password</Label>
             <Input
               id="admin-password"
               type="password"
@@ -148,7 +148,7 @@ function AdminLoginPage() {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={login.isPending}>
-            {login.isPending ? "Signing in…" : "Sign in"}
+            {login.isPending ? "Signing you in…" : "Sign in to the admin console"}
           </Button>
         </form>
       </div>

@@ -13,7 +13,7 @@ export function InstructionTooltip({ instruction }: { instruction: string }) {
         <TooltipTrigger asChild>
           <button
             type="button"
-            aria-label="More information"
+            aria-label="Show more details about this setting"
             className="inline-flex text-muted-foreground transition-colors hover:text-foreground"
           >
             <Info className="h-3.5 w-3.5" />

@@ -29,6 +29,12 @@ type Extra = {
 };
 
 type FormState = { type: Extra["type"]; name: string; description: string; price: string };
+const TYPE_LABELS: Record<Extra["type"], string> = {
+  ADDON: "General add-on",
+  ACCOMMODATION: "Accommodation or hotel upgrade",
+  MEAL: "Meals",
+  OTHER: "Something else",
+};
 const empty: FormState = { type: "ADDON", name: "", description: "", price: "" };
 
 export function ExtrasPage() {
@@ -47,7 +53,7 @@ export function ExtrasPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["extras"] });
 
   const save = useMutation({
-    meta: { success: "Saved" },
+    meta: { success: "Optional add-on saved." },
     mutationFn: () => {
       const body = {
         type: form.type,
@@ -67,7 +73,7 @@ export function ExtrasPage() {
   });
 
   const remove = useMutation({
-    meta: { success: "Deleted" },
+    meta: { success: "Optional add-on deleted." },
     mutationFn: (id: number) => api(`/extras/${id}`, { method: "DELETE" }),
     onSuccess: invalidate,
   });
@@ -87,7 +93,7 @@ export function ExtrasPage() {
   const columns: Column<Extra>[] = [
     {
       key: "name",
-      header: "Name",
+      header: "Add-on name and description",
       cell: (e) => (
         <div>
           <p className="font-medium">{e.name}</p>
@@ -95,8 +101,8 @@ export function ExtrasPage() {
         </div>
       ),
     },
-    { key: "type", header: "Type", cell: (e) => <Badge variant="secondary">{e.type}</Badge> },
-    { key: "price", header: "Price", align: "right", cell: (e) => (e.price != null ? money(e.price) : "Free") },
+    { key: "type", header: "Kind of add-on", cell: (e) => <Badge variant="secondary">{TYPE_LABELS[e.type]}</Badge> },
+    { key: "price", header: "Price per traveller", align: "right", cell: (e) => (e.price != null ? money(e.price) : "Free of charge") },
     {
       key: "actions",
       headClassName: "w-12",
@@ -104,13 +110,13 @@ export function ExtrasPage() {
       cell: (extra) => (
         <RowActions
           actions={[
-            { label: "Edit extra", icon: PenLine, onSelect: () => openEdit(extra) },
+            { label: "Edit this add-on", icon: PenLine, onSelect: () => openEdit(extra) },
             {
-              label: "Delete",
+              label: "Delete this add-on",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ description: `Delete extra "${extra.name}"?` }, () => remove.mutate(extra.id)),
+              onSelect: () => confirmDialog({ title: `Delete the add-on "${extra.name}"?`, description: "Travellers will no longer be able to add it to a booking. Bookings that already include it are not changed.", confirmLabel: "Yes, delete this add-on", cancelLabel: "No, keep it" }, () => remove.mutate(extra.id)),
             },
           ]}
         />
@@ -121,8 +127,8 @@ export function ExtrasPage() {
   return (
     <div>
       <PageHeader
-        title="Extras"
-        description="Add-ons guests can attach to a booking."
+        title="Optional add-ons"
+        description="Extra services travellers can add to a booking for an additional price, such as a hotel upgrade, airport pickup, equipment rental or meals. Create each add-on once here."
         action={
           <Button
             onClick={() => {
@@ -133,7 +139,7 @@ export function ExtrasPage() {
             }}
           >
             <Plus />
-            New extra
+            Create a new add-on
           </Button>
         }
       />
@@ -145,35 +151,37 @@ export function ExtrasPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={Package}
-        emptyTitle="No extras yet"
-        emptyHint="Add add-ons guests can attach to a booking."
+        emptyTitle="You have not created any optional add-ons yet"
+        emptyHint="Add-ons let you earn more from each booking. Examples: private room upgrade, airport transfer, trekking gear rental, extra night. Select “Create a new add-on” to add your first one."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit extra" : "New extra"}
+        title={editing ? "Edit this optional add-on" : "Create a new optional add-on"}
+        description="Describe what the traveller gets and how much it costs per person."
+        submitLabel={editing ? "Save changes to this add-on" : "Create this add-on"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Name" required>
+        <Field label="Add-on name (what travellers will see)" required>
           <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         </Field>
-        <Field label="Type">
+        <Field label="What kind of add-on is this?">
           <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v as Extra["type"] }))}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ADDON">Add-on</SelectItem>
-              <SelectItem value="ACCOMMODATION">Accommodation</SelectItem>
-              <SelectItem value="MEAL">Meal</SelectItem>
-              <SelectItem value="OTHER">Other</SelectItem>
+              <SelectItem value="ADDON">General add-on</SelectItem>
+              <SelectItem value="ACCOMMODATION">Accommodation or hotel upgrade</SelectItem>
+              <SelectItem value="MEAL">Meals</SelectItem>
+              <SelectItem value="OTHER">Something else</SelectItem>
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Price per person (USD)" hint="Blank = free.">
+        <Field label="Price for each traveller (in US dollars)" hint="Leave this empty if the add-on is free of charge.">
           <Input
             type="number"
             min={0}
@@ -182,7 +190,7 @@ export function ExtrasPage() {
             onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
           />
         </Field>
-        <Field label="Description">
+        <Field label="Short description (optional)" hint="Explain what is included so travellers know exactly what they are paying for.">
           <Textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
         </Field>
       </FormDialog>

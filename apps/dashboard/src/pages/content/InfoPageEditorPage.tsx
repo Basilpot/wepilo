@@ -107,7 +107,7 @@ export function InfoPageEditorPage() {
 
   const save = async (intent: "draft" | "publish" | "unpublish") => {
     if (!form.title.trim()) {
-      toast.error("Give the page a title first.");
+      toast.error("Please type a title for the page before saving. The title box is at the top of the page.");
       return;
     }
     const nextPublished = intent === "publish" ? true : intent === "unpublish" ? false : published;
@@ -133,11 +133,11 @@ export function InfoPageEditorPage() {
       setPublished(nextPublished);
       void queryClient.invalidateQueries({ queryKey: ["info-pages"] });
       toast.success(
-        intent === "publish" ? (published ? "Changes saved" : "Page published") : intent === "unpublish" ? "Page moved to drafts" : "Draft saved",
+        intent === "publish" ? (published ? "Your changes were saved and are live on your website." : "Your page is published and visible on your website.") : intent === "unpublish" ? "The page is now hidden from your website and saved as a draft." : "Your draft was saved. It is not visible on your website yet.",
       );
       if (isNew && res.page) navigate(`/info-pages/${res.page.id}`, { replace: true });
     } catch (err) {
-      toastApiError(err, "Couldn't save the page");
+      toastApiError(err, "The page could not be saved. Your writing is still on this page, so check your internet connection and try saving again.");
     } finally {
       setSaving(null);
     }
@@ -168,8 +168,8 @@ export function InfoPageEditorPage() {
   if (isError) {
     return (
       <div role="alert" className="rounded-lg border p-8 text-center">
-        <p className="font-medium">This page couldn't be loaded.</p>
-        <p className="mt-1 text-sm text-muted-foreground">It may have been deleted.</p>
+        <p className="font-medium">We could not open this page.</p>
+        <p className="mt-1 text-sm text-muted-foreground">It may have been deleted, or the link may be wrong. Go back to “Website pages” and choose it from the list.</p>
       </div>
     );
   }
@@ -180,10 +180,10 @@ export function InfoPageEditorPage() {
   return (
     <div>
       <EditorHeader
-        title={form.title.trim() || (isNew ? "New page" : "Untitled page")}
+        title={form.title.trim() || (isNew ? "Create a new website page" : "Untitled page (no title yet)")}
         badge={<StatusBadge kind="content" status={published ? "published" : "draft"} />}
         dirty={dirty}
-        subtitle={isNew ? "Not saved yet" : `/${form.slug}`}
+        subtitle={isNew ? "Not saved yet. Nothing is stored until you save." : `/${form.slug}`}
         onBack={() => confirmLeave() && navigate("/info-pages")}
         actions={
           <PublishActions
@@ -205,12 +205,12 @@ export function InfoPageEditorPage() {
             slug={form.slug}
             onSlugChange={(v) => set("slug", v)}
             prefix={urlPrefix}
-            placeholder="Page title"
+            placeholder="Type the title of this page here"
           />
           <RichTextEditor
             value={form.content}
             onChange={(html) => set("content", html)}
-            placeholder="Write the page… e.g. who you are, how booking works, your terms."
+            placeholder="Write the content of this page here, for example who you are, how booking works, or your terms and conditions."
             minHeight={480}
             variant="document"
             stickyToolbar="7.25rem"
@@ -218,8 +218,8 @@ export function InfoPageEditorPage() {
         </div>
 
         <aside className="lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto lg:border-l lg:pl-8">
-          <SidebarSection title="Page settings">
-            <Field label="Category" hint="Put legal pages (terms, privacy) in a “Legal” category.">
+          <SidebarSection title="Page details" description="Choose how this page is grouped and whether it appears in your website menu.">
+            <Field label="Category (optional)" hint="Tip: put legal pages such as terms and privacy in a category called “Legal”. Create categories under “Page and post categories”.">
               <Select
                 value={form.infoPageCategoryId || "none"}
                 onValueChange={(v) => set("infoPageCategoryId", v === "none" ? "" : v)}
@@ -228,7 +228,7 @@ export function InfoPageEditorPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No category</SelectItem>
+                  <SelectItem value="none">No category chosen</SelectItem>
                   {categories?.data.map((c) => (
                     <SelectItem key={c.id} value={String(c.id)}>
                       {c.name ?? `#${c.id}`}
@@ -239,18 +239,18 @@ export function InfoPageEditorPage() {
             </Field>
             <label className="flex items-start justify-between gap-4">
               <span>
-                <span className="block text-sm font-medium">Show in site navigation</span>
-                <span className="block text-xs text-muted-foreground">Adds a link to your site's main menu.</span>
+                <span className="block text-sm font-medium">Show a link to this page in my website menu</span>
+                <span className="block text-xs text-muted-foreground">Visitors will see this page in the main menu at the top of your website.</span>
               </span>
               <Switch checked={form.featuredInNavbar} onCheckedChange={(v) => set("featuredInNavbar", v)} />
             </label>
           </SidebarSection>
 
-          <SidebarSection title="Cover image">
+          <SidebarSection title="Cover image" description="The main picture shown at the top of the page and when someone shares it on social media.">
             <ImageField value={form.coverImage} onChange={(url) => set("coverImage", url)} />
           </SidebarSection>
 
-          <SidebarSection title="Search engine listing">
+          <SidebarSection title="How this page appears on Google" description="This preview shows how your page may look in search results. Good titles and descriptions bring more visitors.">
             <SerpPreview
               title={form.metaTitle || form.title}
               url={`${urlPrefix}${form.slug || "…"}`}
@@ -259,7 +259,7 @@ export function InfoPageEditorPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
                 <label htmlFor="meta-title" className="font-medium">
-                  Meta title
+                  Search result title (about 60 characters)
                 </label>
                 <span className="text-xs">
                   <CharCount value={form.metaTitle} max={60} />
@@ -270,13 +270,13 @@ export function InfoPageEditorPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
                 <label htmlFor="meta-desc" className="font-medium">
-                  Meta description
+                  Search result description (about 160 characters)
                 </label>
                 <span className="text-xs">
                   <CharCount value={form.metaDescription} max={160} />
                 </span>
               </div>
-              <Textarea id="meta-desc" rows={3} value={form.metaDescription} onChange={(e) => set("metaDescription", e.target.value)} />
+              <Textarea id="meta-desc" rows={3} value={form.metaDescription} onChange={(e) => set("metaDescription", e.target.value)} placeholder="Write one or two sentences that make someone want to click and read this page." />
             </div>
           </SidebarSection>
         </aside>

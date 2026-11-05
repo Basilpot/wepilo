@@ -20,28 +20,27 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthCard
-      title="Reset password"
-      description="We'll email you a link to set a new password."
+      title="Forgot your password?"
+      description="Type the email address you sign in with. We will email you a link that lets you choose a new password."
       footer={
         <Link to="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
-          Back to sign in
+          Go back to the sign in page
         </Link>
       }
     >
       {sent ? (
         <p className="text-sm text-muted-foreground">
-          If an account exists for <span className="font-medium text-foreground">{email}</span>, a reset link is on its
-          way.
+          If an account exists for <span className="font-medium text-foreground">{email}</span>, we have sent a link to choose a new password. It can take a few minutes to arrive, so check your spam or junk folder too.
         </p>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); submit.mutate(); }} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Your email address</Label>
             <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={submit.isPending}>
-            {submit.isPending ? "Sending…" : "Send reset link"}
+            {submit.isPending ? "Sending the link…" : "Email me a reset link"}
           </Button>
         </form>
       )}

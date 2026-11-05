@@ -28,7 +28,7 @@ function PaywallLayout({ session, children }: { session: Session; children: Reac
         </div>
         <Button variant="ghost" size="sm" onClick={signOut}>
           <LogOut />
-          Sign out
+          Sign out of this workspace
         </Button>
       </header>
       <main className="mx-auto w-full max-w-5xl px-4 py-10 md:py-14">{children}</main>
@@ -45,15 +45,15 @@ export function PaywallPage({ session }: { session: Session }) {
   const lapsedPaid = access?.state === "EXPIRED" && data?.subscription?.hasPaidSubscription;
 
   const title = trial
-    ? `Start your ${data?.trial.days ?? 3}-day trial`
+    ? `Start your ${data?.trial.days ?? 3}-day trial by choosing a plan`
     : lapsedPaid
-      ? "Your plan has ended"
-      : "Your trial has ended";
+      ? "Your plan has ended, so your dashboard is locked"
+      : "Your free trial has ended, so your dashboard is locked";
   const lead = trial
-    ? "Pick the plan you want to try. You pay once, and nothing renews when the trial ends."
+    ? "Pick the plan you want to try first. You make one small payment for the trial period. Nothing renews automatically when the trial ends, so you will never be charged again unless you choose to continue."
     : lapsedPaid
-      ? "Your content is safe. Renew to get back into the dashboard."
-      : "Your trips, pages and settings are saved. Choose a plan to pick up where you left off.";
+      ? "All your trips, pages and settings are safe and nothing has been deleted. Renew your plan to get back into your dashboard."
+      : "All your trips, pages and settings are saved and nothing has been deleted. Choose a plan below to continue where you left off.";
 
   return (
     <PaywallLayout session={session}>
@@ -66,8 +66,8 @@ export function PaywallPage({ session }: { session: Session }) {
         <InfoCard
           className="mb-6"
           type="warning"
-          title="Your website is still online"
-          info={`The website API keeps working until ${formatDate(access.apiUntil)}. Renew before then to avoid downtime.`}
+          title="Your website can still load content for now"
+          info={`Your website can keep loading trips and pages from Wepilo until ${formatDate(access.apiUntil)}. Renew your plan before that date, or your website will stop showing your content.`}
         />
       )}
 
@@ -85,15 +85,15 @@ export function PaywallPage({ session }: { session: Session }) {
         <ul className="mt-8 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
           <li className="flex gap-2">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-            Full dashboard for {data?.trial.days ?? 3} days on the plan you pick.
+            You get the full dashboard for {data?.trial.days ?? 3} days on the plan you choose.
           </li>
           <li className="flex gap-2">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-            No automatic charge afterwards. We'll email you when it ends.
+            You will not be charged again automatically. We will email you when the trial ends.
           </li>
           <li className="flex gap-2">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-            Secure checkout by Dodo Payments.
+            Payment is handled on a secure page by Dodo Payments.
           </li>
         </ul>
       )}
@@ -139,29 +139,29 @@ export function BillingReturnPage({ session }: { session: Session }) {
       <div className="mx-auto max-w-md rounded-xl border bg-card p-8 text-center">
         {failed ? (
           <>
-            <h1 className="text-lg font-semibold">Payment didn't go through</h1>
-            <p className="mt-2 text-sm text-muted-foreground">No money was taken. You can try again.</p>
-            <Button className="mt-6" onClick={() => navigate("/", { replace: true })}>Back to plans</Button>
+            <h1 className="text-lg font-semibold">Your payment did not go through</h1>
+            <p className="mt-2 text-sm text-muted-foreground">No money was taken from your account. You can go back and try again with a different card if you like.</p>
+            <Button className="mt-6" onClick={() => navigate("/", { replace: true })}>Go back and choose a plan</Button>
           </>
         ) : done ? (
           <>
             <CheckCircle2 className="mx-auto size-10 text-primary" />
-            <h1 className="mt-4 text-lg font-semibold">{kind === "trial" ? "Your trial has started" : "You're all set"}</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Taking you to your dashboard…</p>
+            <h1 className="mt-4 text-lg font-semibold">{kind === "trial" ? "Your free trial has started" : "Payment received. Your plan is active"}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Taking you to your dashboard now…</p>
           </>
         ) : timedOut ? (
           <>
-            <h1 className="text-lg font-semibold">Still confirming your payment</h1>
+            <h1 className="text-lg font-semibold">We are still confirming your payment</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              This can take a few minutes. Refresh this page shortly. If you were charged and it still doesn't unlock, contact support.
+              Sometimes confirmation takes a few minutes. Wait a moment, then select “Check again”. If your card was charged and your dashboard is still locked after 10 minutes, email Wepilo support and tell us the email address you signed up with.
             </p>
-            <Button className="mt-6" variant="outline" onClick={() => window.location.reload()}>Refresh</Button>
+            <Button className="mt-6" variant="outline" onClick={() => window.location.reload()}>Check again</Button>
           </>
         ) : (
           <>
             <Loader2 className="mx-auto size-8 animate-spin text-primary" />
-            <h1 className="mt-4 text-lg font-semibold">Confirming your payment…</h1>
-            <p className="mt-2 text-sm text-muted-foreground">This usually takes a few seconds. Keep this tab open.</p>
+            <h1 className="mt-4 text-lg font-semibold">Confirming your payment, please wait…</h1>
+            <p className="mt-2 text-sm text-muted-foreground">This usually takes a few seconds. Please keep this browser tab open and do not press the back button.</p>
           </>
         )}
       </div>

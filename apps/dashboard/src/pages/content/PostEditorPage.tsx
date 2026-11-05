@@ -124,7 +124,7 @@ export function PostEditorPage() {
 
   const save = async (intent: "draft" | "publish" | "unpublish") => {
     if (!form.title.trim()) {
-      toast.error("Give the post a title first.");
+      toast.error("Please type a title for the post before saving. The title box is at the top of the page.");
       return;
     }
     const nextPublished = intent === "publish" ? true : intent === "unpublish" ? false : published;
@@ -153,11 +153,11 @@ export function PostEditorPage() {
       setPublished(nextPublished);
       void queryClient.invalidateQueries({ queryKey: ["posts"] });
       toast.success(
-        intent === "publish" ? (published ? "Changes saved" : "Post published") : intent === "unpublish" ? "Post moved to drafts" : "Draft saved",
+        intent === "publish" ? (published ? "Your changes were saved and are live on your website." : "Your post is published and visible on your website.") : intent === "unpublish" ? "The post is now hidden from your website and saved as a draft." : "Your draft was saved. It is not visible on your website yet.",
       );
       if (isNew) navigate(`/posts/${res.post.id}`, { replace: true });
     } catch (err) {
-      toastApiError(err, "Couldn't save the post");
+      toastApiError(err, "The post could not be saved. Your writing is still on this page, so check your internet connection and try saving again.");
     } finally {
       setSaving(null);
     }
@@ -188,8 +188,8 @@ export function PostEditorPage() {
   if (isError) {
     return (
       <div role="alert" className="rounded-lg border p-8 text-center">
-        <p className="font-medium">This post couldn't be loaded.</p>
-        <p className="mt-1 text-sm text-muted-foreground">It may have been deleted.</p>
+        <p className="font-medium">We could not open this post.</p>
+        <p className="mt-1 text-sm text-muted-foreground">It may have been deleted, or the link may be wrong. Go back to “Blog posts” and choose it from the list.</p>
       </div>
     );
   }
@@ -201,11 +201,11 @@ export function PostEditorPage() {
   return (
     <div>
       <EditorHeader
-        title={form.title.trim() || (isNew ? "New post" : "Untitled post")}
+        title={form.title.trim() || (isNew ? "Write a new blog post" : "Untitled post (no title yet)")}
         badge={<StatusBadge kind="content" status={published ? "published" : "draft"} />}
         dirty={dirty}
         subtitle={
-          isNew ? "Not saved yet" : `${wordCount.toLocaleString()} words · ~${Math.max(1, Math.round(wordCount / 220))} min read`
+          isNew ? "Not saved yet. Nothing is stored until you save." : `${wordCount.toLocaleString()} words · about ${Math.max(1, Math.round(wordCount / 220))} minute${Math.round(wordCount / 220) > 1 ? "s" : ""} to read`
         }
         onBack={() => confirmLeave() && navigate("/posts")}
         actions={
@@ -228,12 +228,12 @@ export function PostEditorPage() {
             slug={form.slug}
             onSlugChange={(v) => set("slug", v)}
             prefix={urlPrefix}
-            placeholder="Post title"
+            placeholder="Type the title of your post here"
           />
           <RichTextEditor
             value={form.content}
             onChange={(html) => set("content", html)}
-            placeholder="Tell your story… Use headings to break it into sections."
+            placeholder="Start writing your post here. Use headings to break a long post into clear sections that are easy to read."
             minHeight={480}
             variant="document"
             stickyToolbar="7.25rem"
@@ -241,15 +241,15 @@ export function PostEditorPage() {
         </div>
 
         <aside className="lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto lg:border-l lg:pl-8">
-          <SidebarSection title="Post settings">
-            <Field label="Type">
+          <SidebarSection title="Post details" description="Choose what kind of post this is, who wrote it, and how it is grouped.">
+            <Field label="What kind of post is this?">
               <Select value={form.postType} onValueChange={(v) => set("postType", v as FormState["postType"])}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="BLOG">Blog post</SelectItem>
-                  <SelectItem value="TRAVEL_GUIDE">Travel guide</SelectItem>
+                  <SelectItem value="BLOG">Blog post (news, stories, tips)</SelectItem>
+                  <SelectItem value="TRAVEL_GUIDE">Travel guide (practical destination advice)</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
@@ -259,7 +259,7 @@ export function PostEditorPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No category</SelectItem>
+                  <SelectItem value="none">No category chosen</SelectItem>
                   {categories?.data.map((c) => (
                     <SelectItem key={c.id} value={String(c.id)}>
                       {c.name ?? `#${c.id}`}
@@ -268,13 +268,13 @@ export function PostEditorPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Author">
+            <Field label="Written by">
               <Select value={form.writerId || "none"} onValueChange={(v) => set("writerId", v === "none" ? "" : v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No author</SelectItem>
+                  <SelectItem value="none">No author chosen</SelectItem>
                   {writers?.data.map((w) => (
                     <SelectItem key={w.id} value={String(w.id)}>
                       {w.name ?? w.username}
@@ -283,16 +283,16 @@ export function PostEditorPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Tags" hint="Press Enter or comma to add.">
+            <Field label="Tags (optional)" hint="Short keywords such as “trekking” or “visa”. Type a tag and press Enter or a comma to add it.">
               <TagInput value={form.tags} onChange={(tags) => set("tags", tags)} />
             </Field>
           </SidebarSection>
 
-          <SidebarSection title="Cover image" description="Shown at the top of the post and when it's shared.">
+          <SidebarSection title="Cover image" description="The main picture shown at the top of the post, and when someone shares the post on social media.">
             <ImageField value={form.coverImage} onChange={(url) => set("coverImage", url)} />
           </SidebarSection>
 
-          <SidebarSection title="Search engine listing">
+          <SidebarSection title="How this post appears on Google" description="This preview shows how your post may look in search results. Good titles and descriptions bring more visitors.">
             <SerpPreview
               title={form.metaTitle || form.title}
               url={`${urlPrefix}${form.slug || "…"}`}
@@ -301,7 +301,7 @@ export function PostEditorPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
                 <label htmlFor="meta-title" className="font-medium">
-                  Meta title
+                  Search result title (about 60 characters)
                 </label>
                 <span className="text-xs">
                   <CharCount value={form.metaTitle} max={60} />
@@ -312,7 +312,7 @@ export function PostEditorPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
                 <label htmlFor="meta-desc" className="font-medium">
-                  Meta description
+                  Search result description (about 160 characters)
                 </label>
                 <span className="text-xs">
                   <CharCount value={form.metaDescription} max={160} />
@@ -323,10 +323,10 @@ export function PostEditorPage() {
                 rows={3}
                 value={form.metaDescription}
                 onChange={(e) => set("metaDescription", e.target.value)}
-                placeholder="One or two sentences that make someone click."
+                placeholder="Write one or two sentences that make someone want to click and read your post."
               />
             </div>
-            <Field label="Canonical URL" hint="Only if this post first appeared elsewhere.">
+            <Field label="Original source link (optional, advanced)" hint="Only fill this in if the same article was first published on another website. Paste that website’s full address.">
               <Input value={form.canonicalUrl} onChange={(e) => set("canonicalUrl", e.target.value)} placeholder="https://…" />
             </Field>
           </SidebarSection>

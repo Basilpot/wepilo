@@ -11,10 +11,10 @@ import { Label } from "@/components/ui/label";
 import { AuthCard, useErrorMessage } from "./shared";
 
 const schema = z.object({
-  password: z.string().min(8, "At least 8 characters"),
+  password: z.string().min(8, "Your password must be at least 8 characters long"),
   confirmPassword: z.string(),
 }).refine((v) => v.password === v.confirmPassword, {
-  message: "Passwords do not match",
+  message: "The two passwords you typed are not the same. Type the same password in both boxes.",
   path: ["confirmPassword"],
 });
 
@@ -49,14 +49,14 @@ export function ResetPasswordPage({ setup = false }: { setup?: boolean }) {
 
   const info = link.data;
   const isSetup = setup || info?.purpose === "SETUP";
-  const title = isSetup ? "Set up your account" : "Set new password";
+  const title = isSetup ? "Set up your account" : "Choose a new password";
   const description = isSetup
     ? info
-      ? `${info.companyName ?? "Your workspace"} is ready. Choose a password for ${info.email}.`
-      : "Choose a password to take over your workspace."
+      ? `${info.companyName ?? "Your workspace"} is ready for you. Choose a password for ${info.email}. You will use it to sign in from now on.`
+      : "Choose a password to take over your new workspace. You will use it to sign in from now on."
     : info
       ? `Choose a new password for ${info.email}.`
-      : "Choose a new password for your account.";
+      : "Type your new password twice. After saving, you will sign in with it.";
 
   return (
     <AuthCard
@@ -64,15 +64,15 @@ export function ResetPasswordPage({ setup = false }: { setup?: boolean }) {
       description={description}
       footer={
         <Link to="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
-          Back to sign in
+          Go back to the sign in page
         </Link>
       }
     >
       {!token || link.isError ? (
         <p className="text-sm text-destructive">
           {isSetup
-            ? "This setup link has expired or was already used. Ask your Wepilo contact for a new one."
-            : "This reset link has expired or was already used. Request a new one."}
+            ? "This setup link has expired or has already been used. Ask your Wepilo contact to send you a new setup link."
+            : "This password reset link has expired or has already been used. Go back to the sign in page and select “I forgot my password” to get a new one."}
         </p>
       ) : link.isLoading ? (
         <div className="space-y-3">
@@ -82,14 +82,14 @@ export function ResetPasswordPage({ setup = false }: { setup?: boolean }) {
       ) : (
         <form onSubmit={form.handleSubmit((v) => reset.mutate(v))} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="password">{isSetup ? "Password" : "New password"}</Label>
+            <Label htmlFor="password">{isSetup ? "Choose your password" : "Your new password"}</Label>
             <Input id="password" type="password" autoComplete="new-password" required {...form.register("password")} />
             {form.formState.errors.password && (
               <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <Label htmlFor="confirmPassword">Type the same password again</Label>
             <Input id="confirmPassword" type="password" autoComplete="new-password" required {...form.register("confirmPassword")} />
             {form.formState.errors.confirmPassword && (
               <p className="text-sm text-destructive">{form.formState.errors.confirmPassword.message}</p>
@@ -97,7 +97,7 @@ export function ResetPasswordPage({ setup = false }: { setup?: boolean }) {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={reset.isPending}>
-            {reset.isPending ? "Saving…" : isSetup ? "Set password and continue" : "Save password"}
+            {reset.isPending ? "Saving your password…" : isSetup ? "Save my password and continue" : "Save my new password"}
           </Button>
         </form>
       )}

@@ -14,9 +14,9 @@ import { NAV_GROUPS, QUICK_LINKS } from "@/components/layout/nav";
 import { api } from "@/lib/api";
 
 const ACTIONS = [
-  { title: "New trip", url: "/trips/new", icon: Plus },
-  { title: "New post", url: "/posts/new", icon: FilePlus2 },
-  { title: "Upload media", url: "/media", icon: Upload },
+  { title: "Create a new trip", url: "/trips/new", icon: Plus },
+  { title: "Write a new blog post", url: "/posts/new", icon: FilePlus2 },
+  { title: "Upload images or PDFs to the media library", url: "/media", icon: Upload },
 ];
 
 type TripHit = { id: number; title: string | null; status: string };
@@ -59,13 +59,13 @@ export function CommandMenu({
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange} title="Search" description="Jump to a page or find a trip">
-      <CommandInput placeholder="Search pages, actions or trips…" value={search} onValueChange={setSearch} />
+    <CommandDialog open={open} onOpenChange={onOpenChange} title="Search" description="Open any page, start a common task, or find one of your trips by name">
+      <CommandInput placeholder="Type a page name, a task, or a trip title…" value={search} onValueChange={setSearch} />
       <CommandList>
-        <CommandEmpty>{trips.isFetching ? "Searching…" : "No results."}</CommandEmpty>
+        <CommandEmpty>{trips.isFetching ? "Searching your trips…" : "Nothing matches that search. Try a different word, or check the spelling."}</CommandEmpty>
         {trips.data?.data.length ? (
           <>
-            <CommandGroup heading="Trips">
+            <CommandGroup heading="Matching trips">
               {trips.data.data.map((t) => (
                 <CommandItem
                   key={t.id}
@@ -73,9 +73,9 @@ export function CommandMenu({
                   onSelect={() => go(`/trips/${t.id}`)}
                 >
                   <Footprints />
-                  <span className="truncate">{t.title || "Untitled trip"}</span>
+                  <span className="truncate">{t.title || "Untitled trip (no title yet)"}</span>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    {t.status === "PUBLISHED" ? "Live" : "Draft"}
+                    {t.status === "PUBLISHED" ? "Published" : "Draft, not public"}
                   </span>
                 </CommandItem>
               ))}
@@ -83,7 +83,7 @@ export function CommandMenu({
             <CommandSeparator />
           </>
         ) : null}
-        <CommandGroup heading="Actions">
+        <CommandGroup heading="Common tasks">
           {ACTIONS.map((a) => (
             <CommandItem key={a.url} value={a.title} onSelect={() => go(a.url)}>
               <a.icon />
@@ -92,7 +92,7 @@ export function CommandMenu({
           ))}
         </CommandGroup>
         <CommandSeparator />
-        <CommandGroup heading="Go to">
+        <CommandGroup heading="Daily work">
           {QUICK_LINKS.map((item) => (
             <CommandItem key={item.url} value={`${item.title} ${item.keywords ?? ""}`} onSelect={() => go(item.url)}>
               <item.icon />

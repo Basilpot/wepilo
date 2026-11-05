@@ -52,8 +52,8 @@ export function PlanPicker({
     return (
       <InfoCard
         type="warning"
-        title="Plans aren't available yet"
-        info="Checkout isn't connected to the payment provider. Please contact support to choose a plan."
+        title="Plans cannot be bought online right now"
+        info="Online payment is not available at the moment. Please contact Wepilo support and we will set up your plan with you directly."
       />
     );
   }
@@ -63,8 +63,8 @@ export function PlanPicker({
       {mode === "subscribe" && hasAnnual && (
         <Tabs value={interval} onValueChange={(v) => setInterval(v as BillingInterval)}>
           <TabsList>
-            <TabsTrigger value="monthly" className="px-3">Monthly</TabsTrigger>
-            <TabsTrigger value="annual" className="px-3">Annual</TabsTrigger>
+            <TabsTrigger value="monthly" className="px-3">Pay monthly</TabsTrigger>
+            <TabsTrigger value="annual" className="px-3">Pay once a year</TabsTrigger>
           </TabsList>
         </Tabs>
       )}
@@ -92,7 +92,7 @@ export function PlanPicker({
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-semibold">{plan.name}</h3>
                 {recommended && (
-                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">Most popular</span>
+                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">Most popular choice</span>
                 )}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{plan.tagline}</p>
@@ -102,14 +102,14 @@ export function PlanPicker({
                   <>
                     <p className="text-2xl font-semibold tracking-tight">{trialPrice}</p>
                     <p className="text-xs text-muted-foreground">
-                      for {billing.trial.days} days{anyRecurring ? `, then ${anyRecurring} if you choose to continue` : ""}
+                      one-time payment for a {billing.trial.days}-day trial{anyRecurring ? `. If you decide to continue afterwards, the plan costs ${anyRecurring}` : ""}
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-2xl font-semibold tracking-tight">{recurring ?? (unavailable ? "—" : "See checkout")}</p>
+                    <p className="text-2xl font-semibold tracking-tight">{recurring ?? (unavailable ? "Not available" : "Price shown at checkout")}</p>
                     <p className="text-xs text-muted-foreground">
-                      {unavailable ? `Not offered ${interval}` : `Billed ${interval === "annual" ? "yearly" : "monthly"}, renews automatically`}
+                      {unavailable ? `This plan cannot be paid ${interval === "annual" ? "yearly" : "monthly"}` : `Charged ${interval === "annual" ? "once a year" : "every month"} and renews automatically until you cancel`}
                     </p>
                   </>
                 )}
@@ -135,12 +135,12 @@ export function PlanPicker({
               >
                 {pending === plan.key && busy && <Loader2 className="animate-spin" />}
                 {mode === "trial"
-                  ? `Try ${plan.name} for ${trialPrice}`
+                  ? `Start a ${billing.trial.days}-day ${plan.name} trial for ${trialPrice}`
                   : current
-                    ? "Current plan"
+                    ? "This is your current plan"
                     : switching
-                      ? `Switch to ${plan.name}`
-                      : `Choose ${plan.name}`}
+                      ? `Switch to the ${plan.name} plan`
+                      : `Choose the ${plan.name} plan`}
               </Button>
             </div>
           );
@@ -148,7 +148,7 @@ export function PlanPicker({
       </div>
 
       {!canManage && (
-        <p className="text-sm text-muted-foreground">Only the workspace owner can start a trial or change the plan.</p>
+        <p className="text-sm text-muted-foreground">Only the workspace owner can start a trial, buy a plan or change the plan. Please ask the owner to do this.</p>
       )}
     </div>
   );

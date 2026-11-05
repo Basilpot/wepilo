@@ -48,7 +48,7 @@ export function AuthorsPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["authors"] });
 
   const save = useMutation({
-    meta: { success: "Saved" },
+    meta: { success: "Blog author saved." },
     mutationFn: () => {
       if (editing) {
         const body: Record<string, unknown> = {
@@ -80,7 +80,7 @@ export function AuthorsPage() {
   });
 
   const remove = useMutation({
-    meta: { success: "Deleted" },
+    meta: { success: "Blog author deleted." },
     mutationFn: (id: number) => api(`/authors/${id}`, { method: "DELETE" }),
     onSuccess: invalidate,
   });
@@ -100,9 +100,9 @@ export function AuthorsPage() {
   };
 
   const columns: Column<Author>[] = [
-    { key: "name", header: "Name", cell: (a) => <span className="font-medium">{a.name ?? a.username}</span> },
-    { key: "username", header: "Username", className: "text-muted-foreground", cell: (a) => `@${a.username}` },
-    { key: "email", header: "Email", className: "text-muted-foreground", cell: (a) => a.email },
+    { key: "name", header: "Display name", cell: (a) => <span className="font-medium">{a.name ?? a.username}</span> },
+    { key: "username", header: "Username used to log in", className: "text-muted-foreground", cell: (a) => `@${a.username}` },
+    { key: "email", header: "Email address", className: "text-muted-foreground", cell: (a) => a.email },
     {
       key: "actions",
       headClassName: "w-12",
@@ -110,14 +110,14 @@ export function AuthorsPage() {
       cell: (author) => (
         <RowActions
           actions={[
-            { label: "Edit author", icon: PenLine, onSelect: () => openEdit(author) },
+            { label: "Edit this author", icon: PenLine, onSelect: () => openEdit(author) },
             {
-              label: "Delete",
+              label: "Delete this author",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
               onSelect: () =>
-                confirmDialog({ description: `Delete author ${author.username}?` }, () => remove.mutate(author.id)),
+                confirmDialog({ title: `Delete the author ${author.username}?`, description: "This author’s login will stop working. Posts they wrote stay on your website but will no longer show who wrote them.", confirmLabel: "Yes, delete this author", cancelLabel: "No, keep this author" }, () => remove.mutate(author.id)),
             },
           ]}
         />
@@ -128,8 +128,8 @@ export function AuthorsPage() {
   return (
     <div>
       <PageHeader
-        title="Authors"
-        description="Writer accounts that can publish posts."
+        title="Blog authors"
+        description="The writers whose names appear on your blog posts. Each author has their own login so they can write and publish posts without seeing the rest of your business. Create an author here, then choose them when you write a post."
         action={
           <Button
             onClick={() => {
@@ -140,7 +140,7 @@ export function AuthorsPage() {
             }}
           >
             <Plus />
-            New author
+            Create a new author
           </Button>
         }
       />
@@ -152,25 +152,26 @@ export function AuthorsPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={PenLine}
-        emptyTitle="No authors yet"
-        emptyHint="Add a writer account so they can publish posts."
+        emptyTitle="You have not created any blog authors yet"
+        emptyHint="You need at least one author before you can publish a blog post. Select “Create a new author” to add yourself or a writer."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit author" : "New author"}
-        description={editing ? "Leave password blank to keep the current one." : undefined}
+        title={editing ? "Edit this author" : "Create a new blog author"}
+        description={editing ? "Leave the password box empty if you want to keep the current password." : "The author uses the email and password you set here to log in and write posts."}
+        submitLabel={editing ? "Save changes to this author" : "Create this author"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
         {!editing && (
           <>
-            <Field label="Username" required>
+            <Field label="Username (used to log in)" required hint="Letters and numbers only, with no spaces.">
               <Input value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} />
             </Field>
-            <Field label="Email" required>
+            <Field label="Email address" required>
               <Input
                 type="email"
                 value={form.email}
@@ -179,21 +180,21 @@ export function AuthorsPage() {
             </Field>
           </>
         )}
-        <Field label="Display name">
+        <Field label="Name shown publicly on posts" hint="Example: Maya Gurung. If you leave this empty, the username is shown instead.">
           <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         </Field>
-        <Field label={editing ? "New password (optional)" : "Password"} required={!editing}>
+        <Field label={editing ? "Set a new password (optional)" : "Password for logging in"} required={!editing} hint={editing ? undefined : "Use at least 8 characters."}>
           <Input
             type="password"
             value={form.password}
             onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
           />
         </Field>
-        <Field label="Bio">
+        <Field label="Short biography shown under their posts (optional)">
           <Textarea rows={3} value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))} />
         </Field>
-        <Field label="Photo">
-          <ImageField shape="avatar" label="Add photo" value={form.image} onChange={(url) => setForm((f) => ({ ...f, image: url }))} />
+        <Field label="Profile photo (optional)">
+          <ImageField shape="avatar" label="Choose a photo from your media library" value={form.image} onChange={(url) => setForm((f) => ({ ...f, image: url }))} />
         </Field>
       </FormDialog>
     </div>
