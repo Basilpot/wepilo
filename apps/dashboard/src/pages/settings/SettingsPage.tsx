@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, Copy, KeyRound, Loader2, Power, Trash2, UserPlus, Users2 } from "lucide-react";
+import { KeyRound, Loader2, Power, Trash2, UserPlus, Users2 } from "@/components/icons";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
@@ -23,6 +23,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CopyIcon } from "@/components/ui/morphing-icons";
+import { TextMorph } from "torph/react";
 
 type StaffMember = {
   id: number;
@@ -33,40 +35,16 @@ type StaffMember = {
 };
 
 const TABS = [
-  {
-    value: "profile",
-    label: "Business profile",
-    title: "Business profile",
-    description:
-      "Your company name, logo, description and contact details. They appear on your public website, in the emails travellers receive, and at the top of this dashboard.",
-  },
-  {
-    value: "staff",
-    label: "Staff logins",
-    title: "Staff logins",
-    description:
-      "Give each person on your team their own email and password for this dashboard, and choose what each person is allowed to see and change. Never share one login between several people.",
-  },
-  {
-    value: "api-keys",
-    label: "Developer API keys",
-    title: "Developer API keys",
-    description:
-      "A secret key that lets your website load your trips, blog posts and pages from this dashboard. You only need this if you, or a web developer, are building your own website with Wepilo.",
-  },
-  {
-    value: "billing",
-    label: "Plan and billing",
-    title: "Plan and billing",
-    description:
-      "See which plan you are on, when it renews, and change or cancel it. Payments are handled securely, so we never see your card number.",
-  },
+  { value: "profile", label: "Business profile" },
+  { value: "staff", label: "Staff logins" },
+  { value: "api-keys", label: "API keys" },
+  { value: "billing", label: "Billing" },
 ] as const;
 
 const ROLES = [
-  { value: "ADMIN", label: "Administrator", hint: "Can see and change everything except the plan and billing, and the developer API keys." },
+  { value: "ADMIN", label: "Admin", hint: "Can see and change everything except the plan and billing, and the developer API keys." },
   { value: "MANAGER", label: "Manager", hint: "Can manage trips, departure dates, customer bookings and inquiries, and all website content." },
-  { value: "EDITOR", label: "Content editor", hint: "Can only write and edit blog posts, website pages and the media library. Cannot see customer bookings or business settings." },
+  { value: "EDITOR", label: "Editor", hint: "Can only write and edit blog posts, website pages and the media library. Cannot see customer bookings or business settings." },
 ];
 
 const formatDate = (iso: string) =>
@@ -93,7 +71,7 @@ function SettingsSection({
   );
 }
 
-function CopyButton({ value, label = "Copy to clipboard" }: { value: string; label?: string }) {
+function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <Button
@@ -110,8 +88,8 @@ function CopyButton({ value, label = "Copy to clipboard" }: { value: string; lab
         )
       }
     >
-      {copied ? <Check /> : <Copy />}
-      {copied ? "Copied to clipboard" : label}
+      <CopyIcon copied={copied} size={16} />
+      <TextMorph>{copied ? "Copied" : label}</TextMorph>
     </Button>
   );
 }
@@ -174,24 +152,24 @@ function ProfileTab() {
         save.mutate();
       }}
     >
-      <SettingsSection title="Name, logo and description" description="Your name and logo appear on your public website, in emails to travellers, and in this dashboard.">
-        <Field label="Your business name" htmlFor="companyName" required hint="Use the name travellers know you by.">
+      <SettingsSection title="Brand" description="Your name and logo appear on your public website, in emails to travellers, and in this dashboard.">
+        <Field label="Business name" htmlFor="companyName" required hint="Use the name travellers know you by.">
           <Input id="companyName" value={form.companyName} onChange={(e) => set("companyName", e.target.value)} />
         </Field>
-        <Field label="Your logo" hint="Use a square or wide PNG or SVG picture with a transparent background for the best result.">
-          <ImageField shape="square" label="Choose your logo from the media library" value={form.companyLogo} onChange={(url) => set("companyLogo", url)} />
+        <Field label="Logo" hint="Use a square or wide PNG or SVG picture with a transparent background for the best result.">
+          <ImageField shape="square" label="Upload logo" value={form.companyLogo} onChange={(url) => set("companyLogo", url)} />
         </Field>
-        <Field label="Short description of your business" htmlFor="desc" hint="Write a short paragraph about who you are and what you offer. It is shown in your website footer and “About” section.">
+        <Field label="About your business" htmlFor="desc" hint="Write a short paragraph about who you are and what you offer. It is shown in your website footer and “About” section.">
           <Textarea id="desc" rows={4} value={form.companyDescription} onChange={(e) => set("companyDescription", e.target.value)} />
         </Field>
       </SettingsSection>
 
-      <SettingsSection title="Contact details" description="How travellers can reach you. These are shown on your website and in booking emails.">
-        <Field label="Your website address" htmlFor="website" hint="Type the full address, starting with https://. Used for the “Open my public website” button.">
+      <SettingsSection title="Contact" description="How travellers can reach you. These are shown on your website and in booking emails.">
+        <Field label="Website" htmlFor="website" hint="Type the full address, starting with https://. Used for the “View site” button.">
           <Input id="website" type="url" value={form.website} onChange={(e) => set("website", e.target.value)} placeholder="https://www.example.com" />
         </Field>
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Business phone number" htmlFor="phone" hint="Include the country code.">
+          <Field label="Phone" htmlFor="phone" hint="Include the country code.">
             <Input id="phone" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+1 555 0100" />
           </Field>
           <Field label="Office address" htmlFor="address" hint="Street, city and country.">
@@ -207,10 +185,10 @@ function ProfileTab() {
         )}
         aria-hidden={!dirty}
       >
-        <span className="text-sm text-muted-foreground">You have changes that are not saved yet</span>
+        <span className="text-sm text-muted-foreground">You have unsaved changes</span>
         <div className="flex gap-2">
           <Button type="button" variant="ghost" onClick={() => setForm(JSON.parse(baseline) as ProfileForm)} disabled={save.isPending}>
-            Undo my changes
+            Discard
           </Button>
           <Button type="submit" disabled={save.isPending || !form.companyName.trim()}>
             {save.isPending && <Loader2 className="animate-spin" />}
@@ -267,7 +245,7 @@ function StaffTab() {
   const columns: Column<StaffMember>[] = [
     {
       key: "name",
-      header: "Team member",
+      header: "Person",
       cell: (m) => (
         <div className="flex items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
@@ -276,7 +254,7 @@ function StaffTab() {
           <div className="min-w-0">
             <p className="truncate font-medium">
               {m.name}
-              {m.id === session?.staff.id && <span className="ml-1.5 text-xs font-normal text-muted-foreground">(this is you)</span>}
+              {m.id === session?.staff.id && <span className="ml-1.5 text-xs font-normal text-muted-foreground">(you)</span>}
             </p>
             <p className="truncate text-xs text-muted-foreground">{m.email}</p>
           </div>
@@ -285,14 +263,14 @@ function StaffTab() {
     },
     {
       key: "role",
-      header: "What they are allowed to do",
+      header: "Role",
       cell: (m) =>
         m.role === "OWNER" ? (
-          <span className="text-sm">Owner (full access)</span>
+          <span className="text-sm">Owner</span>
         ) : (
           <div onClick={(e) => e.stopPropagation()}>
             <Select value={m.role} disabled={!isOwner} onValueChange={(role) => update.mutate({ id: m.id, body: { role } })}>
-              <SelectTrigger size="sm" className="w-48" aria-label={`Choose what ${m.name} is allowed to do`}>
+              <SelectTrigger size="sm" className="w-32" aria-label={`Choose what ${m.name} is allowed to do`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -308,7 +286,7 @@ function StaffTab() {
     },
     {
       key: "status",
-      header: "Can sign in?",
+      header: "Status",
       cell: (m) => <StatusBadge kind="account" status={m.isActive ? "active" : "disabled"} />,
     },
     {
@@ -319,18 +297,18 @@ function StaffTab() {
           <RowActions
             actions={[
               {
-                label: m.isActive ? "Turn off this login (they cannot sign in)" : "Turn this login back on",
+                label: m.isActive ? "Disable login" : "Enable login",
                 icon: Power,
                 onSelect: () => update.mutate({ id: m.id, body: { isActive: !m.isActive } }),
               },
               {
-                label: "Remove this login permanently",
+                label: "Remove",
                 icon: Trash2,
                 variant: "destructive",
                 separatorBefore: true,
                 onSelect: () =>
                   confirmDialog(
-                    { title: `Remove the login for ${m.name}?`, description: `${m.name} will no longer be able to sign in to this dashboard. Nothing they created is deleted. If you only want to pause their access for now, choose “Turn off this login” instead.`, confirmLabel: "Yes, remove this login", cancelLabel: "No, keep it" },
+                    { title: `Remove the login for ${m.name}?`, description: `${m.name} will no longer be able to sign in to this dashboard. Nothing they created is deleted. If you only want to pause their access for now, choose “Disable login” instead.`, confirmLabel: "Yes, remove this login" },
                     () => remove.mutate(m.id),
                   ),
               },
@@ -343,7 +321,7 @@ function StaffTab() {
   return (
     <>
       <SettingsSection
-        title="People who can sign in"
+        title="Staff logins"
         description="Everyone listed here can sign in to this dashboard with their own email and password. Only the owner can add, change or remove logins."
       >
         <div className="flex justify-end">
@@ -356,7 +334,7 @@ function StaffTab() {
               }}
             >
               <UserPlus />
-              Add a staff login
+              Add staff login
             </Button>
           )}
         </div>
@@ -366,19 +344,19 @@ function StaffTab() {
           getRowId={(m) => m.id}
           isLoading={isLoading}
           emptyIcon={Users2}
-          emptyTitle="You are the only person with a login so far"
-          emptyHint="Instead of sharing your password, select “Add a staff login” and give each teammate their own."
+          emptyTitle="Only you so far"
+          emptyHint="Instead of sharing your password, select “Add staff login” and give each teammate their own."
         />
       </SettingsSection>
-      <SettingsSection title="What each kind of login can do" description="When you add a staff login, you choose one of these. You can change it later.">
+      <SettingsSection title="Roles" description="When you add a staff login, you choose one of these. You can change it later.">
         <dl className="divide-y rounded-lg border">
           <div className="flex gap-4 px-4 py-3 text-sm">
-            <dt className="w-32 shrink-0 font-medium">Owner</dt>
-            <dd className="text-muted-foreground">Can see and change everything, including the plan and billing, developer API keys and other staff logins. There is only one owner.</dd>
+            <dt className="w-24 shrink-0 font-medium">Owner</dt>
+            <dd className="text-muted-foreground">Everything, including billing, API keys and staff.</dd>
           </div>
           {ROLES.map((r) => (
             <div key={r.value} className="flex gap-4 px-4 py-3 text-sm">
-              <dt className="w-32 shrink-0 font-medium">{r.label}</dt>
+              <dt className="w-24 shrink-0 font-medium">{r.label}</dt>
               <dd className="text-muted-foreground">{r.hint}</dd>
             </div>
           ))}
@@ -388,17 +366,17 @@ function StaffTab() {
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title="Add a staff login"
+        title="Add staff login"
         description="This person will sign in to the dashboard with the email and temporary password you set here. Send them the password privately, for example by phone or a secure message, never in a public place."
         onSubmit={() => create.mutate()}
         pending={create.isPending}
-        submitLabel="Create this staff login"
+        submitLabel="Create login"
       >
         {error && <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
-        <Field label="Their full name" htmlFor="staff-name" required>
+        <Field label="Name" htmlFor="staff-name" required>
           <Input id="staff-name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         </Field>
-        <Field label="Their email address (used to sign in)" htmlFor="staff-email" required>
+        <Field label="Email" htmlFor="staff-email" required>
           <Input id="staff-email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
         </Field>
         <Field label="Temporary password" htmlFor="staff-pass" required hint="Use at least 8 characters. Ask them to change it after their first sign in.">
@@ -410,7 +388,7 @@ function StaffTab() {
             onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
           />
         </Field>
-        <Field label="What should this person be allowed to do?">
+        <Field label="Role">
           <Select value={form.role} onValueChange={(v) => setForm((f) => ({ ...f, role: v }))}>
             <SelectTrigger className="w-full">
               <SelectValue />
@@ -464,7 +442,7 @@ function ApiKeysTab() {
   return (
     <>
       <SettingsSection
-        title="Website content key"
+        title="Content API key"
         description={
           <>
             A secret password that lets your website load your trips, blog posts and pages from this dashboard. Your developer adds it to every request in a header named{" "}
@@ -489,9 +467,9 @@ function ApiKeysTab() {
               <KeyRound className="size-4" />
             </span>
             <div>
-              <p className="text-sm font-medium">Website content key</p>
+              <p className="text-sm font-medium">Content API key</p>
               <p className="text-xs text-muted-foreground">
-                {isLoading ? "Checking whether a key exists…" : apiKeyStatus?.configured ? "Active and working" : "No key created yet"}
+                {isLoading ? "Checking…" : apiKeyStatus?.configured ? "Active" : "Not created yet"}
               </p>
             </div>
           </div>
@@ -504,16 +482,15 @@ function ApiKeysTab() {
                 onClick={() =>
                   confirmDialog(
                     {
-                      title: "Replace your API key with a new one?",
+                      title: "Replace API key?",
                       description: "A new key is created and the current one stops working immediately. Your website will not load content until you give your developer the new key.",
                       confirmLabel: "Yes, replace the key",
-                      cancelLabel: "No, keep the current key",
                     },
                     () => createApiKey.mutate(),
                   )
                 }
               >
-                Replace with a new key
+                Replace
               </Button>
               <Button
                 variant="ghost"
@@ -523,29 +500,28 @@ function ApiKeysTab() {
                 onClick={() =>
                   confirmDialog(
                     {
-                      title: "Revoke your API key?",
+                      title: "Revoke API key?",
                       description: "Your website will stop loading trips, posts and pages from this workspace until you create and install a new key.",
                       confirmLabel: "Yes, revoke the key",
-                      cancelLabel: "No, keep the key",
                     },
                     () => revokeApiKey.mutate(),
                   )
                 }
               >
-                Revoke this key
+                Revoke
               </Button>
             </div>
           ) : (
             <Button size="sm" onClick={() => createApiKey.mutate()} disabled={createApiKey.isPending || isLoading || inTrial}>
               {createApiKey.isPending && <Loader2 className="animate-spin" />}
-              Create my API key
+              Create key
             </Button>
           )}
         </div>
         {inTrial && (
           <InfoCard
-            title="You need a paid plan to create an API key"
-            info="Your free trial lets you use this dashboard, but not connect your own website. Choose a plan under “Plan and billing” to unlock API keys."
+            title="API access starts with a paid plan"
+            info="Your free trial lets you use this dashboard, but not connect your own website. Choose a plan under “Billing” to unlock API keys."
           />
         )}
       </SettingsSection>
@@ -565,18 +541,18 @@ function BillingTab() {
 
   const access = data?.access;
   const sub = data?.subscription;
-  const planName = access ? PLAN_NAMES[access.plan] : "No plan selected";
+  const planName = access ? PLAN_NAMES[access.plan] : "—";
 
   let summary = "";
   if (access?.managed) {
     summary = access.endsAt
       ? `Your plan was arranged directly with the Wepilo team and runs until ${formatDate(access.endsAt)}.`
-      : "Your plan was arranged directly with the Wepilo team and has no end date.";
+      : "Arranged with the Wepilo team · no end date";
   } else if (access && sub) {
     if (access.state === "TRIAL") {
       summary = `Your free trial ends on ${access.endsAt ? formatDate(access.endsAt) : "a date soon"}. You will not be charged automatically. Choose a plan below before then to keep access.`;
     } else if (access.state === "PAST_DUE") {
-      summary = "Your last payment did not go through. Select “Manage payment method and invoices” to update your card, or your plan may be cancelled.";
+      summary = "Your last payment did not go through. Select “Manage billing” to update your card, or your plan may be cancelled.";
     } else if (sub.cancelAtPeriodEnd && sub.currentPeriodEnd) {
       summary = `You cancelled this plan. You keep full access until ${formatDate(sub.currentPeriodEnd)}, after which your account locks.`;
     } else if (sub.currentPeriodEnd) {
@@ -586,7 +562,7 @@ function BillingTab() {
 
   return (
     <>
-      <SettingsSection title="Your current plan" description="Your plan decides how many trips, staff logins and files you can have.">
+      <SettingsSection title="Current plan" description="Your plan decides how many trips, staff logins and files you can have.">
         {isLoading || !data ? (
           <Skeleton className="h-20 w-full" />
         ) : (
@@ -601,7 +577,7 @@ function BillingTab() {
             {sub?.hasPaidSubscription && canManage && (
               <Button variant="outline" onClick={() => portal.mutate()} disabled={portal.isPending}>
                 {portal.isPending && <Loader2 className="animate-spin" />}
-                Manage payment method and invoices
+                Manage billing
               </Button>
             )}
           </div>
@@ -609,18 +585,18 @@ function BillingTab() {
       </SettingsSection>
 
       {access?.managed ? (
-        <SettingsSection title="How to change your plan" description="Your plan was set up directly with the Wepilo team, so it cannot be changed here.">
+        <SettingsSection title="Changing your plan" description="Your plan was set up directly with the Wepilo team, so it cannot be changed here.">
           <p className="text-sm text-muted-foreground">
             To change your plan, limits or end date,{" "}
             <Link className="font-medium text-foreground underline underline-offset-4" to="/support">
-              send us a message on the “Contact Wepilo support” page
+              contact us through Support
             </Link>
             .
           </p>
         </SettingsSection>
       ) : (
       <SettingsSection
-        title={sub?.hasPaidSubscription ? "Switch to a different plan" : "Choose a plan"}
+        title={sub?.hasPaidSubscription ? "Change plan" : "Choose a plan"}
         description={
           sub?.hasPaidSubscription
             ? "If you switch plans, you are charged or credited only the difference for the rest of the current billing period, starting today."
@@ -642,7 +618,7 @@ function BillingTab() {
           />
         )}
         <p className="text-sm text-muted-foreground">
-          Need more than 25 staff logins or special terms? <Link className="font-medium text-foreground underline underline-offset-4" to="/support">Contact us about an Enterprise plan</Link>.
+          Need more than 25 staff or custom terms? <Link className="font-medium text-foreground underline underline-offset-4" to="/support">Talk to us about Enterprise</Link>.
         </p>
       </SettingsSection>
       )}
@@ -656,11 +632,10 @@ export function SettingsPage() {
   const segments = location.pathname.split("/").filter(Boolean);
   const active = TABS.some((t) => t.value === segments[1]) ? segments[1] : "profile";
 
-  const current = TABS.find((t) => t.value === active) ?? TABS[0];
 
   return (
     <div>
-      <PageHeader title={current.title} description={current.description} />
+      <PageHeader title="Settings" description="Your business details, who can sign in, website access and your plan. Pick a tab to change one of them." />
       <Tabs value={active} onValueChange={(value) => navigate(value === "profile" ? "/settings" : `/settings/${value}`)}>
         <TabsList variant="line" className="w-full justify-start border-b">
           {TABS.map((tab) => (

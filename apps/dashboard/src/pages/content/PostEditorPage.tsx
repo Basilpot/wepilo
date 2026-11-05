@@ -153,7 +153,7 @@ export function PostEditorPage() {
       setPublished(nextPublished);
       void queryClient.invalidateQueries({ queryKey: ["posts"] });
       toast.success(
-        intent === "publish" ? (published ? "Your changes were saved and are live on your website." : "Your post is published and visible on your website.") : intent === "unpublish" ? "The post is now hidden from your website and saved as a draft." : "Your draft was saved. It is not visible on your website yet.",
+        intent === "publish" ? (published ? "Changes saved" : "Post published") : intent === "unpublish" ? "Post moved to drafts" : "Draft saved",
       );
       if (isNew) navigate(`/posts/${res.post.id}`, { replace: true });
     } catch (err) {
@@ -189,7 +189,7 @@ export function PostEditorPage() {
     return (
       <div role="alert" className="rounded-lg border p-8 text-center">
         <p className="font-medium">We could not open this post.</p>
-        <p className="mt-1 text-sm text-muted-foreground">It may have been deleted, or the link may be wrong. Go back to “Blog posts” and choose it from the list.</p>
+        <p className="mt-1 text-sm text-muted-foreground">It may have been deleted.</p>
       </div>
     );
   }
@@ -201,7 +201,7 @@ export function PostEditorPage() {
   return (
     <div>
       <EditorHeader
-        title={form.title.trim() || (isNew ? "Write a new blog post" : "Untitled post (no title yet)")}
+        title={form.title.trim() || (isNew ? "New post" : "Untitled post")}
         badge={<StatusBadge kind="content" status={published ? "published" : "draft"} />}
         dirty={dirty}
         subtitle={
@@ -241,15 +241,15 @@ export function PostEditorPage() {
         </div>
 
         <aside className="lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto lg:border-l lg:pl-8">
-          <SidebarSection title="Post details" description="Choose what kind of post this is, who wrote it, and how it is grouped.">
-            <Field label="What kind of post is this?">
+          <SidebarSection title="Post settings" description="Choose what kind of post this is, who wrote it, and how it is grouped.">
+            <Field label="Type">
               <Select value={form.postType} onValueChange={(v) => set("postType", v as FormState["postType"])}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="BLOG">Blog post (news, stories, tips)</SelectItem>
-                  <SelectItem value="TRAVEL_GUIDE">Travel guide (practical destination advice)</SelectItem>
+                  <SelectItem value="BLOG">Blog post</SelectItem>
+                  <SelectItem value="TRAVEL_GUIDE">Travel guide</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
@@ -259,7 +259,7 @@ export function PostEditorPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No category chosen</SelectItem>
+                  <SelectItem value="none">No category</SelectItem>
                   {categories?.data.map((c) => (
                     <SelectItem key={c.id} value={String(c.id)}>
                       {c.name ?? `#${c.id}`}
@@ -268,13 +268,13 @@ export function PostEditorPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Written by">
+            <Field label="Author">
               <Select value={form.writerId || "none"} onValueChange={(v) => set("writerId", v === "none" ? "" : v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No author chosen</SelectItem>
+                  <SelectItem value="none">No author</SelectItem>
                   {writers?.data.map((w) => (
                     <SelectItem key={w.id} value={String(w.id)}>
                       {w.name ?? w.username}
@@ -283,7 +283,7 @@ export function PostEditorPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Tags (optional)" hint="Short keywords such as “trekking” or “visa”. Type a tag and press Enter or a comma to add it.">
+            <Field label="Tags" hint="Short keywords such as “trekking” or “visa”. Type a tag and press Enter or a comma to add it.">
               <TagInput value={form.tags} onChange={(tags) => set("tags", tags)} />
             </Field>
           </SidebarSection>
@@ -292,7 +292,7 @@ export function PostEditorPage() {
             <ImageField value={form.coverImage} onChange={(url) => set("coverImage", url)} />
           </SidebarSection>
 
-          <SidebarSection title="How this post appears on Google" description="This preview shows how your post may look in search results. Good titles and descriptions bring more visitors.">
+          <SidebarSection title="Search engine listing" description="This preview shows how your post may look in search results. Good titles and descriptions bring more visitors.">
             <SerpPreview
               title={form.metaTitle || form.title}
               url={`${urlPrefix}${form.slug || "…"}`}
@@ -301,7 +301,7 @@ export function PostEditorPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
                 <label htmlFor="meta-title" className="font-medium">
-                  Search result title (about 60 characters)
+                  Meta title
                 </label>
                 <span className="text-xs">
                   <CharCount value={form.metaTitle} max={60} />
@@ -312,7 +312,7 @@ export function PostEditorPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
                 <label htmlFor="meta-desc" className="font-medium">
-                  Search result description (about 160 characters)
+                  Meta description
                 </label>
                 <span className="text-xs">
                   <CharCount value={form.metaDescription} max={160} />
@@ -326,7 +326,7 @@ export function PostEditorPage() {
                 placeholder="Write one or two sentences that make someone want to click and read your post."
               />
             </div>
-            <Field label="Original source link (optional, advanced)" hint="Only fill this in if the same article was first published on another website. Paste that website’s full address.">
+            <Field label="Canonical URL" hint="Only fill this in if the same article was first published on another website. Paste that website’s full address.">
               <Input value={form.canonicalUrl} onChange={(e) => set("canonicalUrl", e.target.value)} placeholder="https://…" />
             </Field>
           </SidebarSection>

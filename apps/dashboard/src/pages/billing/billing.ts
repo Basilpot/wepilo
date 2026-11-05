@@ -94,18 +94,18 @@ export function formatPrice(price: Price, interval?: BillingInterval) {
     currency: price.currency,
     maximumFractionDigits: price.amount % 1 === 0 ? 0 : 2,
   }).format(price.amount);
-  return interval ? `${amount} per ${interval === "annual" ? "year" : "month"}` : amount;
+  return interval ? `${amount}/${interval === "annual" ? "yr" : "mo"}` : amount;
 }
 
 export function planFeatures(plan: PlanInfo, opts: { trial?: boolean } = {}) {
   const l = plan.limits;
-  const gb = (b: number | null) => (b === null ? "Unlimited storage for photos and files" : `${Math.round(b / 1024 ** 3)} GB of storage for photos and files`);
+  const gb = (b: number | null) => (b === null ? "Unlimited storage" : `${Math.round(b / 1024 ** 3)} GB media storage`);
   return [
-    l.trips === null ? "Unlimited trips" : `Up to ${l.trips} trips you can sell`,
-    l.posts === null ? "Unlimited blog posts and website pages" : `Up to ${l.posts} blog posts`,
-    l.staff === null ? "Unlimited staff logins" : `Up to ${l.staff} staff login${l.staff === 1 ? "" : "s"} for your team`,
+    l.trips === null ? "Unlimited trips" : `Up to ${l.trips} trips`,
+    l.posts === null ? "Unlimited posts and pages" : `${l.posts} posts`,
+    l.staff === null ? "Unlimited staff logins" : `${l.staff} staff login${l.staff === 1 ? "" : "s"}`,
     gb(l.storageBytes),
-    opts.trial ? "Connect your own website (needs a paid plan)" : "Connect your own website with a developer API key",
+    opts.trial ? "Website API unlocks with a paid plan" : "Website API access",
   ];
 }
 

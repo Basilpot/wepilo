@@ -1,4 +1,4 @@
-import { Info, TriangleAlert, CircleAlert, CheckCircle2 } from "lucide-react";
+import { Info, TriangleAlert, CircleAlert, CheckCircle2 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 

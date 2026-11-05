@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { ArrowRight, Check, ExternalLink, Inbox, Plus, Star } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check, ExternalLink, Inbox, Plus, Receipt, Star } from "@/components/icons";
+import { TextMorph } from "torph/react";
 import { api } from "@/lib/api";
 import { useSession } from "@/App";
 import { PageHeader } from "@/components/PageHeader";
@@ -45,11 +46,11 @@ const shortDate = (iso: string) =>
 function relative(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.round(diff / 60_000);
-  if (mins < 60) return `${Math.max(1, mins)} min ago`;
+  if (mins < 60) return `${Math.max(1, mins)}m ago`;
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} hr ago`;
+  if (hours < 24) return `${hours}h ago`;
   const days = Math.round(hours / 24);
-  return days < 30 ? `${days} days ago` : shortDate(iso);
+  return days < 30 ? `${days}d ago` : shortDate(iso);
 }
 
 function greeting() {
@@ -66,32 +67,32 @@ function SetupChecklist({ data }: { data: Analytics }) {
   const tenant = session?.tenant;
   const steps = [
     {
-      title: "Step 1: Finish your business profile",
+      title: "Complete your business profile",
       hint: "Add your company description, phone number and address. Travellers see these on your website and in the emails you send them.",
       done: Boolean(tenant?.companyDescription && tenant?.phone),
       href: "/settings",
-      cta: "Open business profile",
+      cta: "Edit profile",
     },
     {
-      title: "Step 2: Create your first trip",
+      title: "Add your first trip",
       hint: "Enter the trip name, day-by-day itinerary, price and photos. You can save it as a draft and come back to finish it later.",
       done: data.trips.total > 0,
       href: "/trips/new",
-      cta: "Create a trip",
+      cta: "Add trip",
     },
     {
-      title: "Step 3: Publish a trip so travellers can see it",
+      title: "Publish a trip",
       hint: "Draft trips are hidden from your website. Open a trip and publish it to make it visible to the public.",
       done: data.trips.published > 0,
       href: "/trips",
-      cta: "Open the trips list",
+      cta: "Go to trips",
     },
     {
-      title: "Step 4: Add departure dates and seats",
+      title: "Add departure dates",
       hint: "A departure is a specific start date with a set number of seats and a price. Travellers can only book online once a trip has at least one upcoming departure.",
       done: data.upcomingDepartures.length > 0,
       href: "/departures",
-      cta: "Add departure dates",
+      cta: "Add dates",
     },
   ];
   const completed = steps.filter((s) => s.done).length;
@@ -99,12 +100,12 @@ function SetupChecklist({ data }: { data: Analytics }) {
   const next = steps.find((s) => !s.done);
 
   return (
-    <section className="rounded-lg border bg-card">
+    <section className="rounded-2xl border bg-card">
       <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-4 pb-3">
         <div>
-          <h2 className="text-sm font-semibold">Finish these 4 steps to start receiving customers</h2>
+          <h2 className="text-sm font-semibold">Get your site taking inquiries</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {completed} of {steps.length} setup steps completed
+            {completed} of {steps.length} done
           </p>
         </div>
         <div
@@ -149,10 +150,87 @@ function SetupChecklist({ data }: { data: Analytics }) {
   );
 }
 
+/** What needs a person today: unanswered leads, unconfirmed bookings, the next departure. */
+function TodayStrip({ data, isLoading }: { data: Analytics | undefined; isLoading: boolean }) {
+  const next = data?.upcomingDepartures[0];
+  const items = [
+    {
+      key: "inquiries",
+      label: "Inquiries to answer",
+      value: data?.inquiriesNew ?? 0,
+      hint: (data?.inquiriesNew ?? 0) > 0 ? "Travellers are waiting for your reply" : "You're all caught up",
+      to: "/inquiries",
+      icon: Inbox,
+      urgent: (data?.inquiriesNew ?? 0) > 0,
+    },
+    {
+      key: "bookings",
+      label: "Bookings to confirm",
+      value: data?.bookings.pending ?? 0,
+      hint: (data?.bookings.pending ?? 0) > 0 ? "Confirm so travellers know their seat is safe" : "Nothing waiting",
+      to: "/bookings",
+      icon: Receipt,
+      urgent: (data?.bookings.pending ?? 0) > 0,
+    },
+    {
+      key: "departure",
+      label: "Next departure",
+      value: next ? new Date(next.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "None",
+      hint: next
+        ? `${next.activity.title ?? "Untitled trip"} · ${next.capacity - next.availableSpots} of ${next.capacity} seats booked`
+        : "Add dates so travellers can book",
+      to: "/departures",
+      icon: CalendarCheck,
+      urgent: false,
+    },
+  ];
+  return (
+    <section aria-label="Today" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {items.map((item) => (
+        <Link
+          key={item.key}
+          to={item.to}
+          className={cn(
+            "group relative flex min-w-0 items-start gap-3.5 rounded-2xl border bg-card p-4 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_12px_28px_-18px_rgb(0_0_0/0.3)] motion-reduce:hover:translate-y-0",
+            item.urgent && "border-attention/50 bg-attention/[0.06]",
+          )}
+        >
+          <span
+            className={cn(
+              "relative flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary",
+              item.urgent && "bg-attention/20 text-attention-foreground",
+            )}
+          >
+            <item.icon className="size-[18px]" />
+            {item.urgent && (
+              <span aria-hidden className="absolute -top-0.5 -right-0.5 flex size-2.5">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-attention opacity-60 motion-reduce:animate-none" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-attention" />
+              </span>
+            )}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium text-muted-foreground">{item.label}</span>
+            {isLoading ? (
+              <Skeleton className="my-1 h-7 w-12" />
+            ) : (
+              <span className="block text-2xl font-semibold tracking-tight tabular-nums">
+                <TextMorph>{String(item.value)}</TextMorph>
+              </span>
+            )}
+            <span className="block truncate text-xs text-muted-foreground">{isLoading ? " " : item.hint}</span>
+          </span>
+          <ArrowRight className="mt-1 size-4 shrink-0 -translate-x-1 text-muted-foreground opacity-0 transition-[opacity,translate] duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+        </Link>
+      ))}
+    </section>
+  );
+}
+
 function Panel({
   title,
   href,
-  linkLabel = "See everything",
+  linkLabel = "View all",
   children,
   className,
 }: {
@@ -163,7 +241,7 @@ function Panel({
   className?: string;
 }) {
   return (
-    <section className={cn("flex min-w-0 flex-col rounded-lg border bg-card", className)}>
+    <section className={cn("flex min-w-0 flex-col rounded-2xl border bg-card", className)}>
       <header className="flex h-12 items-center justify-between border-b px-5">
         <h2 className="text-sm font-semibold">{title}</h2>
         {href && (
@@ -219,10 +297,10 @@ export function HomePage() {
   const website = session?.tenant?.website;
 
   const stats = [
-    { label: "Trips visible on your website", value: data?.trips.published, sub: data ? `${data.trips.drafts} more ${data.trips.drafts === 1 ? "trip is a hidden draft" : "trips are hidden drafts"}` : "", to: "/trips" },
-    { label: "Confirmed customer bookings", value: data?.bookings.confirmed, sub: data ? `${data.bookings.pending} waiting for your confirmation` : "", to: "/bookings" },
-    { label: "New customer inquiries", value: data?.inquiriesNew, sub: "Travellers waiting for your reply", to: "/inquiries" },
-    { label: "Total value of confirmed bookings", value: data ? money(data.revenue) : undefined, sub: "Since you started, all time", to: "/bookings" },
+    { label: "Live trips", value: data?.trips.published, sub: data ? `${data.trips.drafts} draft${data.trips.drafts === 1 ? "" : "s"}` : "", to: "/trips" },
+    { label: "Confirmed bookings", value: data?.bookings.confirmed, sub: data ? `${data.bookings.pending} pending` : "", to: "/bookings" },
+    { label: "New inquiries", value: data?.inquiriesNew, sub: "Awaiting a reply", to: "/inquiries" },
+    { label: "Confirmed value", value: data ? money(data.revenue) : undefined, sub: "All time", to: "/bookings" },
   ];
 
   // The API only returns months that had bookings; plot all twelve.
@@ -244,22 +322,22 @@ export function HomePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={session ? (firstName ? `${greeting()}, ${firstName}` : greeting()) : "Business overview"}
-        description="A summary of your trips, customer bookings and inquiries. Click any number or list below to open the full page behind it."
+        title={session ? (firstName ? `${greeting()}, ${firstName}` : greeting()) : "Dashboard"}
+        description="Start with what needs you today, then see how your trips and website are doing. Click any number or list to open the full page behind it."
         action={
           <div className="flex gap-2">
             {website && (
               <Button variant="outline" asChild>
                 <a href={website} target="_blank" rel="noopener noreferrer">
                   <ExternalLink />
-                  Open my public website
+                  Open site
                 </a>
               </Button>
             )}
             <Button asChild>
               <Link to="/trips/new">
                 <Plus />
-                Create a new trip
+                New trip
               </Link>
             </Button>
           </div>
@@ -267,18 +345,20 @@ export function HomePage() {
       />
 
       {isError ? (
-        <div role="alert" className="rounded-lg border p-8 text-center">
+        <div role="alert" className="rounded-2xl border p-8 text-center">
           <p className="font-medium">We could not load your business overview.</p>
-          <p className="mt-1 text-sm text-muted-foreground">Check your internet connection, then select "Try loading again". If it keeps failing, contact Wepilo support.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Check your internet connection, then select “Try again”. If it keeps failing, contact Wepilo support.</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => void refetch()}>
-            Try loading again
+            Try again
           </Button>
         </div>
       ) : null}
 
       {data && <SetupChecklist data={data} />}
 
-      <div className="grid grid-cols-2 overflow-hidden rounded-lg border bg-card lg:grid-cols-4">
+      <TodayStrip data={data} isLoading={isLoading} />
+
+      <div className="grid grid-cols-2 overflow-hidden rounded-2xl border bg-card lg:grid-cols-4">
         {stats.map((stat, i) => (
           <Link
             key={stat.label}
@@ -292,12 +372,14 @@ export function HomePage() {
           >
             <span className="flex items-center justify-between text-sm text-muted-foreground">
               {stat.label}
-              <ArrowRight className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
+              <ArrowRight className="size-3.5 -translate-x-1 opacity-0 transition-[opacity,translate] duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
             </span>
             {isLoading ? (
               <Skeleton className="my-1 h-7 w-16" />
             ) : (
-              <span className="text-2xl font-semibold tracking-tight tabular-nums">{stat.value ?? 0}</span>
+              <span className="text-2xl font-semibold tracking-tight tabular-nums">
+                <TextMorph>{String(stat.value ?? 0)}</TextMorph>
+              </span>
             )}
             <span className="text-xs text-muted-foreground">{isLoading ? " " : stat.sub}</span>
           </Link>
@@ -305,7 +387,7 @@ export function HomePage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <Panel title="Customer bookings over the last 12 months" href="/bookings" className="lg:col-span-3">
+        <Panel title="Bookings, last 12 months" href="/bookings" className="lg:col-span-3">
           {isLoading ? (
             <div className="p-5">
               <Skeleton className="h-60 w-full" />
@@ -339,7 +421,7 @@ export function HomePage() {
           )}
         </Panel>
 
-        <Panel title="Latest customer inquiries" href="/inquiries" className="lg:col-span-2">
+        <Panel title="Recent inquiries" href="/inquiries" className="lg:col-span-2">
           {inquiries.isLoading ? (
             <ListSkeleton />
           ) : inquiries.data?.data.length ? (
@@ -372,7 +454,7 @@ export function HomePage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="Next departures on your calendar" href="/departures">
+        <Panel title="Upcoming departures" href="/departures">
           {isLoading ? (
             <ListSkeleton />
           ) : data?.upcomingDepartures.length ? (
@@ -389,13 +471,13 @@ export function HomePage() {
                       <span className="mt-0.5 text-base font-semibold tabular-nums">{new Date(d.startDate).getDate()}</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{d.activity.title ?? "Untitled trip (no title yet)"}</p>
+                      <p className="truncate text-sm font-medium">{d.activity.title ?? "Untitled trip"}</p>
                       <div className="mt-1.5 flex items-center gap-2">
                         <div className="h-1 w-24 overflow-hidden rounded-full bg-muted">
-                          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                          <div className="animate-seat-fill h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
                         </div>
                         <span className="text-xs text-muted-foreground tabular-nums">
-                          {booked} of {d.capacity} seats booked
+                          {booked}/{d.capacity} booked
                         </span>
                       </div>
                     </div>
@@ -406,15 +488,15 @@ export function HomePage() {
             </ul>
           ) : (
             <PanelEmpty>
-              You have no upcoming departure dates, so travellers cannot book yet.{" "}
+              No upcoming departures.{" "}
               <Link to="/departures" className="font-medium text-foreground underline underline-offset-4">
-                Add a departure date
+                Add dates
               </Link>
             </PanelEmpty>
           )}
         </Panel>
 
-        <Panel title="Your most popular trips" href="/trips">
+        <Panel title="Top trips" href="/trips">
           {isLoading ? (
             <ListSkeleton />
           ) : data?.topActivities.length ? (
@@ -424,8 +506,8 @@ export function HomePage() {
                   <Link to={`/trips/${t.id}`} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/40">
                     <span className="w-4 text-sm text-muted-foreground tabular-nums">{i + 1}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{t.title ?? "Untitled trip (no title yet)"}</p>
-                      <p className="text-xs text-muted-foreground tabular-nums">{t.views.toLocaleString()} page views on your website</p>
+                      <p className="truncate text-sm font-medium">{t.title ?? "Untitled"}</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">{t.views.toLocaleString()} views</p>
                     </div>
                     {t.averageRating > 0 && (
                       <span className="inline-flex items-center gap-1 text-sm tabular-nums">

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send } from "@/components/icons";
 import { api } from "@/lib/api";
 import { StatusBadge } from "@/components/status-badge";
 import { PageHeader } from "@/components/PageHeader";
@@ -87,7 +87,7 @@ export function SupportTicketPage() {
         action={
           <Button variant="outline" onClick={() => navigate("/support")}>
             <ArrowLeft />
-            Back to all support requests
+            Back
           </Button>
         }
       />
@@ -95,16 +95,16 @@ export function SupportTicketPage() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <StatusBadge kind="ticket" status={ticket.status} />
         <StatusBadge kind="priority" status={ticket.priority} />
-        {ticket.callbackNumber && <span className="text-sm text-muted-foreground">Phone number for a call back: {ticket.callbackNumber}</span>}
+        {ticket.callbackNumber && <span className="text-sm text-muted-foreground">Callback: {ticket.callbackNumber}</span>}
         <Select value={ticket.status} onValueChange={(status) => setStatus.mutate(status)}>
-          <SelectTrigger className="ml-auto h-8 w-56" aria-label="Change the status of this request">
+          <SelectTrigger className="ml-auto h-8 w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="OPEN">Open, waiting for Wepilo</SelectItem>
-            <SelectItem value="IN_PROGRESS">Wepilo is working on it</SelectItem>
-            <SelectItem value="RESOLVED">Resolved, problem fixed</SelectItem>
-            <SelectItem value="CLOSED">Closed, nothing more to do</SelectItem>
+            <SelectItem value="OPEN">Open</SelectItem>
+            <SelectItem value="IN_PROGRESS">In progress</SelectItem>
+            <SelectItem value="RESOLVED">Resolved</SelectItem>
+            <SelectItem value="CLOSED">Closed</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -141,12 +141,12 @@ export function SupportTicketPage() {
 
       <Card>
         <CardContent className="space-y-3 pt-6">
-          <Field label="Write a reply to the Wepilo team">
+          <Field label="Reply">
             <Textarea rows={4} value={reply} onChange={(e) => setReply(e.target.value)} />
           </Field>
           <Button onClick={() => addReply.mutate()} disabled={addReply.isPending || !reply.trim()}>
             <Send />
-            {addReply.isPending ? "Sending your reply…" : "Send my reply"}
+            {addReply.isPending ? "Sending…" : "Send reply"}
           </Button>
         </CardContent>
       </Card>

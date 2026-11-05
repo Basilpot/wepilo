@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Loader2, PackageOpen } from "lucide-react";
+import { Loader2, PackageOpen } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { InstructionTooltip } from "@/components/atoms";
@@ -11,7 +11,7 @@ export function FormDialog({
   description,
   children,
   onSubmit,
-  submitLabel = "Save changes",
+  submitLabel = "Save",
   pending = false,
 }: {
   open: boolean;
@@ -42,11 +42,11 @@ export function FormDialog({
           </div>
           <SheetFooter className="flex-row justify-end gap-2 border-t bg-muted/30 px-6 py-3">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-              Cancel and close without saving
+              Cancel
             </Button>
             <Button type="submit" disabled={pending} className="min-w-24">
               {pending && <Loader2 className="animate-spin" />}
-              {pending ? "Saving, please wait…" : submitLabel}
+              {pending ? "Saving…" : submitLabel}
             </Button>
           </SheetFooter>
         </form>
@@ -102,8 +102,8 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center rounded-lg border border-dashed px-6 py-10 text-center", className)}>
-      <span className="flex size-10 items-center justify-center rounded-lg border bg-background text-muted-foreground shadow-xs">
+    <div className={cn("flex flex-col items-center rounded-2xl border border-dashed px-6 py-10 text-center", className)}>
+      <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         <Icon className="size-5" />
       </span>
       <p className="mt-3 text-sm font-medium">{title}</p>

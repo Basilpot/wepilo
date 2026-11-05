@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, ShieldCheck } from "lucide-react";
+import { LogOut, ShieldCheck } from "@/components/icons";
 import { api, ApiClientError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -72,21 +72,21 @@ function AdminShell({ admin, children }: { admin: PlatformAdmin; children: React
               <ShieldCheck className="size-4" />
             </span>
             <span className="text-sm font-semibold tracking-tight">Wepilo</span>
-            <span className="hidden text-sm text-muted-foreground sm:inline">Platform admin console</span>
+            <span className="hidden text-sm text-muted-foreground sm:inline">Platform</span>
           </Link>
           <nav className="flex items-center gap-1">
             <NavLink to="/admin/workspaces" className={navClass}>
-              Customer workspaces
+              Workspaces
             </NavLink>
             <NavLink to="/admin/admins" className={navClass}>
-              Wepilo admins
+              Admins
             </NavLink>
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <span className="hidden text-sm text-muted-foreground md:inline">{admin.email}</span>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut />
-              <span className="sr-only sm:not-sr-only">Sign out of the admin console</span>
+              <span className="sr-only sm:not-sr-only">Sign out</span>
             </Button>
           </div>
         </div>
@@ -109,7 +109,7 @@ function AdminLoginPage() {
       await queryClient.refetchQueries({ queryKey: ["platform", "me"] });
       navigate("/admin/workspaces", { replace: true });
     },
-    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Something went wrong. Please try again in a moment."),
+    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Something went wrong"),
   });
 
   return (
@@ -132,11 +132,11 @@ function AdminLoginPage() {
           }}
         >
           <div className="space-y-2">
-            <Label htmlFor="admin-email">Your admin email address</Label>
+            <Label htmlFor="admin-email">Email</Label>
             <Input id="admin-email" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="admin-password">Your password</Label>
+            <Label htmlFor="admin-password">Password</Label>
             <Input
               id="admin-password"
               type="password"
@@ -148,7 +148,7 @@ function AdminLoginPage() {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={login.isPending}>
-            {login.isPending ? "Signing you in…" : "Sign in to the admin console"}
+            {login.isPending ? "Signing in…" : "Sign in"}
           </Button>
         </form>
       </div>

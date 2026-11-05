@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PenLine, Plus, Trash2, MapPinHouse } from "lucide-react";
+import { PenLine, Plus, Trash2, MapPinHouse } from "@/components/icons";
 import { api } from "@/lib/api";
 import { ImageField } from "@/components/image-field";
 import { PageHeader } from "@/components/PageHeader";
@@ -42,8 +42,8 @@ const TABS = [
   },
   {
     key: "cities",
-    label: "Cities and towns",
-    singular: "city or town",
+    label: "Cities",
+    singular: "city",
     path: "/cities",
     intro: "Cities and towns are the specific places where trips start, end or stop, for example Kathmandu or Cusco.",
   },
@@ -124,17 +124,17 @@ function TaxonomyTab({
   const columns: Column<TaxonomyItem>[] = [
     {
       key: "name",
-      header: "Name shown to travellers",
+      header: "Name",
       cell: (item) => (
         <div className="flex items-center gap-2">
           <span className="font-medium">{item.name ?? item.handle}</span>
-          {item.showOnHomepage && <Badge variant="secondary">Shown on homepage</Badge>}
+          {item.showOnHomepage && <Badge variant="secondary">Homepage</Badge>}
         </div>
       ),
     },
     {
       key: "handle",
-      header: "Web address ending (URL slug)",
+      header: "Handle",
       cell: (item) => <span className="font-mono text-xs text-muted-foreground">{item.handle}</span>,
     },
     {
@@ -144,14 +144,14 @@ function TaxonomyTab({
       cell: (item) => (
         <RowActions
           actions={[
-            { label: `Edit this ${singular}`, icon: PenLine, onSelect: () => openEdit(item) },
+            { label: `Edit ${singular}`, icon: PenLine, onSelect: () => openEdit(item) },
             {
-              label: `Delete this ${singular}`,
+              label: "Delete",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
               onSelect: () =>
-                confirmDialog({ title: `Delete "${item.name ?? item.handle}"?`, description: `This ${singular} will be removed from your website. Trips that use it will lose this label until you pick a new one.`, confirmLabel: `Yes, delete this ${singular}`, cancelLabel: "No, keep it" }, () => remove.mutate(item.id)),
+                confirmDialog({ title: `Delete "${item.name ?? item.handle}"?`, description: `This ${singular} will be removed from your website. Trips that use it will lose this label until you pick a new one.` }, () => remove.mutate(item.id)),
             },
           ]}
         />
@@ -168,8 +168,8 @@ function TaxonomyTab({
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={MapPinHouse}
-        emptyTitle={`You have not added any ${label.toLowerCase()} yet`}
-        emptyHint={`${intro} Select “Add a new ${singular}” to create the first one.`}
+        emptyTitle={`No ${label.toLowerCase()} yet`}
+        emptyHint={`${intro} Select “New ${singular}” to create the first one.`}
         maxHeight="420px"
         toolbar={
           <Button
@@ -181,7 +181,7 @@ function TaxonomyTab({
             }}
           >
             <Plus />
-            Add a new {singular}
+            New {singular}
           </Button>
         }
       />
@@ -189,20 +189,19 @@ function TaxonomyTab({
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? `Edit this ${singular}` : `Add a new ${singular}`}
+        title={editing ? `Edit ${singular}` : `New ${singular}`}
         description={intro}
-        submitLabel={editing ? `Save changes to this ${singular}` : `Add this ${singular}`}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label={`Name of the ${singular}`} required>
+        <Field label="Name" required>
           <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         </Field>
-        <Field label="Web address ending (optional)" hint="This becomes part of the page link on your website, for example kathmandu. Leave it empty and we create it automatically from the name.">
+        <Field label="Handle" hint="This becomes part of the page link on your website, for example kathmandu. Leave it empty and we create it automatically from the name.">
           <Input value={form.handle} onChange={(e) => setForm((f) => ({ ...f, handle: e.target.value }))} />
         </Field>
-        <Field label="Picture shown on your website (optional)">
+        <Field label="Image">
           <ImageField value={form.image} onChange={(url) => setForm((f) => ({ ...f, image: url }))} />
         </Field>
         <label className="flex items-center gap-2 text-sm">
@@ -210,7 +209,7 @@ function TaxonomyTab({
             checked={form.showOnHomepage}
             onCheckedChange={(v) => setForm((f) => ({ ...f, showOnHomepage: v === true }))}
           />
-          Show this on my website homepage
+          Show on homepage
         </label>
       </FormDialog>
     </>

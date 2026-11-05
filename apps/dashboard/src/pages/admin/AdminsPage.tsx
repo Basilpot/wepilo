@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, UserCheck, UserX } from "lucide-react";
+import { Plus, UserCheck, UserX } from "@/components/icons";
 import { api, ApiClientError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
@@ -42,7 +42,7 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
   const columns: Column<PlatformAdmin>[] = [
     {
       key: "name",
-      header: "Admin name and email",
+      header: "Admin",
       cell: (a) => (
         <div>
           <p className="font-medium">
@@ -53,10 +53,10 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
         </div>
       ),
     },
-    { key: "status", header: "Can sign in?", cell: (a) => <StatusBadge kind="account" status={a.isActive ? "active" : "disabled"} /> },
+    { key: "status", header: "Status", cell: (a) => <StatusBadge kind="account" status={a.isActive ? "active" : "disabled"} /> },
     {
       key: "last",
-      header: "Last time they signed in",
+      header: "Last sign-in",
       className: "text-muted-foreground",
       cell: (a) => (a.lastLoginAt ? formatDate(a.lastLoginAt) : "Never"),
     },
@@ -69,7 +69,7 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
           <RowActions
             actions={[
               {
-                label: a.isActive ? "Turn off this admin’s access" : "Turn this admin’s access back on",
+                label: a.isActive ? "Deactivate" : "Reactivate",
                 icon: a.isActive ? UserX : UserCheck,
                 onSelect: () => toggle.mutate(a),
               },
@@ -82,7 +82,7 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
   return (
     <div>
       <PageHeader
-        title="Wepilo admins"
+        title="Admins"
         description="The Wepilo team members who can create customer workspaces, change plans, suspend accounts and open any workspace. Only add people you fully trust, because every admin has full access to every customer."
         action={
           <Button
@@ -92,7 +92,7 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
             }}
           >
             <Plus />
-            Add a Wepilo admin
+            Add admin
           </Button>
         }
       />
@@ -101,19 +101,19 @@ export function AdminsPage({ me }: { me: PlatformAdmin }) {
       <FormDialog
         open={open}
         onOpenChange={setOpen}
-        title="Add a Wepilo admin"
+        title="Add admin"
         description="This person gets full access to every customer workspace. Send them the password through a secure channel, never by plain email or chat."
-        submitLabel="Add this admin"
+        submitLabel="Add admin"
         pending={create.isPending}
         onSubmit={() => {
           setError(null);
           create.mutate();
         }}
       >
-        <Field label="Their full name" htmlFor="a-name" required>
+        <Field label="Name" htmlFor="a-name" required>
           <Input id="a-name" required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         </Field>
-        <Field label="Their email address (used to sign in)" htmlFor="a-email" required>
+        <Field label="Email" htmlFor="a-email" required>
           <Input id="a-email" type="email" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
         </Field>
         <Field label="Password" htmlFor="a-password" required hint="Use at least 12 characters.">

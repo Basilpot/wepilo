@@ -24,61 +24,61 @@ type StatusDef = { label: string; tone: Tone };
 
 const STATUSES = {
   trip: {
-    DRAFT: { label: "Draft (hidden from public)", tone: "neutral" },
-    PUBLISHED: { label: "Published on your website", tone: "success" },
+    DRAFT: { label: "Draft", tone: "neutral" },
+    PUBLISHED: { label: "Live on site", tone: "success" },
   },
   content: {
-    draft: { label: "Draft (hidden from public)", tone: "neutral" },
-    published: { label: "Published on your website", tone: "success" },
+    draft: { label: "Draft", tone: "neutral" },
+    published: { label: "Published", tone: "success" },
   },
   inquiry: {
-    NEW: { label: "New, not answered yet", tone: "info" },
-    IN_PROGRESS: { label: "Being handled", tone: "warning" },
+    NEW: { label: "New", tone: "info" },
+    IN_PROGRESS: { label: "In progress", tone: "warning" },
     RESOLVED: { label: "Resolved", tone: "success" },
-    CLOSED: { label: "Closed, no action needed", tone: "neutral" },
+    CLOSED: { label: "Closed", tone: "neutral" },
   },
   booking: {
-    PENDING: { label: "Waiting for your confirmation", tone: "warning" },
+    PENDING: { label: "Pending", tone: "warning" },
     CONFIRMED: { label: "Confirmed", tone: "info" },
-    COMPLETED: { label: "Trip completed", tone: "success" },
+    COMPLETED: { label: "Completed", tone: "success" },
     CANCELLED: { label: "Cancelled", tone: "neutral" },
   },
   departure: {
-    OPEN: { label: "Seats available", tone: "success" },
-    FULL: { label: "Fully booked", tone: "warning" },
+    OPEN: { label: "Open", tone: "success" },
+    FULL: { label: "Full", tone: "warning" },
     DELAYED: { label: "Delayed", tone: "danger" },
   },
   ticket: {
-    OPEN: { label: "Open, waiting for Wepilo", tone: "info" },
-    IN_PROGRESS: { label: "Wepilo is working on it", tone: "warning" },
+    OPEN: { label: "Open", tone: "info" },
+    IN_PROGRESS: { label: "In progress", tone: "warning" },
     RESOLVED: { label: "Resolved", tone: "success" },
     CLOSED: { label: "Closed", tone: "neutral" },
   },
   priority: {
-    LOW: { label: "Low priority", tone: "neutral" },
-    MEDIUM: { label: "Medium priority", tone: "info" },
-    HIGH: { label: "High priority", tone: "warning" },
-    URGENT: { label: "Urgent, blocking my business", tone: "danger" },
+    LOW: { label: "Low", tone: "neutral" },
+    MEDIUM: { label: "Medium", tone: "info" },
+    HIGH: { label: "High", tone: "warning" },
+    URGENT: { label: "Urgent", tone: "danger" },
   },
   account: {
     active: { label: "Active", tone: "success" },
-    disabled: { label: "Login turned off", tone: "neutral" },
-    unsubscribed: { label: "Unsubscribed from emails", tone: "neutral" },
+    disabled: { label: "Disabled", tone: "neutral" },
+    unsubscribed: { label: "Unsubscribed", tone: "neutral" },
   },
   subscription: {
     ACTIVE: { label: "Active", tone: "success" },
-    TRIALING: { label: "Free trial", tone: "info" },
-    PAST_DUE: { label: "Payment overdue", tone: "warning" },
+    TRIALING: { label: "Trial", tone: "info" },
+    PAST_DUE: { label: "Payment due", tone: "warning" },
     CANCELED: { label: "Cancelled", tone: "neutral" },
     EXPIRED: { label: "Expired", tone: "danger" },
   },
   workspace: {
-    ACTIVE: { label: "Active, paid", tone: "success" },
-    TRIAL: { label: "Free trial", tone: "info" },
-    PAST_DUE: { label: "Payment overdue", tone: "warning" },
-    UNPAID: { label: "Unpaid, no access", tone: "neutral" },
+    ACTIVE: { label: "Active", tone: "success" },
+    TRIAL: { label: "Trial", tone: "info" },
+    PAST_DUE: { label: "Payment due", tone: "warning" },
+    UNPAID: { label: "Unpaid", tone: "neutral" },
     EXPIRED: { label: "Expired", tone: "neutral" },
-    SUSPENDED: { label: "Suspended by Wepilo", tone: "danger" },
+    SUSPENDED: { label: "Suspended", tone: "danger" },
   },
 } satisfies Record<string, Record<string, StatusDef>>;
 
@@ -93,7 +93,7 @@ function humanize(code: string) {
 export function statusInfo(kind: StatusKind, code: string | null | undefined): StatusDef {
   const value = code ?? "";
   const map = STATUSES[kind] as Record<string, StatusDef>;
-  return map[value] ?? map[value.toUpperCase()] ?? map[value.toLowerCase()] ?? { label: humanize(value) || "Not set", tone: "neutral" };
+  return map[value] ?? map[value.toUpperCase()] ?? map[value.toLowerCase()] ?? { label: humanize(value) || "—", tone: "neutral" };
 }
 
 /** Status codes for a kind, in display order, for filters and selects. */
@@ -117,7 +117,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset",
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset",
         TONE_CLASSES[tone],
         className,
       )}

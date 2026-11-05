@@ -15,8 +15,12 @@ import {
   Search,
   Settings,
   Sun,
-} from "lucide-react";
+} from "@/components/icons";
+import { motion } from "motion/react";
+import { TextMorph } from "torph/react";
 import { ThemeContext } from "@/components/theme-provider";
+import { ThemeIcon } from "@/components/ui/morphing-icons";
+import { SoundToggle, setSoundMuted, useSoundMuted } from "@/components/ui/sound";
 import { CommandMenu } from "@/components/layout/CommandMenu";
 import { NAV_GROUPS, QUICK_LINKS, findNavItem, isActive, type NavItem } from "@/components/layout/nav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -78,8 +82,8 @@ function initials(name: string) {
 
 function planLabel(session: Session) {
   const a = session.access;
-  if (!a) return "No plan selected";
-  return a.state === "TRIAL" ? `${PLAN_NAMES[a.plan]} free trial` : PLAN_NAMES[a.plan];
+  if (!a) return "—";
+  return a.state === "TRIAL" ? `${PLAN_NAMES[a.plan]} trial` : PLAN_NAMES[a.plan];
 }
 
 async function signOut() {
@@ -104,18 +108,31 @@ function useNewInquiries() {
 function NavLinkItem({ item, badge }: { item: NavItem; badge?: number }) {
   const { pathname } = useLocation();
   const { setOpenMobile } = useSidebar();
+  const active = isActive(pathname, item.url);
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild tooltip={item.title} isActive={isActive(pathname, item.url)}>
+      <SidebarMenuButton asChild tooltip={item.title} isActive={active}>
         <Link to={item.url} onClick={() => setOpenMobile(false)}>
+          {active && (
+            <motion.span
+              layoutId="nav-active-pill"
+              aria-hidden
+              className="absolute inset-0 -z-10 rounded-full bg-sidebar-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.5),0_1px_2px_rgb(0_0_0/0.06)] dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]"
+              transition={{ type: "spring", stiffness: 520, damping: 42, mass: 0.8 }}
+            />
+          )}
           <item.icon />
           <span>{item.title}</span>
           {badge ? <span className="sr-only">, {badge} new</span> : null}
         </Link>
       </SidebarMenuButton>
       {badge ? (
-        <SidebarMenuBadge aria-hidden className="bg-primary/10 text-primary peer-data-[active=true]/menu-button:text-primary">
-          {badge > 99 ? "99+" : badge}
+        <SidebarMenuBadge
+          key={badge}
+          aria-hidden
+          className="animate-pop-in rounded-full bg-attention px-1.5 font-semibold text-[oklch(0.25_0.05_60)] tabular-nums peer-data-[active=true]/menu-button:text-[oklch(0.25_0.05_60)]"
+        >
+          <TextMorph>{badge > 99 ? "99+" : String(badge)}</TextMorph>
         </SidebarMenuBadge>
       ) : null}
     </SidebarMenuItem>
@@ -124,21 +141,21 @@ function NavLinkItem({ item, badge }: { item: NavItem; badge?: number }) {
 
 function WorkspaceHeader({ session }: { session: Session }) {
   const tenant = session.tenant;
-  const name = tenant?.companyName ?? tenant?.slug ?? "Your workspace";
+  const name = tenant?.companyName ?? tenant?.slug ?? "Workspace";
   const paid = session.access?.state === "ACTIVE" || session.access?.state === "PAST_DUE";
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton size="lg" asChild>
           <Link to="/">
-            <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg bg-primary text-primary-foreground">
+            <div className="flex aspect-square size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary text-primary-foreground shadow-pill">
               {tenant?.companyLogo ? (
                 <img src={tenant.companyLogo} alt="" className="size-full bg-background object-contain" />
               ) : (
                 <Mountain className="size-4" />
               )}
             </div>
-            <div className="grid flex-1 text-left text-sm leading-tight">
+            <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
               <span className="truncate font-semibold">{name}</span>
               <span className="mt-0.5 flex items-center gap-1.5 text-xs">
                 <span
@@ -216,26 +233,27 @@ function UserMenu({ session }: { session: Session }) {
               <DropdownMenuItem asChild>
                 <Link to="/settings/billing">
                   <CreditCard />
-                  Plan and billing
+                  Billing
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/settings/api-keys">
                   <KeyRound />
-                  Developer API keys
+                  API keys
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/support">
                   <LifeBuoy />
-                  Contact Wepilo support
+                  Support
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            <MenuSoundRow />
             <div className="flex items-center justify-between px-2 py-1.5 text-sm">
-              <span className="text-muted-foreground">Colour mode (light or dark)</span>
-              <div className="flex rounded-md border p-0.5">
+              <span className="text-muted-foreground">Theme</span>
+              <div className="flex rounded-full border p-0.5">
                 {(
                   [
                     ["light", Sun],
@@ -245,11 +263,11 @@ function UserMenu({ session }: { session: Session }) {
                   <button
                     key={value}
                     type="button"
-                    aria-label={`Switch to ${value} mode`}
+                    aria-label={`${value} theme`}
                     aria-pressed={theme === value}
                     onClick={() => setTheme(value)}
                     className={cn(
-                      "flex size-6 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground",
+                      "flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground",
                       theme === value && "bg-muted text-foreground",
                     )}
                   >
@@ -261,7 +279,7 @@ function UserMenu({ session }: { session: Session }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut}>
               <LogOut />
-              Sign out of this workspace
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -294,7 +312,6 @@ function AppSidebar({ session }: { session: Session }) {
       </SidebarHeader>
       <SidebarContent className="gap-1">
         <SidebarGroup className="py-1">
-          <SidebarGroupLabel>Daily work</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {QUICK_LINKS.map((item) => (
@@ -352,7 +369,7 @@ function ImpersonationBanner({ session }: { session: Session }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b bg-primary px-4 py-2 text-center text-sm text-primary-foreground">
       <span>
-        You are viewing this workspace as a Wepilo platform admin, signed in with the owner's full access to <strong>{session.tenant?.companyName ?? session.tenant?.slug}</strong>. Any change you make is a real change to the customer's account. This session ends automatically within one hour.
+        You're viewing <strong>{session.tenant?.companyName ?? session.tenant?.slug}</strong> as a Wepilo admin with the owner's full access. Every change you make is real. This session ends automatically within an hour.
       </span>
       <button
         type="button"
@@ -362,7 +379,7 @@ function ImpersonationBanner({ session }: { session: Session }) {
           window.location.href = session.tenant ? `/admin/workspaces/${session.tenant.id}` : "/admin";
         }}
       >
-        Leave this workspace and return to the admin console
+        Back to admin
       </button>
     </div>
   );
@@ -387,20 +404,20 @@ function BillingBanner({ session }: { session: Session }) {
   if (access.state === "TRIAL") {
     text =
       days === 0
-        ? "Your free trial ends today. Choose a plan now to keep access to your trips, bookings and website content."
-        : `Your free trial ends in ${days} day${days === 1 ? "" : "s"}. You will not be charged automatically. Choose a plan before the trial ends to keep access.`;
+        ? "Your trial ends today. Choose a plan to keep access to your trips, bookings and website content."
+        : `Your trial ends in ${days} day${days === 1 ? "" : "s"}. You won't be charged automatically, so choose a plan before then to keep access.`;
     action = billingLink("Choose a plan");
   } else if (access.state === "PAST_DUE") {
     tone = "danger";
-    text = "Your last payment did not go through. Update your payment card now so your account is not locked.";
+    text = "Your last payment didn't go through. Update your card so your account isn't locked.";
     action = isOwner ? (
       <button type="button" className="font-medium underline underline-offset-4" onClick={() => portal.mutate()}>
-        Update payment card
+        Update card
       </button>
     ) : null;
   } else if (access.cancelAtPeriodEnd && days !== null && days <= 14) {
-    text = `You cancelled your plan, and access ends in ${days} day${days === 1 ? "" : "s"}. Renew to keep your account running.`;
-    action = billingLink("Renew my plan");
+    text = `Your plan is cancelled and access ends in ${days} day${days === 1 ? "" : "s"}. Renew to keep your account running.`;
+    action = billingLink("Renew");
   }
   if (!text) return null;
 
@@ -419,6 +436,53 @@ function BillingBanner({ session }: { session: Session }) {
   );
 }
 
+/** Sun-to-moon morph that flips the colour mode in one press. */
+function HeaderThemeToggle() {
+  const { theme, toggle } = useContext(ThemeContext);
+  const dark = theme === "dark";
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      onClick={toggle}
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-pressed={dark}
+      data-sound={dark ? "toggleOff" : "toggleOn"}
+      className="text-muted-foreground hover:text-foreground"
+    >
+      <ThemeIcon dark={dark} size={18} />
+    </Button>
+  );
+}
+
+/** Mute switch inside the account menu, mirroring the header speaker. */
+function MenuSoundRow() {
+  const muted = useSoundMuted();
+  return (
+    <div className="flex items-center justify-between px-2 py-1.5 text-sm">
+      <span className="text-muted-foreground">Interface sounds</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={!muted}
+        aria-label="Interface sounds"
+        onClick={() => setSoundMuted(!muted)}
+        className={cn(
+          "relative h-5 w-9 rounded-full transition-colors duration-200",
+          muted ? "bg-muted-foreground/30" : "bg-primary",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow-sm transition-transform duration-300 ease-[var(--ease-spring)]",
+            !muted && "translate-x-4",
+          )}
+        />
+      </button>
+    </div>
+  );
+}
+
 function SiteHeader({ session, onSearch }: { session: Session; onSearch: () => void }) {
   const { pathname } = useLocation();
   const current = findNavItem(pathname);
@@ -428,28 +492,32 @@ function SiteHeader({ session, onSearch }: { session: Session; onSearch: () => v
       <div className="flex w-full items-center gap-1 px-3 lg:gap-2 lg:px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mx-1.5 data-[orientation=vertical]:h-4" />
-        <span className="truncate text-sm font-medium">{current?.title ?? ""}</span>
+        <span className="truncate text-sm font-semibold">
+          <TextMorph>{current?.title ?? ""}</TextMorph>
+        </span>
         <div className="ml-auto flex items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
             onClick={onSearch}
-            className="hidden w-56 justify-start gap-2 px-2.5 font-normal text-muted-foreground md:flex"
+            className="hidden w-60 justify-start gap-2 bg-muted/50 px-3 font-normal text-muted-foreground shadow-none hover:translate-y-0 hover:bg-muted hover:shadow-none md:flex dark:bg-input/20"
           >
             <Search />
-            <span className="flex-1 text-left">Search pages, trips or actions…</span>
-            <kbd className="pointer-events-none rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+            <span className="flex-1 text-left">Search or jump to…</span>
+            <kbd className="pointer-events-none rounded-full border bg-muted px-2 font-sans text-[11px] font-medium text-muted-foreground">
               ⌘K
             </kbd>
           </Button>
-          <Button variant="ghost" size="icon" onClick={onSearch} className="md:hidden" aria-label="Search pages, trips or actions">
+          <Button variant="ghost" size="icon" onClick={onSearch} className="md:hidden" aria-label="Search">
             <Search />
           </Button>
+          <HeaderThemeToggle />
+          <SoundToggle className="size-8 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground" />
           {website ? (
             <Button asChild variant="outline" size="sm">
               <a href={website} target="_blank" rel="noopener noreferrer">
                 <Globe />
-                <span className="hidden sm:inline">Open my public website</span>
+                <span className="hidden sm:inline">View site</span>
                 <ExternalLink className="hidden opacity-60 sm:inline" />
               </a>
             </Button>

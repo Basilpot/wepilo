@@ -5,12 +5,12 @@ import { api, ApiClientError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mountain } from "lucide-react";
+import { Mountain } from "@/components/icons";
 
 const POINTS = [
-  { title: "Trips, departure dates and bookings", body: "Build day-by-day itineraries, set dates and seats, and manage every customer booking in one place." },
-  { title: "Connect your own website", body: "Write or change something here, and your website shows the update automatically." },
-  { title: "Never lose a customer inquiry", body: "Every message from your website forms arrives in one inbox, with one-click reply by email, phone or WhatsApp." },
+  { title: "Trips, departures and bookings", body: "Build day-by-day itineraries, set dates and seats, and manage every customer booking in one place." },
+  { title: "A content API for your site", body: "Write or change something here, and your website shows the update automatically." },
+  { title: "Inquiries that don't get lost", body: "Every message from your website forms arrives in one inbox, with one-click reply by email, phone or WhatsApp." },
 ];
 
 export function AuthCard({
@@ -87,7 +87,7 @@ export function useAuthRedirect() {
 export function useErrorMessage() {
   const [error, setError] = useState<string | null>(null);
   const capture = (err: unknown) => {
-    setError(err instanceof ApiClientError ? err.message : "Something went wrong on our side. Please try again in a moment.");
+    setError(err instanceof ApiClientError ? err.message : "Something went wrong");
   };
   return { error, setError, capture };
 }

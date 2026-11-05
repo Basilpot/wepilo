@@ -1,5 +1,5 @@
 import * as React from "react";
-import { MoreHorizontal, Search, ChevronLeft, ChevronRight, Inbox, SearchX } from "lucide-react";
+import { MoreHorizontal, Search, ChevronLeft, ChevronRight, Inbox, SearchX } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -34,6 +34,8 @@ export type Column<T> = {
   className?: string;
   headClassName?: string;
   align?: "left" | "right";
+  /** Leave this column out of the stacked phone layout. */
+  hideOnMobile?: boolean;
 };
 
 export type PageSizeOption = number;
@@ -55,13 +57,13 @@ export function DataTable<T>({
   isLoading = false,
   error,
   onRetry,
-  emptyTitle = "There is nothing to show here yet.",
+  emptyTitle = "No results.",
   emptyHint,
   emptyAction,
   emptyIcon: EmptyIcon = Inbox,
   onRowClick,
   search,
-  searchPlaceholder = "Type to search this list…",
+  searchPlaceholder = "Search…",
   toolbar,
   pagination,
   maxHeight,
@@ -84,6 +86,8 @@ export function DataTable<T>({
   maxHeight?: string;
 }) {
   const colCount = columns.length;
+  // With nothing to list, column headings only add noise above the empty state.
+  const isEmpty = !isLoading && !error && rows.length === 0;
 
   return (
     <div>
@@ -108,16 +112,20 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border bg-card">
+      {!isEmpty && !error && (
+        <MobileRows columns={columns} rows={rows} getRowId={getRowId} isLoading={isLoading} onRowClick={onRowClick} />
+      )}
+      <div className={cn(!isEmpty && !error && "hidden sm:block")}>
+      <div className="overflow-hidden rounded-2xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-16px_rgb(0_0_0/0.12)]">
         <div className={cn("overflow-x-auto", maxHeight && "overflow-y-auto")} style={maxHeight ? { maxHeight } : undefined}>
           <Table>
-            <TableHeader className="bg-muted/40">
+            <TableHeader className={cn("bg-muted/50", isEmpty && "hidden")}>
               <TableRow className="hover:bg-transparent">
                 {columns.map((col) => (
                   <TableHead
                     key={col.key}
                     className={cn(
-                      "h-10 text-xs font-medium text-muted-foreground first:pl-4 last:pr-4",
+                      "h-10 text-xs font-semibold tracking-wide text-muted-foreground first:pl-5 last:pr-5",
                       col.headClassName,
                       col.align === "right" && "text-right",
                       col.align === "left" && "text-left",
@@ -136,7 +144,7 @@ export function DataTable<T>({
                       <span className="text-sm text-foreground">{error}</span>
                       {onRetry && (
                         <Button variant="outline" size="sm" onClick={onRetry}>
-                          Try loading again
+                          Try again
                         </Button>
                       )}
                     </div>
@@ -146,7 +154,7 @@ export function DataTable<T>({
                 Array.from({ length: 6 }).map((_, i) => (
                   <TableRow key={i} className="hover:bg-transparent">
                     {columns.map((col) => (
-                      <TableCell key={col.key} className={cn("py-3.5 first:pl-4 last:pr-4", col.className)}>
+                      <TableCell key={col.key} className={cn("py-3.5 first:pl-5 last:pr-5", col.className)}>
                         <Skeleton className="h-4 w-full max-w-48" />
                       </TableCell>
                     ))}
@@ -156,7 +164,7 @@ export function DataTable<T>({
                 rows.map((row) => (
                   <TableRow
                     key={getRowId(row)}
-                    className={cn(onRowClick && "cursor-pointer focus-visible:bg-muted/50 focus-visible:outline-none")}
+                    className={cn("transition-colors duration-150", onRowClick && "cursor-pointer hover:bg-primary/[0.035] focus-visible:bg-muted/50 focus-visible:outline-none")}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
                     tabIndex={onRowClick ? 0 : undefined}
                     onKeyDown={
@@ -171,7 +179,7 @@ export function DataTable<T>({
                       <TableCell
                         key={col.key}
                         className={cn(
-                          "py-3 first:pl-4 last:pr-4",
+                          "py-3.5 first:pl-5 last:pr-5",
                           col.className,
                           col.align === "right" && "text-right",
                           col.align === "left" && "text-left",
@@ -186,18 +194,18 @@ export function DataTable<T>({
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={colCount} className="h-64 text-center whitespace-normal">
                     <div className="mx-auto flex max-w-sm flex-col items-center justify-center">
-                      <span className="mb-3 flex size-10 items-center justify-center rounded-lg border bg-background text-muted-foreground shadow-xs">
+                      <span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                         {search?.value ? <SearchX className="size-5" /> : <EmptyIcon className="size-5" />}
                       </span>
                       <span className="text-sm font-medium text-foreground">
-                        {search?.value ? `Nothing in this list matches “${search.value}”` : emptyTitle}
+                        {search?.value ? `No matches for “${search.value}”` : emptyTitle}
                       </span>
                       <span className="mt-1 text-sm text-muted-foreground">
                         {search?.value ? "Check the spelling, try a shorter or different word, or clear the search to see the full list again." : emptyHint}
                       </span>
                       {search?.value ? (
                         <Button variant="outline" size="sm" className="mt-4" onClick={() => search.onChange("")}>
-                          Clear the search and show everything
+                          Clear search
                         </Button>
                       ) : emptyAction ? (
                         <div className="mt-4">{emptyAction}</div>
@@ -211,25 +219,99 @@ export function DataTable<T>({
         </div>
       </div>
 
+      </div>
+
       {pagination && <TablePagination pagination={pagination} />}
     </div>
+  );
+}
+
+/**
+ * Phones get one card per row instead of a table that scrolls sideways: the first column is the
+ * card's heading, the rest are labelled lines, and an actions column sits in the corner.
+ */
+function MobileRows<T>({
+  columns,
+  rows,
+  getRowId,
+  isLoading,
+  onRowClick,
+}: {
+  columns: Column<T>[];
+  rows: T[];
+  getRowId: (row: T) => string | number;
+  isLoading: boolean;
+  onRowClick?: (row: T) => void;
+}) {
+  const [lead, ...rest] = columns;
+  const actions = rest.find((c) => c.key === "actions");
+  const details = rest.filter((c) => c.key !== "actions" && !c.hideOnMobile);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 sm:hidden">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <ul className="space-y-2 sm:hidden">
+      {rows.map((row) => (
+        <li key={getRowId(row)}>
+          <div
+            role={onRowClick ? "button" : undefined}
+            tabIndex={onRowClick ? 0 : undefined}
+            onClick={onRowClick ? () => onRowClick(row) : undefined}
+            onKeyDown={onRowClick ? (e) => e.key === "Enter" && e.target === e.currentTarget && onRowClick(row) : undefined}
+            className={cn(
+              "rounded-2xl border bg-card p-4 transition-colors",
+              onRowClick && "cursor-pointer active:bg-muted/50",
+            )}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">{lead.cell(row)}</div>
+              {actions && <div className="-mt-1 -mr-2 shrink-0">{actions.cell(row)}</div>}
+            </div>
+            {details.length > 0 && (
+              <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t pt-3 text-sm">
+                {details.map((col) => (
+                  <div key={col.key} className="contents">
+                    <dt className="text-muted-foreground">{col.header}</dt>
+                    <dd className="min-w-0 text-right [&>*]:ml-auto">{col.cell(row)}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 
 export function TablePagination({ pagination }: { pagination: DataTablePagination }) {
   const pageSizeOptions = pagination.pageSizeOptions ?? [10, 20, 30, 50];
   if (pagination.totalPages <= 0 || pagination.total === 0) return null;
+  const smallest = Math.min(...pageSizeOptions);
+  // One page that fits in the smallest page size: a count is all that's useful.
+  const navigable = pagination.totalPages > 1 || (pagination.total ?? 0) > smallest;
   return (
     <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
       <span className="tabular-nums">
         {typeof pagination.total === "number" && pagination.limit
           ? pagination.total === 0
-            ? "No results to show"
-            : `Showing ${(pagination.page - 1) * pagination.limit + 1} to ${Math.min(pagination.page * pagination.limit, pagination.total)} of ${pagination.total}`
+            ? "No results"
+            : navigable
+              ? `${(pagination.page - 1) * pagination.limit + 1}–${Math.min(pagination.page * pagination.limit, pagination.total)} of ${pagination.total}`
+              : `${pagination.total} ${pagination.total === 1 ? "item" : "items"}`
           : typeof pagination.total === "number"
             ? `${pagination.total} ${pagination.total === 1 ? "item" : "items"} in total`
             : `Page ${pagination.page} of ${pagination.totalPages}`}
       </span>
+      {navigable && (
       <div className="flex items-center gap-2">
         {pagination.onLimit && pagination.limit && (
           <Select value={String(pagination.limit)} onValueChange={(v) => pagination.onLimit!(Number(v))}>
@@ -246,9 +328,8 @@ export function TablePagination({ pagination }: { pagination: DataTablePaginatio
           </Select>
         )}
         <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8"
+          variant="ghost"
+          size="icon-sm"
           aria-label="Go to the previous page"
           disabled={pagination.page <= 1}
           onClick={() => pagination.onPage(pagination.page - 1)}
@@ -256,12 +337,11 @@ export function TablePagination({ pagination }: { pagination: DataTablePaginatio
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="tabular-nums">
-          Page {pagination.page} of {pagination.totalPages}
+          {pagination.page} / {pagination.totalPages}
         </span>
         <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8"
+          variant="ghost"
+          size="icon-sm"
           aria-label="Go to the next page"
           disabled={pagination.page >= pagination.totalPages}
           onClick={() => pagination.onPage(pagination.page + 1)}
@@ -269,6 +349,7 @@ export function TablePagination({ pagination }: { pagination: DataTablePaginatio
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
+      )}
     </div>
   );
 }
@@ -283,7 +364,7 @@ export type RowAction = {
   hidden?: boolean;
 };
 
-export function RowActions({ actions, label = "Open the actions menu for this row" }: { actions: RowAction[]; label?: string }) {
+export function RowActions({ actions, label = "Open menu" }: { actions: RowAction[]; label?: string }) {
   const visible = actions.filter((a) => !a.hidden);
   if (!visible.length) return null;
   return (
@@ -294,7 +375,7 @@ export function RowActions({ actions, label = "Open the actions menu for this ro
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuContent align="end" className="min-w-48 [&_[role=menuitem]]:whitespace-nowrap">
           {visible.map((a, i) => (
             <React.Fragment key={`${a.label}-${i}`}>
               {a.separatorBefore && <DropdownMenuSeparator />}

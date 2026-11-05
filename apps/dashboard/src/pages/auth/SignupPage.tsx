@@ -14,11 +14,11 @@ const schema = z
     companyName: z.string().min(2),
     slug: z.string().min(2).regex(/^[a-z0-9-]+$/, "lowercase letters, numbers and dashes only"),
     email: z.string().email(),
-    password: z.string().min(8, "Your password must be at least 8 characters long"),
+    password: z.string().min(8, "At least 8 characters"),
     confirmPassword: z.string(),
   })
   .refine((v) => v.password === v.confirmPassword, {
-    message: "The two passwords you typed are not the same. Type the same password in both boxes.",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
@@ -48,11 +48,11 @@ export function SignupPage() {
 
   return (
     <AuthCard
-      title="Create your Wepilo workspace"
+      title="Create your workspace"
       description="First, create your workspace here. Next, you start a 3-day trial for a one-time payment of $1. It is not a subscription, and nothing renews automatically."
       footer={
         <>
-          Already have a workspace?{" "}
+          Already have an account?{" "}
           <Link to="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
             Sign in
           </Link>
@@ -61,7 +61,7 @@ export function SignupPage() {
     >
       <form onSubmit={form.handleSubmit((v) => signup.mutate(v))} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="companyName">Your company name</Label>
+          <Label htmlFor="companyName">Company name</Label>
           <Input
             id="companyName"
             required
@@ -83,7 +83,7 @@ export function SignupPage() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="slug">Your workspace address</Label>
+          <Label htmlFor="slug">Workspace URL</Label>
           <Input id="slug" placeholder="acme-expeditions" required {...form.register("slug")} />
           <p className="text-xs text-muted-foreground">Use only lowercase letters, numbers and dashes, with no spaces. It becomes your workspace’s unique name in links. It is filled in for you from your company name, and you can change it.</p>
           {form.formState.errors.slug && (
@@ -91,18 +91,18 @@ export function SignupPage() {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Your email address</Label>
+          <Label htmlFor="email">Email</Label>
           <Input id="email" type="email" autoComplete="email" required {...form.register("email")} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Choose a password (at least 8 characters)</Label>
+          <Label htmlFor="password">Password</Label>
           <Input id="password" type="password" autoComplete="new-password" required {...form.register("password")} />
           {form.formState.errors.password && (
             <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Type the same password again</Label>
+          <Label htmlFor="confirmPassword">Confirm password</Label>
           <Input id="confirmPassword" type="password" autoComplete="new-password" required {...form.register("confirmPassword")} />
           {form.formState.errors.confirmPassword && (
             <p className="text-sm text-destructive">{form.formState.errors.confirmPassword.message}</p>
@@ -110,7 +110,7 @@ export function SignupPage() {
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <Button type="submit" className="w-full" disabled={signup.isPending}>
-          {signup.isPending ? "Creating your workspace…" : "Create my workspace"}
+          {signup.isPending ? "Creating…" : "Create workspace"}
         </Button>
       </form>
     </AuthCard>

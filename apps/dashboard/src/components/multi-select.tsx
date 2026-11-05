@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, X } from "lucide-react";
+import { Check, X } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,8 @@ export function MultiSelect({
   selected,
   onChange,
   placeholder = "Click to choose one or more items…",
-  searchPlaceholder = "Type to find an item…",
-  emptyText = "No items match what you typed.",
+  searchPlaceholder = "Search…",
+  emptyText = "No items found.",
   className,
 }: {
   options: ComboOption[];

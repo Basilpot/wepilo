@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, NotebookPen, PenLine, Plus, Trash2 } from "lucide-react";
+import { Check, NotebookPen, PenLine, Plus, Trash2 } from "@/components/icons";
 import { api } from "@/lib/api";
 import { StatusBadge } from "@/components/status-badge";
 import { PageHeader } from "@/components/PageHeader";
@@ -38,7 +38,7 @@ export function InfoPagesPage() {
   const columns: Column<InfoPage>[] = [
     {
       key: "title",
-      header: "Page title and web address",
+      header: "Page",
       cell: (p) => (
         <div className="min-w-0">
           <p className="truncate font-medium">{p.title}</p>
@@ -46,29 +46,29 @@ export function InfoPagesPage() {
         </div>
       ),
     },
-    { key: "category", header: "Category", className: "text-muted-foreground", cell: (p) => p.category?.name ?? "No category chosen" },
+    { key: "category", header: "Category", className: "text-muted-foreground", cell: (p) => p.category?.name ?? "—" },
     {
       key: "nav",
-      header: "Linked in the website menu?",
+      header: "In navigation",
       className: "text-muted-foreground",
-      cell: (p) => (p.featuredInNavbar ? <Check aria-label="Yes, this page is linked in the website menu" className="size-4 text-foreground" /> : "No"),
+      cell: (p) => (p.featuredInNavbar ? <Check aria-label="Yes" className="size-4 text-foreground" /> : "—"),
     },
-    { key: "status", header: "Visible to the public?", cell: (p) => <StatusBadge kind="content" status={p.published ? "published" : "draft"} /> },
+    { key: "status", header: "Status", cell: (p) => <StatusBadge kind="content" status={p.published ? "published" : "draft"} /> },
     {
       key: "actions",
       headClassName: "w-12",
       cell: (page) => (
         <RowActions
           actions={[
-            { label: "Open this page to edit it", icon: PenLine, onSelect: () => navigate(`/info-pages/${page.id}`) },
+            { label: "Edit page", icon: PenLine, onSelect: () => navigate(`/info-pages/${page.id}`) },
             {
-              label: "Delete this page",
+              label: "Delete",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
               onSelect: () =>
                 confirmDialog(
-                  { title: "Delete this page permanently?", description: `“${page.title}” will be removed from your website for good and cannot be brought back. Any link to it from other pages will stop working, so consider adding a redirect first.`, confirmLabel: "Yes, delete this page", cancelLabel: "No, keep this page" },
+                  { title: "Delete page?", description: `“${page.title}” will be removed from your website for good and cannot be brought back. Any link to it from other pages will stop working, so consider adding a redirect first.` },
                   () => remove.mutate(page.id),
                 ),
             },
@@ -81,13 +81,13 @@ export function InfoPagesPage() {
   return (
     <div>
       <PageHeader
-        title="Website pages"
-        description="Fixed pages on your website that do not change often, such as About us, How to book, Terms and conditions and Privacy policy. Create a new page, or open an existing one to edit its text, search settings and whether it appears in your website menu."
+        title="Pages"
+        description="Fixed pages on your website that do not change often, such as About us, How to book, Terms and conditions and Privacy policy. New page, or open an existing one to edit its text, search settings and whether it appears in your website menu."
         action={
           <Button asChild>
             <Link to="/info-pages/new">
               <Plus />
-              Create a new page
+              New page
             </Link>
           </Button>
         }
@@ -102,13 +102,13 @@ export function InfoPagesPage() {
         onRetry={() => void refetch()}
         onRowClick={(p) => navigate(`/info-pages/${p.id}`)}
         emptyIcon={NotebookPen}
-        emptyTitle="You have not created any website pages yet"
-        emptyHint="Travel websites usually need at least these pages: About us, How to book, Terms and conditions, Cancellation policy and Privacy policy. Select “Create a new page” to add the first one."
+        emptyTitle="No pages yet"
+        emptyHint="Travel websites usually need at least these pages: About us, How to book, Terms and conditions, Cancellation policy and Privacy policy. Select “New page” to add the first one."
         emptyAction={
           <Button asChild size="sm">
             <Link to="/info-pages/new">
               <Plus />
-              Create a new page
+              New page
             </Link>
           </Button>
         }

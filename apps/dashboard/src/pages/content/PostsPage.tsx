@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PenLine, Plus, RotateCcw, Trash2, Newspaper } from "lucide-react";
+import { PenLine, Plus, RotateCcw, Trash2, Newspaper } from "@/components/icons";
 import { api, type Paginated } from "@/lib/api";
 import { StatusBadge } from "@/components/status-badge";
 import { PageHeader } from "@/components/PageHeader";
@@ -69,7 +69,7 @@ export function PostsPage() {
   const columns: Column<Post>[] = [
     {
       key: "title",
-      header: "Post title",
+      header: "Title",
       cell: (post) =>
         trashed ? (
           <span className="font-medium">{post.title}</span>
@@ -83,13 +83,13 @@ export function PostsPage() {
           </Link>
         ),
     },
-    { key: "type", header: "Kind of post", className: "text-muted-foreground", cell: (p) => p.postType.replace("_", " ").toLowerCase() },
-    { key: "category", header: "Category", className: "text-muted-foreground", cell: (p) => p.blogCategory?.name ?? "No category chosen" },
-    { key: "author", header: "Written by", className: "text-muted-foreground", cell: (p) => p.writer?.name ?? "No author chosen" },
-    { key: "views", header: "Website page views", align: "right", className: "text-muted-foreground", cell: (p) => p.views },
+    { key: "type", header: "Type", className: "text-muted-foreground", cell: (p) => p.postType.replace("_", " ") },
+    { key: "category", header: "Category", className: "text-muted-foreground", cell: (p) => p.blogCategory?.name ?? "—" },
+    { key: "author", header: "Author", className: "text-muted-foreground", cell: (p) => p.writer?.name ?? "—" },
+    { key: "views", header: "Views", align: "right", className: "text-muted-foreground", cell: (p) => p.views },
     {
       key: "status",
-      header: "Visible to the public?",
+      header: "Status",
       cell: (p) => (
         <StatusBadge kind="content" status={p.published ? "published" : "draft"} />
       ),
@@ -103,19 +103,19 @@ export function PostsPage() {
           actions={
             trashed
               ? [
-                  { label: "Restore this post from the trash", icon: RotateCcw, onSelect: () => patch.mutate({ id: post.id, path: "restore" }) },
+                  { label: "Restore", icon: RotateCcw, onSelect: () => patch.mutate({ id: post.id, path: "restore" }) },
                   {
-                    label: "Delete this post forever",
+                    label: "Delete forever",
                     icon: Trash2,
                     variant: "destructive",
                     separatorBefore: true,
                     onSelect: () =>
-                      confirmDialog({ title: "Delete this post forever?", description: "The post will be erased completely and cannot be brought back. If you might want it later, leave it in the trash instead.", confirmLabel: "Yes, delete it forever", cancelLabel: "No, leave it in the trash" }, () => remove.mutate(post.id)),
+                      confirmDialog({ title: "Delete this post forever?", description: "The post will be erased completely and cannot be brought back. If you might want it later, leave it in the trash instead." }, () => remove.mutate(post.id)),
                   },
                 ]
               : [
-                  { label: "Open this post to edit it", icon: PenLine, onSelect: () => navigate(`/posts/${post.id}`) },
-                  { label: "Move this post to the trash", icon: Trash2, separatorBefore: true, onSelect: () => patch.mutate({ id: post.id, path: "trash" }) },
+                  { label: "Edit post", icon: PenLine, onSelect: () => navigate(`/posts/${post.id}`) },
+                  { label: "Trash", icon: Trash2, separatorBefore: true, onSelect: () => patch.mutate({ id: post.id, path: "trash" }) },
                 ]
           }
         />
@@ -126,13 +126,13 @@ export function PostsPage() {
   return (
     <div>
       <PageHeader
-        title="Blog posts"
+        title="Posts"
         description="Articles and travel guides published on your website's blog. Good posts help travellers find you on Google. Create a new post, or open an existing one to edit, publish or hide it. Deleted posts wait in the trash first."
         action={
           <Button asChild>
             <Link to="/posts/new">
               <Plus />
-              Write a new post
+              New post
             </Link>
           </Button>
         }
@@ -151,10 +151,10 @@ export function PostsPage() {
             setPage(1);
           },
         }}
-        searchPlaceholder="Search posts by title…"
+        searchPlaceholder="Search posts…"
         emptyIcon={Newspaper}
-        emptyTitle={trashed ? "The trash is empty" : "You have not written any blog posts yet"}
-        emptyHint={trashed ? undefined : "Select “Write a new post” to create your first article. A post can be a travel guide, a trip report, news, or tips for travellers."}
+        emptyTitle={trashed ? "Trash is empty" : "No posts yet"}
+        emptyHint={trashed ? undefined : "Select “New post” to create your first article. A post can be a travel guide, a trip report, news, or tips for travellers."}
         toolbar={
           <div className="flex flex-wrap items-center gap-3">
             <Select
@@ -164,13 +164,13 @@ export function PostsPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-52" aria-label="Filter posts by whether they are published">
+              <SelectTrigger className="w-36">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All posts</SelectItem>
-                <SelectItem value="true">Published on website</SelectItem>
-                <SelectItem value="false">Hidden drafts</SelectItem>
+                <SelectItem value="true">Published</SelectItem>
+                <SelectItem value="false">Draft</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -182,7 +182,7 @@ export function PostsPage() {
               }}
             >
               <Trash2 />
-              {trashed ? "Showing the trash. Click to go back to posts" : "Show deleted posts (trash)"}
+              {trashed ? "Showing trash" : "Trash"}
             </Button>
           </div>
         }

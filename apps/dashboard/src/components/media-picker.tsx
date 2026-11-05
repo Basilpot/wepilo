@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, Search, Upload, Check, Library, ImageIcon } from "lucide-react";
+import { Loader2, Search, Upload, Check, Library, ImageIcon } from "@/components/icons";
 import { api, uploadFile, type Paginated, toastApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +37,7 @@ export function MediaPicker({
   onSelect,
   multiple,
   accept = "image/*",
-  confirmLabel = "Insert the selected image",
+  confirmLabel = "Insert",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -137,7 +137,7 @@ export function MediaPicker({
         onOpenChange(false);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "The file details could not be saved. Please try again.");
+      toast.error(err instanceof Error ? err.message : "Failed to save");
     }
   };
 
@@ -147,16 +147,16 @@ export function MediaPicker({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[88vh] w-[95vw] max-w-[95vw] flex-col sm:max-w-[95vw]">
         <DialogHeader>
-          <DialogTitle>Choose a file from your media library, or upload a new one</DialogTitle>
+          <DialogTitle>Select media</DialogTitle>
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
           <TabsList>
             <TabsTrigger value="library" className="gap-1.5">
-              <Library className="h-4 w-4" /> Choose from my media library
+              <Library className="h-4 w-4" /> Library
             </TabsTrigger>
             <TabsTrigger value="upload" className="gap-1.5">
-              <Upload className="h-4 w-4" /> Upload a new file
+              <Upload className="h-4 w-4" /> Upload
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -186,7 +186,7 @@ export function MediaPicker({
               ) : items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
                   <ImageIcon className="h-8 w-8" />
-                  No files found. Try a different search, or use the "Upload a new file" tab to add one.
+                  No media found
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
@@ -220,13 +220,13 @@ export function MediaPicker({
             <div className="flex items-center justify-between gap-2 border-t pt-3">
               <span className="text-xs text-muted-foreground">
                 {multiple ? `${selected.length} selected · ` : ""}
-                Showing {items.length} of {total} files
+                {items.length} / {total}
               </span>
               <div className="flex gap-2">
                 {hasMore && (
                   <Button variant="outline" size="sm" disabled={loadingMore} onClick={() => load(page + 1, search, true)}>
                     {loadingMore && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-                    Show more files
+                    Load more
                   </Button>
                 )}
                 {multiple && (
@@ -254,18 +254,18 @@ export function MediaPicker({
                 ) : (
                   <Upload className="mb-3 h-9 w-9 text-muted-foreground" />
                 )}
-                <p className="text-sm font-medium">{uploading ? "Uploading your file, please wait…" : "Click here to choose a file from your computer"}</p>
-                <p className="text-xs text-muted-foreground">The file is saved to your media library so you can reuse it anywhere on your website.</p>
+                <p className="text-sm font-medium">{uploading ? "Uploading…" : "Click to upload"}</p>
+                <p className="text-xs text-muted-foreground">Added to your media library</p>
               </button>
             ) : (
               <div className="grid min-h-0 flex-1 gap-6 overflow-hidden lg:grid-cols-2">
                 <div className="flex min-h-0 items-center justify-center overflow-hidden rounded-xl border bg-muted/30 p-4">
-                  <img src={pending.url} alt="Preview of the file you are uploading" className="max-h-full max-w-full rounded-xl object-contain" />
+                  <img src={pending.url} alt="Preview" className="max-h-full max-w-full rounded-xl object-contain" />
                 </div>
                 <div className="flex min-h-0 flex-col">
                   <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
                     <div className="space-y-1.5">
-                      <Label htmlFor="mp-filename">File name (cannot be changed here)</Label>
+                      <Label htmlFor="mp-filename">Filename</Label>
                       <Input id="mp-filename" value={pending.filename} disabled />
                     </div>
                     <div className="space-y-1.5">
@@ -273,11 +273,11 @@ export function MediaPicker({
                       <Input id="mp-alt" value={meta.alt} onChange={(e) => setMeta({ ...meta, alt: e.target.value })} placeholder="Example: Hikers crossing a suspension bridge above a river valley" />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="mp-title">Image title (optional)</Label>
+                      <Label htmlFor="mp-title">Title</Label>
                       <Input id="mp-title" value={meta.title} onChange={(e) => setMeta({ ...meta, title: e.target.value })} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="mp-caption">Caption shown under the image (optional)</Label>
+                      <Label htmlFor="mp-caption">Caption</Label>
                       <Input id="mp-caption" value={meta.caption} onChange={(e) => setMeta({ ...meta, caption: e.target.value })} />
                     </div>
                     <div className="space-y-1.5">
@@ -287,7 +287,7 @@ export function MediaPicker({
                   </div>
                   <div className="flex gap-2 pt-4">
                     <Button variant="outline" className="flex-1" onClick={() => setPending(null)}>
-                      Go back without saving
+                      Back
                     </Button>
                     <Button className="flex-1" onClick={confirmUpload}>
                       {confirmLabel}

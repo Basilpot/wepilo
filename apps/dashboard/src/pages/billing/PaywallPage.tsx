@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, LogOut, Mountain, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Loader2, LogOut, Mountain, ShieldCheck } from "@/components/icons";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +28,7 @@ function PaywallLayout({ session, children }: { session: Session; children: Reac
         </div>
         <Button variant="ghost" size="sm" onClick={signOut}>
           <LogOut />
-          Sign out of this workspace
+          Sign out
         </Button>
       </header>
       <main className="mx-auto w-full max-w-5xl px-4 py-10 md:py-14">{children}</main>
@@ -45,10 +45,10 @@ export function PaywallPage({ session }: { session: Session }) {
   const lapsedPaid = access?.state === "EXPIRED" && data?.subscription?.hasPaidSubscription;
 
   const title = trial
-    ? `Start your ${data?.trial.days ?? 3}-day trial by choosing a plan`
+    ? `Start your ${data?.trial.days ?? 3}-day trial`
     : lapsedPaid
-      ? "Your plan has ended, so your dashboard is locked"
-      : "Your free trial has ended, so your dashboard is locked";
+      ? "Your plan has ended"
+      : "Your trial has ended";
   const lead = trial
     ? "Pick the plan you want to try first. You make one small payment for the trial period. Nothing renews automatically when the trial ends, so you will never be charged again unless you choose to continue."
     : lapsedPaid
@@ -66,7 +66,7 @@ export function PaywallPage({ session }: { session: Session }) {
         <InfoCard
           className="mb-6"
           type="warning"
-          title="Your website can still load content for now"
+          title="Your website is still online"
           info={`Your website can keep loading trips and pages from Wepilo until ${formatDate(access.apiUntil)}. Renew your plan before that date, or your website will stop showing your content.`}
         />
       )}
@@ -139,28 +139,28 @@ export function BillingReturnPage({ session }: { session: Session }) {
       <div className="mx-auto max-w-md rounded-xl border bg-card p-8 text-center">
         {failed ? (
           <>
-            <h1 className="text-lg font-semibold">Your payment did not go through</h1>
+            <h1 className="text-lg font-semibold">Payment didn't go through</h1>
             <p className="mt-2 text-sm text-muted-foreground">No money was taken from your account. You can go back and try again with a different card if you like.</p>
-            <Button className="mt-6" onClick={() => navigate("/", { replace: true })}>Go back and choose a plan</Button>
+            <Button className="mt-6" onClick={() => navigate("/", { replace: true })}>Back to plans</Button>
           </>
         ) : done ? (
           <>
             <CheckCircle2 className="mx-auto size-10 text-primary" />
-            <h1 className="mt-4 text-lg font-semibold">{kind === "trial" ? "Your free trial has started" : "Payment received. Your plan is active"}</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Taking you to your dashboard now…</p>
+            <h1 className="mt-4 text-lg font-semibold">{kind === "trial" ? "Your trial has started" : "You're all set"}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Taking you to your dashboard…</p>
           </>
         ) : timedOut ? (
           <>
-            <h1 className="text-lg font-semibold">We are still confirming your payment</h1>
+            <h1 className="text-lg font-semibold">Still confirming your payment</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Sometimes confirmation takes a few minutes. Wait a moment, then select “Check again”. If your card was charged and your dashboard is still locked after 10 minutes, email Wepilo support and tell us the email address you signed up with.
+              Sometimes confirmation takes a few minutes. Wait a moment, then select “Refresh”. If your card was charged and your dashboard is still locked after 10 minutes, email Wepilo support and tell us the email address you signed up with.
             </p>
             <Button className="mt-6" variant="outline" onClick={() => window.location.reload()}>Check again</Button>
           </>
         ) : (
           <>
             <Loader2 className="mx-auto size-8 animate-spin text-primary" />
-            <h1 className="mt-4 text-lg font-semibold">Confirming your payment, please wait…</h1>
+            <h1 className="mt-4 text-lg font-semibold">Confirming your payment…</h1>
             <p className="mt-2 text-sm text-muted-foreground">This usually takes a few seconds. Please keep this browser tab open and do not press the back button.</p>
           </>
         )}

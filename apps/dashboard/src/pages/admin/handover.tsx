@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Check, Copy, KeyRound } from "lucide-react";
+import { KeyRound } from "@/components/icons";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { SetupLink } from "./admin-api";
+import { CopyIcon } from "@/components/ui/morphing-icons";
+import { TextMorph } from "torph/react";
 
 /** The one-time link that lets the client set a password and take over the workspace. */
 export function SetupLinkPanel({ link, ownerEmail }: { link: SetupLink; ownerEmail: string }) {
@@ -34,8 +36,8 @@ export function SetupLinkPanel({ link, ownerEmail }: { link: SetupLink; ownerEma
           <div className="mt-3 flex gap-2">
             <Input readOnly value={link.url} onFocus={(e) => e.currentTarget.select()} className="bg-background font-mono text-xs" />
             <Button type="button" variant="outline" onClick={copy} className="shrink-0">
-              {copied ? <Check /> : <Copy />}
-              {copied ? "Link copied" : "Copy the setup link"}
+              <CopyIcon copied={copied} size={16} />
+              <TextMorph>{copied ? "Copied" : "Copy"}</TextMorph>
             </Button>
           </div>
         </div>

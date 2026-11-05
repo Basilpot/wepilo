@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileText, PenLine, Plus, Trash2 } from "lucide-react";
+import { FileText, PenLine, Plus, Trash2 } from "@/components/icons";
 import { api } from "@/lib/api";
 import { StatusBadge } from "@/components/status-badge";
 import { PageHeader } from "@/components/PageHeader";
@@ -75,7 +75,7 @@ export function DocumentsPage() {
   const columns: Column<Document>[] = [
     {
       key: "title",
-      header: "Document name",
+      header: "Title",
       cell: (d) => (
         <span className="flex items-center gap-2 font-medium">
           <FileText className="h-4 w-4 text-muted-foreground" />
@@ -83,10 +83,10 @@ export function DocumentsPage() {
         </span>
       ),
     },
-    { key: "path", header: "Where the file is stored", className: "font-mono text-sm text-muted-foreground", cell: (d) => d.path },
+    { key: "path", header: "Path", className: "font-mono text-sm text-muted-foreground", cell: (d) => d.path },
     {
       key: "status",
-      header: "Visible to the public?",
+      header: "Status",
       cell: (d) => <StatusBadge kind="content" status={d.published ? "published" : "draft"} />,
     },
     {
@@ -96,13 +96,13 @@ export function DocumentsPage() {
       cell: (doc) => (
         <RowActions
           actions={[
-            { label: "Edit this document", icon: PenLine, onSelect: () => openEdit(doc) },
+            { label: "Edit document", icon: PenLine, onSelect: () => openEdit(doc) },
             {
-              label: "Delete this document",
+              label: "Delete",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ title: `Delete the document “${doc.title}”?`, description: "It will be removed from your website. The file itself stays in your media library.", confirmLabel: "Yes, delete this document", cancelLabel: "No, keep it" }, () => remove.mutate(doc.id)),
+              onSelect: () => confirmDialog({ description: `Delete "${doc.title}"?` }, () => remove.mutate(doc.id)),
             },
           ]}
         />
@@ -113,7 +113,7 @@ export function DocumentsPage() {
   return (
     <div>
       <PageHeader
-        title="Licences and certificates"
+        title="Documents"
         description="Official papers that prove your business is trustworthy, such as your tourism licence, company registration, insurance and association memberships. Travellers can open the ones you publish from your website."
         action={
           <Button
@@ -127,7 +127,7 @@ export function DocumentsPage() {
             }}
           >
             <Plus />
-            Add a licence or certificate
+            New document
           </Button>
         }
       />
@@ -139,29 +139,28 @@ export function DocumentsPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={FileText}
-        emptyTitle="You have not added any licences or certificates yet"
-        emptyHint="First upload the PDF or image in the “Media library”. Then select “Add a licence or certificate” here and paste the file’s location."
+        emptyTitle="No documents"
+        emptyHint="First upload the PDF or image in the “Media”. Then select “New document” here and paste the file’s location."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit this licence or certificate" : "Add a licence or certificate"}
+        title={editing ? "Edit document" : "New document"}
         description="Give the document a clear name and tell us where the file is."
-        submitLabel={editing ? "Save changes to this document" : "Add this document"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Document name (what visitors will see)" required hint="Example: Nepal Tourism Board licence">
+        <Field label="Title" required hint="Example: Nepal Tourism Board licence">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} />
         </Field>
-        <Field label="Where is the file? (file location or web address)" required hint="Upload the file in the “Media library” first, open it, choose “Copy the file link”, and paste that link here.">
+        <Field label="Path or URL" required hint="Upload the file in the “Media” first, open it, choose “Copy link”, and paste that link here.">
           <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/media/file/..." />
         </Field>
         <label className="flex items-center gap-2 text-sm">
           <Checkbox checked={published} onCheckedChange={(v) => setPublished(v === true)} />
-          Show this document on my public website
+          Published
         </label>
       </FormDialog>
     </div>

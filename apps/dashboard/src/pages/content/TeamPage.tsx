@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PenLine, Plus, Trash2, Contact2 } from "lucide-react";
+import { PenLine, Plus, Trash2, Contact2 } from "@/components/icons";
 import { api } from "@/lib/api";
 import { ImageField } from "@/components/image-field";
 import { PageHeader } from "@/components/PageHeader";
@@ -98,7 +98,7 @@ export function TeamPage() {
   const columns: Column<Member>[] = [
     {
       key: "member",
-      header: "Person and job title",
+      header: "Member",
       cell: (m) => (
         <div className="flex items-center gap-3">
           {m.image ? (
@@ -110,17 +110,17 @@ export function TeamPage() {
           )}
           <div>
             <p className="font-medium">{m.name}</p>
-            <p className="text-xs text-muted-foreground">{m.designation ?? "No job title added"}</p>
+            <p className="text-xs text-muted-foreground">{m.designation ?? "—"}</p>
           </div>
         </div>
       ),
     },
-    { key: "department", header: "Department", cell: (m) => m.department?.name ?? "No department" },
+    { key: "department", header: "Department", cell: (m) => m.department?.name ?? "—" },
     {
       key: "about",
-      header: "Short biography shown on the website",
+      header: "About",
       className: "max-w-md",
-      cell: (m) => <span className="line-clamp-2 text-muted-foreground">{m.about ?? "No biography added"}</span>,
+      cell: (m) => <span className="line-clamp-2 text-muted-foreground">{m.about ?? "—"}</span>,
     },
     {
       key: "actions",
@@ -129,13 +129,13 @@ export function TeamPage() {
       cell: (member) => (
         <RowActions
           actions={[
-            { label: "Edit this team member", icon: PenLine, onSelect: () => openEdit(member) },
+            { label: "Edit member", icon: PenLine, onSelect: () => openEdit(member) },
             {
-              label: "Remove this person from the website",
+              label: "Remove",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ title: `Remove ${member.name} from your website?`, description: "Their profile will no longer appear on your public team page. This does not delete their staff login, if they have one.", confirmLabel: "Yes, remove this person", cancelLabel: "No, keep them" }, () => remove.mutate(member.id)),
+              onSelect: () => confirmDialog({ description: `Remove ${member.name}?` }, () => remove.mutate(member.id)),
             },
           ]}
         />
@@ -146,7 +146,7 @@ export function TeamPage() {
   return (
     <div>
       <PageHeader
-        title="Team members"
+        title="Team"
         description="The people introduced on your public website, such as guides, founders and office staff, each with a photo, job title and short biography. This list is only for your website. To give someone access to this dashboard, use “Staff logins” instead."
         action={
           <Button
@@ -158,7 +158,7 @@ export function TeamPage() {
             }}
           >
             <Plus />
-            Add a team member
+            Add member
           </Button>
         }
       />
@@ -170,33 +170,32 @@ export function TeamPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={Contact2}
-        emptyTitle="You have not added any team members yet"
-        emptyHint="Introduce your guides and staff so travellers know who they will be travelling with. Select “Add a team member” to create the first profile."
+        emptyTitle="No team members yet"
+        emptyHint="Introduce your guides and staff so travellers know who they will be travelling with. Select “Add member” to create the first profile."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit this team member" : "Add a team member"}
+        title={editing ? "Edit member" : "Add member"}
         description="This information is shown publicly on your website’s team page."
-        submitLabel={editing ? "Save changes to this person" : "Add this person"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Full name" required>
+        <Field label="Name" required>
           <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         </Field>
-        <Field label="Job title (optional)" hint="Example: Lead trekking guide, Operations manager">
+        <Field label="Designation" hint="Example: Lead trekking guide, Operations manager">
           <Input value={form.designation} onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))} />
         </Field>
-        <Field label="Short biography (optional)" hint="Two or three sentences about their experience and what travellers can expect from them.">
+        <Field label="About" hint="Two or three sentences about their experience and what travellers can expect from them.">
           <Textarea rows={3} value={form.about} onChange={(e) => setForm((f) => ({ ...f, about: e.target.value }))} />
         </Field>
-        <Field label="Profile photo (optional)">
-          <ImageField shape="avatar" label="Choose a photo from your media library" value={form.image} onChange={(url) => setForm((f) => ({ ...f, image: url }))} />
+        <Field label="Photo">
+          <ImageField shape="avatar" label="Add photo" value={form.image} onChange={(url) => setForm((f) => ({ ...f, image: url }))} />
         </Field>
-        <Field label="Which department are they in? (optional)" hint="Departments are created in the “Team departments” page.">
+        <Field label="Department" hint="Departments are created in the “Departments” page.">
           <Select
             value={form.departmentId || "none"}
             onValueChange={(v) => setForm((f) => ({ ...f, departmentId: v === "none" ? "" : v }))}
@@ -205,7 +204,7 @@ export function TeamPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">No department</SelectItem>
+              <SelectItem value="none">None</SelectItem>
               {data?.departments.map((dept) => (
                 <SelectItem key={dept.id} value={String(dept.id)}>
                   {dept.name ?? dept.id}

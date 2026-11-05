@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, LifeBuoy } from "lucide-react";
+import { Plus, LifeBuoy } from "@/components/icons";
 import { api, type Paginated } from "@/lib/api";
 import { StatusBadge } from "@/components/status-badge";
 import { PageHeader } from "@/components/PageHeader";
@@ -82,7 +82,7 @@ export function SupportPage() {
   const columns: Column<Ticket>[] = [
     {
       key: "subject",
-      header: "What your message is about",
+      header: "Subject",
       cell: (t) => (
         <div className="min-w-0">
           <p className="truncate font-medium">{t.subject}</p>
@@ -90,21 +90,21 @@ export function SupportPage() {
         </div>
       ),
     },
-    { key: "creator", header: "Sent by", cell: (t) => t.creatorName ?? "You" },
+    { key: "creator", header: "From", cell: (t) => t.creatorName ?? "You" },
     {
       key: "created",
-      header: "Date sent",
+      header: "Created",
       className: "whitespace-nowrap text-muted-foreground",
       cell: (t) => new Date(t.createdAt).toLocaleDateString(),
     },
     {
       key: "priority",
-      header: "How urgent",
+      header: "Priority",
       cell: (t) => <StatusBadge kind="priority" status={t.priority} />,
     },
     {
       key: "status",
-      header: "Where it stands",
+      header: "Status",
       cell: (t) => <StatusBadge kind="ticket" status={t.status} />,
     },
   ];
@@ -112,7 +112,7 @@ export function SupportPage() {
   return (
     <div>
       <PageHeader
-        title="Contact Wepilo support"
+        title="Support"
         description="Ask the Wepilo team for help, report a problem, or suggest a feature. Each message becomes a support request that you can follow here, and we reply on the same page. Select a request to read the replies."
         action={
           <Button
@@ -122,7 +122,7 @@ export function SupportPage() {
             }}
           >
             <Plus />
-            Send a new message to support
+            New ticket
           </Button>
         }
       />
@@ -134,17 +134,17 @@ export function SupportPage() {
         isLoading={isLoading}
         onRowClick={(t) => navigate(`/support/${t.id}`)}
         emptyIcon={LifeBuoy}
-        emptyTitle="You have not contacted support yet"
-        emptyHint="If something is not working or you need help, select “Send a new message to support”. Describe what you were doing and what went wrong, and the Wepilo team will reply."
+        emptyTitle="No tickets"
+        emptyHint="If something is not working or you need help, select “New ticket”. Describe what you were doing and what went wrong, and the Wepilo team will reply."
         toolbar={
           <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
-            <SelectTrigger className="w-56" aria-label="Show only requests in this state">
+            <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All requests</SelectItem>
-              <SelectItem value="OPEN">Open, waiting for Wepilo</SelectItem>
-              <SelectItem value="IN_PROGRESS">Wepilo is working on it</SelectItem>
+              <SelectItem value="all">All tickets</SelectItem>
+              <SelectItem value="OPEN">Open</SelectItem>
+              <SelectItem value="IN_PROGRESS">In progress</SelectItem>
               <SelectItem value="RESOLVED">Resolved</SelectItem>
               <SelectItem value="CLOSED">Closed</SelectItem>
             </SelectContent>
@@ -167,49 +167,48 @@ export function SupportPage() {
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title="Send a new message to support"
+        title="New support ticket"
         description="The more detail you give, the faster we can help. Tell us what you were trying to do and what happened instead."
-        submitLabel="Send to Wepilo support"
         onSubmit={() => create.mutate()}
         pending={create.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="What do you need help with?" required>
+        <Field label="Category" required>
           <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="general">A general question</SelectItem>
-              <SelectItem value="billing">My plan, payment or invoice</SelectItem>
-              <SelectItem value="technical">Something is broken or not working</SelectItem>
-              <SelectItem value="feature">An idea for a new feature</SelectItem>
+              <SelectItem value="general">General</SelectItem>
+              <SelectItem value="billing">Billing</SelectItem>
+              <SelectItem value="technical">Technical</SelectItem>
+              <SelectItem value="feature">Feature request</SelectItem>
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Short summary" required hint="Example: I cannot publish my trip">
+        <Field label="Subject" required hint="Example: I cannot publish my trip">
           <Input value={form.subject} onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} />
         </Field>
-        <Field label="Describe the problem or question" required hint="Include the name of the page, what you clicked, and any error message you saw.">
+        <Field label="Message" required hint="Include the name of the page, what you clicked, and any error message you saw.">
           <Textarea rows={5} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Phone number for a call back (optional)" hint="Include the country code.">
+          <Field label="Callback number" hint="Include the country code.">
             <Input
               value={form.callbackNumber}
               onChange={(e) => setForm((f) => ({ ...f, callbackNumber: e.target.value }))}
             />
           </Field>
-          <Field label="How urgent is this?">
+          <Field label="Priority">
             <Select value={form.priority} onValueChange={(v) => setForm((f) => ({ ...f, priority: v }))}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="LOW">Low, whenever you can</SelectItem>
-                <SelectItem value="MEDIUM">Medium, normal request</SelectItem>
-                <SelectItem value="HIGH">High, affecting my work</SelectItem>
-                <SelectItem value="URGENT">Urgent, my business is blocked</SelectItem>
+                <SelectItem value="LOW">Low</SelectItem>
+                <SelectItem value="MEDIUM">Medium</SelectItem>
+                <SelectItem value="HIGH">High</SelectItem>
+                <SelectItem value="URGENT">Urgent</SelectItem>
               </SelectContent>
             </Select>
           </Field>

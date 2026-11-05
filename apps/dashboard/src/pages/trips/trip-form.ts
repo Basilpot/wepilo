@@ -102,7 +102,7 @@ export function newDay(day: number): ItineraryDay {
 export function newVariant(index: number, isDefault = false): ItineraryVariant {
   return {
     id: uid(),
-    name: index === 0 ? "Standard itinerary" : `Itinerary version ${index + 1}`,
+    name: index === 0 ? "Standard itinerary" : `Variant ${index + 1}`,
     description: "",
     isDefault,
     days: [newDay(1)],
@@ -167,24 +167,24 @@ export type TripStep = {
 };
 
 export const TRIP_STEPS: TripStep[] = [
-  { n: 1, key: "basics", title: "Trip name and web address", description: "Give the trip a name travellers will recognise. The web address is created from it automatically.", fields: ["title", "slug"] },
-  { n: 2, key: "overview", title: "Trip overview", description: "Write a short introduction that tells travellers what they will experience.", fields: ["overview"] },
-  { n: 3, key: "categorization", title: "Category, place and themes", description: "Say what kind of trip it is, where it takes place, and which homepage themes it belongs to.", fields: ["tripCategoryId", "countryId", "cityId", "regionId", "featuredTagIds"] },
-  { n: 4, key: "highlights", title: "Trip highlights", description: "List the best experiences and moments of the trip.", fields: ["highlights"] },
-  { n: 5, key: "itinerary", title: "Day-by-day itinerary", description: "Describe what happens on each day of the trip.", fields: ["itinerary"] },
-  { n: 6, key: "media", title: "Photos and video", description: "Add the photos travellers see, and an optional introduction video.", fields: ["images", "videoUrl"] },
-  { n: 7, key: "map", title: "Route map", description: "Add a map picture and explain the route.", fields: ["routeMap", "mapDescription"] },
-  { n: 8, key: "inclusions", title: "What is included in the price", description: "List everything the traveller does not need to pay for separately.", fields: ["inclusions"] },
-  { n: 9, key: "exclusions", title: "What is not included", description: "List what travellers must pay for themselves.", fields: ["exclusions"] },
-  { n: 10, key: "duration", title: "Trip length and altitude", description: "Say how long the trip lasts and how high it goes.", fields: ["duration", "maximumAltitude", "altitudeChart"] },
-  { n: 11, key: "capacity", title: "Group size and difficulty", description: "Say how many people can join and how demanding the trip is.", fields: ["guestCapacity", "difficultyLevel"] },
-  { n: 12, key: "points", title: "Where it starts and ends", description: "Say where travellers meet you and where the trip finishes.", fields: ["meetingPoint", "dropOffPoint"] },
-  { n: 13, key: "stay", title: "Places to stay and meals", description: "List where travellers sleep and which meals are included.", fields: ["accommodations", "meals"] },
-  { n: 14, key: "pricing", title: "Price and group discounts", description: "Set the price for one traveller and any discounts for larger groups.", fields: ["price", "maxPrice", "groupDiscount", "showGroupDiscount"] },
-  { n: 15, key: "extras", title: "Optional add-ons and languages", description: "Choose the add-ons travellers can buy and the languages your guides speak.", fields: ["extraIds", "languages"] },
-  { n: 16, key: "info", title: "Important notes for travellers", description: "Add anything travellers should read before booking, such as packing tips or visa rules.", fields: ["additionalInfo"] },
-  { n: 17, key: "faq", title: "Frequently asked questions", description: "Answer the questions travellers ask you most often.", fields: ["faq"] },
-  { n: 18, key: "seo", title: "Google and social media appearance", description: "Control how the trip looks in Google results and when shared on social media.", fields: ["seo"] },
+  { n: 1, key: "basics", title: "Basic information", description: "Give the trip a name travellers will recognise. The web address is created from it automatically.", fields: ["title", "slug"] },
+  { n: 2, key: "overview", title: "Overview", description: "Write a short introduction that tells travellers what they will experience.", fields: ["overview"] },
+  { n: 3, key: "categorization", title: "Categorization", description: "Say what kind of trip it is, where it takes place, and which homepage themes it belongs to.", fields: ["tripCategoryId", "countryId", "cityId", "regionId", "featuredTagIds"] },
+  { n: 4, key: "highlights", title: "Highlights", description: "List the best experiences and moments of the trip.", fields: ["highlights"] },
+  { n: 5, key: "itinerary", title: "Itinerary", description: "Describe what happens on each day of the trip.", fields: ["itinerary"] },
+  { n: 6, key: "media", title: "Media", description: "Add the photos travellers see, and an optional introduction video.", fields: ["images", "videoUrl"] },
+  { n: 7, key: "map", title: "Map", description: "Add a map picture and explain the route.", fields: ["routeMap", "mapDescription"] },
+  { n: 8, key: "inclusions", title: "Inclusions", description: "List everything the traveller does not need to pay for separately.", fields: ["inclusions"] },
+  { n: 9, key: "exclusions", title: "Exclusions", description: "List what travellers must pay for themselves.", fields: ["exclusions"] },
+  { n: 10, key: "duration", title: "Duration & altitude", description: "Say how long the trip lasts and how high it goes.", fields: ["duration", "maximumAltitude", "altitudeChart"] },
+  { n: 11, key: "capacity", title: "Capacity & difficulty", description: "Say how many people can join and how demanding the trip is.", fields: ["guestCapacity", "difficultyLevel"] },
+  { n: 12, key: "points", title: "Meeting & drop-off", description: "Say where travellers meet you and where the trip finishes.", fields: ["meetingPoint", "dropOffPoint"] },
+  { n: 13, key: "stay", title: "Accommodation & meals", description: "List where travellers sleep and which meals are included.", fields: ["accommodations", "meals"] },
+  { n: 14, key: "pricing", title: "Pricing", description: "Set the price for one traveller and any discounts for larger groups.", fields: ["price", "maxPrice", "groupDiscount", "showGroupDiscount"] },
+  { n: 15, key: "extras", title: "Extras & languages", description: "Choose the add-ons travellers can buy and the languages your guides speak.", fields: ["extraIds", "languages"] },
+  { n: 16, key: "info", title: "Additional info", description: "Add anything travellers should read before booking, such as packing tips or visa rules.", fields: ["additionalInfo"] },
+  { n: 17, key: "faq", title: "FAQs", description: "Answer the questions travellers ask you most often.", fields: ["faq"] },
+  { n: 18, key: "seo", title: "SEO", description: "Control how the trip looks in Google results and when shared on social media.", fields: ["seo"] },
 ];
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -276,15 +276,15 @@ export function getStepProgress(form: TripForm): Record<string, number> {
 
 /** Sections of a PAGE trip, in page order. Keys match getStepProgress / step bodies. */
 export const PAGE_SECTIONS = [
-  { key: "summary", title: "Short summary", description: "One or two sentences shown on trip cards and in search results." },
-  { key: "content", title: "Main page content", description: "Write everything travellers need to know, organised the way you like." },
-  { key: "media", title: "Photos and video", description: "The first photo is used as the cover picture." },
-  { key: "pricing", title: "Price and group discounts", description: "Set the price for one traveller and any discounts for larger groups." },
-  { key: "categorization", title: "Category and place", description: "Helps travellers find this trip on your website." },
-  { key: "inclusions", title: "What is included in the price", description: "Optional. Shown as a checklist on the trip page." },
-  { key: "exclusions", title: "What is not included", description: "Optional. List what travellers must pay for themselves." },
-  { key: "faq", title: "Frequently asked questions", description: "Optional. Answers to the questions you get asked most." },
-  { key: "seo", title: "Google and social media appearance", description: "Optional. If you leave this empty, the trip title and summary are used." },
+  { key: "summary", title: "Summary", description: "One or two sentences shown on trip cards and in search results." },
+  { key: "content", title: "Page content", description: "Write everything travellers need to know, organised the way you like." },
+  { key: "media", title: "Photos & video", description: "The first photo is used as the cover picture." },
+  { key: "pricing", title: "Pricing", description: "Set the price for one traveller and any discounts for larger groups." },
+  { key: "categorization", title: "Category & location", description: "Helps travellers find this trip on your website." },
+  { key: "inclusions", title: "What's included", description: "Optional. Shown as a checklist on the trip page." },
+  { key: "exclusions", title: "What's not included", description: "Optional. List what travellers must pay for themselves." },
+  { key: "faq", title: "FAQs", description: "Optional. Answers to the questions you get asked most." },
+  { key: "seo", title: "Search engine listing", description: "Optional. If you leave this empty, the trip title and summary are used." },
 ] as const;
 
 export function getPageProgress(form: TripForm): Record<string, number> {
@@ -321,7 +321,7 @@ export function normalizeItinerary(itinerary: unknown): ItineraryVariant[] {
     const defaultIndex = Math.max(0, rows.findIndex((v) => Boolean(v.isDefault)));
     return rows.map((v, i) => ({
       id: uid(),
-      name: str(v.name) || (i === 0 ? "Standard itinerary" : `Itinerary version ${i + 1}`),
+      name: str(v.name) || (i === 0 ? "Standard itinerary" : `Variant ${i + 1}`),
       description: str(v.description),
       isDefault: i === defaultIndex,
       days: (Array.isArray(v.days) ? (v.days as Record<string, unknown>[]) : []).map((d, di) => ({

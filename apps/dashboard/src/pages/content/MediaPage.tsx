@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FileText, Images, Link2, Pencil, Search, Trash2, Upload } from "lucide-react";
+import { FileText, Images, Link2, Pencil, Search, Trash2, Upload } from "@/components/icons";
 import { api, uploadFile, type Paginated } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState, Field, FormDialog } from "@/components/form";
@@ -118,7 +118,7 @@ export function MediaPage() {
     }
     if (done) void queryClient.invalidateQueries({ queryKey: ["media"] });
     if (failed) toast.error(`${done} uploaded successfully, but ${failed} could not be uploaded. Check your internet connection and upload the failed files again.`, { id });
-    else toast.success(`${done} file${done === 1 ? " was" : "s were"} uploaded to your media library.`, { id });
+    else toast.success(`${done} file${done === 1 ? "" : "s"} uploaded`, { id });
     setUploading(false);
   };
 
@@ -157,9 +157,9 @@ export function MediaPage() {
       }}
     >
       <PageHeader
-        title="Media library"
+        title="Media"
         description={
-          data ? `Photos and PDF files you can reuse on trips, pages and blog posts. You are using ${formatBytes(data.storageUsedBytes)} of storage across ${data.pagination.total} file${data.pagination.total === 1 ? "" : "s"}. You can also drag files from your computer anywhere on this page to upload them.` : "Photos and PDF files you can reuse on trips, pages and blog posts. You can also drag files from your computer anywhere on this page to upload them."
+          data && data.pagination.total > 0 ? `Photos and PDF files you can reuse on trips, pages and blog posts. ${data.pagination.total} file${data.pagination.total === 1 ? "" : "s"}, ${formatBytes(data.storageUsedBytes)} used. Drag files anywhere on this page to upload them.` : "Photos and PDF files you can reuse on trips, pages and blog posts. Drag files anywhere on this page to upload them."
         }
         action={
           <>
@@ -176,7 +176,7 @@ export function MediaPage() {
             />
             <Button disabled={uploading} onClick={() => fileRef.current?.click()}>
               <Upload />
-              {uploading ? "Uploading your files, please wait…" : "Upload images or PDFs"}
+              {uploading ? "Uploading…" : "Upload"}
             </Button>
           </>
         }
@@ -213,13 +213,13 @@ export function MediaPage() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex w-full flex-col items-center rounded-lg border border-dashed px-6 py-16 text-center transition-colors hover:border-primary/50 hover:bg-muted/40"
+            className="group flex w-full flex-col items-center rounded-2xl border border-dashed px-6 py-16 text-center transition-colors hover:border-primary/50 hover:bg-primary/[0.03]"
           >
-            <span className="flex size-10 items-center justify-center rounded-lg border bg-background text-muted-foreground shadow-xs">
+            <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-300 group-hover:-translate-y-0.5">
               <Images className="size-5" />
             </span>
-            <span className="mt-3 text-sm font-medium">Drag images or PDFs here, or click to choose files from your computer</span>
-            <span className="mt-1 text-sm text-muted-foreground">Accepted: JPG, PNG, WebP, GIF, SVG and PDF files, up to 10 MB each. Uploaded files stay here so you can reuse them on trips, pages and posts.</span>
+            <span className="mt-3 text-sm font-medium">Drop images here or click to upload</span>
+            <span className="mt-1 max-w-md text-sm text-muted-foreground">JPG, PNG, WebP, GIF, SVG and PDF files, up to 10 MB each. Uploaded files stay here so you can reuse them on trips, pages and posts.</span>
           </button>
         )
       ) : (
@@ -251,15 +251,15 @@ export function MediaPage() {
                   </button>
                   <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-end gap-1 p-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100">
                     {[
-                      { label: "Edit description and details", icon: Pencil, onClick: () => openEdit(item) },
-                      { label: "Copy the file link", icon: Link2, onClick: () => void copyUrl(item.url) },
+                      { label: "Edit details", icon: Pencil, onClick: () => openEdit(item) },
+                      { label: "Copy link", icon: Link2, onClick: () => void copyUrl(item.url) },
                       {
-                        label: "Delete this file",
+                        label: "Delete file",
                         icon: Trash2,
                         onClick: () =>
                           confirmDialog(
                             {
-                              title: "Delete this file permanently?",
+                              title: "Delete file?",
                               description: `${item.filename} will be removed from your media library for good. Any trip, page or post that still uses it will show a broken image until you choose a new one.`,
                             },
                             () => remove.mutate(item.id),
@@ -280,7 +280,7 @@ export function MediaPage() {
                   </div>
                   {isImage && !item.alt && (
                     <span className="absolute bottom-1.5 left-1.5 rounded bg-amber-100/95 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">
-                      Missing image description
+                      No alt text
                     </span>
                   )}
                 </div>
@@ -322,17 +322,16 @@ export function MediaPage() {
       >
         <div className="flex flex-col items-center rounded-xl border-2 border-dashed border-primary bg-background px-16 py-12 text-center shadow-lg">
           <Upload className="size-6 text-primary" />
-          <p className="mt-3 font-medium">Release your mouse to upload these files</p>
-          <p className="mt-1 text-sm text-muted-foreground">Images and PDF files up to 10 MB each</p>
+          <p className="mt-3 font-medium">Drop to upload</p>
+          <p className="mt-1 text-sm text-muted-foreground">Images and PDFs up to 10 MB</p>
         </div>
       </div>
 
       <FormDialog
         open={!!editing}
         onOpenChange={(o) => !o && setEditing(null)}
-        title="Edit the details of this file"
+        title="File details"
         description={editing?.filename}
-        submitLabel="Save file details"
         onSubmit={() => saveMeta.mutate()}
         pending={saveMeta.isPending}
       >
@@ -355,21 +354,21 @@ export function MediaPage() {
               </span>
               <Button type="button" variant="outline" size="sm" onClick={() => void copyUrl(editing.url)}>
                 <Link2 />
-                Copy the file link
+                Copy link
               </Button>
             </div>
           </div>
         )}
-        <Field label="Image description (alt text)" htmlFor="alt" hint="Describe what the picture shows in one sentence. Google and screen readers for blind visitors use this text. Skip it for PDFs.">
+        <Field label="Alt text" htmlFor="alt" hint="Describe what the picture shows in one sentence. Google and screen readers for blind visitors use this text. Skip it for PDFs.">
           <Input id="alt" value={editForm.alt} onChange={(e) => setEditForm({ ...editForm, alt: e.target.value })} placeholder="Example: Hikers crossing a suspension bridge at sunrise" />
         </Field>
-        <Field label="Title (optional)" htmlFor="title">
+        <Field label="Title" htmlFor="title">
           <Input id="title" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
         </Field>
-        <Field label="Caption shown under the image (optional)" htmlFor="caption">
+        <Field label="Caption" htmlFor="caption">
           <Input id="caption" value={editForm.caption} onChange={(e) => setEditForm({ ...editForm, caption: e.target.value })} />
         </Field>
-        <Field label="Internal notes about this file (optional)" htmlFor="description">
+        <Field label="Description" htmlFor="description">
           <Textarea id="description" rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
         </Field>
       </FormDialog>

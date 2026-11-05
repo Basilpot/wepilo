@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink, Loader2, Mail, RefreshCw } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Mail, RefreshCw } from "@/components/icons";
 import { api, ApiClientError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { confirmDialog } from "@/components/confirm";
@@ -67,7 +67,7 @@ export function WorkspaceDetailPage() {
       <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2 text-muted-foreground">
         <Link to="/admin/workspaces">
           <ArrowLeft />
-          Back to all customer workspaces
+          Workspaces
         </Link>
       </Button>
 
@@ -78,8 +78,8 @@ export function WorkspaceDetailPage() {
             <StatusBadge kind="workspace" status={workspaceState(t)} />
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            <span className="font-mono">{t.slug}</span> · created on {formatDate(t.createdAt)}
-            {t.createdByAdminId ? ", set up by the Wepilo team" : ", signed up by the agency itself"}
+            <span className="font-mono">{t.slug}</span> · created {formatDate(t.createdAt)}
+            {t.createdByAdminId ? " by the Wepilo team" : " by self sign-up"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -89,11 +89,10 @@ export function WorkspaceDetailPage() {
             onClick={() =>
               confirmDialog(
                 {
-                  title: "Open this workspace as its owner?",
+                  title: "Open as owner?",
                   description:
                     "This browser will be signed in to the customer’s workspace with the owner’s full access for one hour. Every change you make is a real change to their account. Your visit is recorded in the activity log.",
-                  confirmLabel: "Yes, open the workspace",
-                  cancelLabel: "No, stay here",
+                  confirmLabel: "Open workspace",
                   destructive: false,
                 },
                 () => openAsOwner.mutate(),
@@ -101,7 +100,7 @@ export function WorkspaceDetailPage() {
             }
           >
             <ExternalLink />
-            Open this workspace as its owner
+            Open as owner
           </Button>
           <Button
             variant={suspended ? "default" : "outline"}
@@ -110,17 +109,17 @@ export function WorkspaceDetailPage() {
             onClick={() =>
               confirmDialog(
                 suspended
-                  ? { title: "Reactivate this workspace?", description: "The agency’s staff can sign in again and its website starts loading content again.", confirmLabel: "Yes, reactivate it", destructive: false }
+                  ? { title: "Reactivate workspace?", description: "The agency’s staff can sign in again and its website starts loading content again.", confirmLabel: "Yes, reactivate it", destructive: false }
                   : {
-                      title: "Suspend this workspace?",
+                      title: "Suspend workspace?",
                       description: "Everyone in this agency is signed out and nobody can sign in. The agency’s website also stops loading content. Nothing is deleted, and you can reactivate the workspace at any time.",
-                      confirmLabel: "Yes, suspend it",
+                      confirmLabel: "Suspend",
                     },
                 () => update.mutate({ status: suspended ? "ACTIVE" : "SUSPENDED" }),
               )
             }
           >
-            {suspended ? "Reactivate this workspace" : "Suspend this workspace"}
+            {suspended ? "Reactivate" : "Suspend"}
           </Button>
         </div>
       </div>
@@ -129,7 +128,7 @@ export function WorkspaceDetailPage() {
         <div className="space-y-6">
           <HandoverCard data={data} onChanged={refresh} />
           <PlanCard data={data} pending={update.isPending} onSave={(body) => update.mutate(body)} />
-          <Panel title="Staff logins" description={`${data.staff.length} ${data.staff.length === 1 ? "person can" : "people can"} sign in to this workspace`}>
+          <Panel title="Staff" description={`${data.staff.length} ${data.staff.length === 1 ? "person can" : "people can"} sign in to this workspace`}>
             <ul className="divide-y">
               {data.staff.map((s) => (
                 <li key={s.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
@@ -148,14 +147,14 @@ export function WorkspaceDetailPage() {
         </div>
 
         <div className="space-y-6">
-          <Panel title="How much of the product they use">
+          <Panel title="Usage">
             <dl className="grid grid-cols-2 gap-4">
               {(
                 [
-                  ["Trips created", data.usage.trips],
-                  ["Blog posts written", data.usage.posts],
-                  ["Customer bookings received", data.usage.bookings],
-                  ["Staff logins", data.usage.staff],
+                  ["Trips", data.usage.trips],
+                  ["Posts", data.usage.posts],
+                  ["Bookings", data.usage.bookings],
+                  ["Staff", data.usage.staff],
                 ] as const
               ).map(([label, value]) => (
                 <div key={label}>
@@ -165,7 +164,7 @@ export function WorkspaceDetailPage() {
               ))}
             </dl>
           </Panel>
-          <Panel title="Admin activity log" description="A record of what Wepilo admins did in this workspace.">
+          <Panel title="Activity" description="A record of what Wepilo admins did in this workspace.">
             {data.log.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nothing yet.</p>
             ) : (
@@ -174,7 +173,7 @@ export function WorkspaceDetailPage() {
                   <li key={entry.id} className="text-sm">
                     <p className="font-medium">{AUDIT_LABELS[entry.action] ?? entry.action}</p>
                     <p className="text-xs text-muted-foreground">
-                      {entry.admin?.name ?? "An admin who has since been removed"} · {new Date(entry.createdAt).toLocaleString()}
+                      {entry.admin?.name ?? "Removed admin"} · {new Date(entry.createdAt).toLocaleString()}
                     </p>
                     {entry.detail && entry.action === "workspace.updated" && (
                       <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
@@ -215,7 +214,7 @@ function HandoverCard({ data, onChanged }: { data: WorkspaceDetail; onChanged: (
       setLink(null);
       onChanged();
     },
-    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Something went wrong. Please try again in a moment."),
+    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Something went wrong"),
   });
 
   const status = data.pendingSetupUntil
@@ -224,13 +223,13 @@ function HandoverCard({ data, onChanged }: { data: WorkspaceDetail; onChanged: (
 
   return (
     <Panel
-      title="Workspace owner and handover"
+      title="Owner & handover"
       description="The owner signs in with this email address, after choosing a password through a one-time setup link."
       action={
         owner &&
         !editing && (
           <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
-            Change the owner’s details
+            Edit owner
           </Button>
         )
       }
@@ -247,10 +246,10 @@ function HandoverCard({ data, onChanged }: { data: WorkspaceDetail; onChanged: (
           }}
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Owner’s full name" htmlFor="owner-name" required>
+            <Field label="Name" htmlFor="owner-name" required>
               <Input id="owner-name" required value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
-            <Field label="Owner’s email address" htmlFor="owner-email" required hint="This is also the address they use to sign in, so changing it changes their login.">
+            <Field label="Email" htmlFor="owner-email" required hint="This is also the address they use to sign in, so changing it changes their login.">
               <Input id="owner-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </Field>
           </div>
@@ -258,10 +257,10 @@ function HandoverCard({ data, onChanged }: { data: WorkspaceDetail; onChanged: (
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={saveOwner.isPending}>
               {saveOwner.isPending && <Loader2 className="animate-spin" />}
-              Save the owner’s details
+              Save owner
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={() => setEditing(false)}>
-              Cancel without saving
+              Cancel
             </Button>
           </div>
         </form>
@@ -276,11 +275,11 @@ function HandoverCard({ data, onChanged }: { data: WorkspaceDetail; onChanged: (
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" disabled={issue.isPending} onClick={() => issue.mutate(false)}>
               <RefreshCw />
-              Create a new setup link
+              New setup link
             </Button>
             <Button variant="outline" size="sm" disabled={issue.isPending} onClick={() => issue.mutate(true)}>
               <Mail />
-              Create a new link and email it to the owner
+              Email new link to owner
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">A new link replaces the old one. Using it also resets the owner's password.</p>
@@ -328,10 +327,10 @@ function PlanCard({
     if (planChanged && liveSubscription) {
       confirmDialog(
         {
-          title: "This customer pays through Dodo checkout",
+          title: "This workspace pays through Dodo",
           description:
             "If you set the plan by hand, the workspace becomes a hand-managed plan, but their Dodo subscription keeps charging them. Cancel that subscription in Dodo first, or the next renewal will override your change.",
-          confirmLabel: "Yes, set the plan anyway",
+          confirmLabel: "Set plan anyway",
         },
         run,
       );
@@ -346,7 +345,7 @@ function PlanCard({
         : "Self-service. The agency pays through the online checkout.";
 
   return (
-    <Panel title="Plan and access" description={billingLine}>
+    <Panel title="Plan & access" description={billingLine}>
       <form
         className="space-y-4"
         onSubmit={(e) => {
@@ -355,7 +354,7 @@ function PlanCard({
         }}
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Plan this customer is on">
+          <Field label="Plan">
             <Select value={plan} onValueChange={(v) => setPlan(v as PlanKey)}>
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -369,7 +368,7 @@ function PlanCard({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Access runs until" htmlFor="plan-end">
+          <Field label="Access until" htmlFor="plan-end">
             <Input
               id="plan-end"
               type="date"
@@ -383,16 +382,16 @@ function PlanCard({
         {plan === "ENTERPRISE" && (
           <label className="flex items-center gap-3 text-sm">
             <Switch checked={noEnd} onCheckedChange={setNoEnd} />
-            This plan has no end date
+            No end date
           </label>
         )}
-        <Field label="Private notes for the Wepilo team" htmlFor="plan-notes" hint="Only Wepilo admins can see this. The customer never sees it.">
+        <Field label="Internal notes" htmlFor="plan-notes" hint="Only Wepilo admins can see this. The customer never sees it.">
           <Textarea id="plan-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
         <div className="flex items-center gap-3">
           <Button type="submit" size="sm" disabled={pending || (!planChanged && !notesChanged)}>
             {pending && <Loader2 className="animate-spin" />}
-            Save plan and notes
+            Save
           </Button>
           {planChanged && <span className="text-xs text-muted-foreground">Saving sets this as a managed plan.</span>}
         </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Inbox } from "lucide-react";
+import { Inbox } from "@/components/icons";
 import { api, type Paginated } from "@/lib/api";
 import { StatusBadge, statusInfo, statusOptions } from "@/components/status-badge";
 import { PageHeader } from "@/components/PageHeader";
@@ -30,19 +30,19 @@ const NEXT: Record<Inquiry["status"], Inquiry["status"][]> = {
 };
 
 const ACTION_LABEL: Record<Inquiry["status"], string> = {
-  NEW: "Move back to New (unanswered)",
-  IN_PROGRESS: "Mark as being handled",
-  RESOLVED: "Mark as resolved (customer helped)",
-  CLOSED: "Close this inquiry (no action needed)",
+  NEW: "Mark as new",
+  IN_PROGRESS: "Mark in progress",
+  RESOLVED: "Mark resolved",
+  CLOSED: "Close inquiry",
 };
 
 function receivedLabel(value: string | number) {
   const then = new Date(value);
   const mins = Math.round((Date.now() - then.getTime()) / 60000);
   if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins} min ago`;
+  if (mins < 60) return `${mins}m ago`;
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} hr ago`;
+  if (hours < 24) return `${hours}h ago`;
   const days = Math.round(hours / 24);
   if (days === 1) return "Yesterday";
   if (days < 7) return `${days} days ago`;
@@ -78,7 +78,7 @@ export function InquiriesPage() {
   const columns: Column<Inquiry>[] = [
     {
       key: "from",
-      header: "Traveller who contacted you",
+      header: "From",
       cell: (i) => (
         <div className="flex min-w-0 items-center gap-3">
           <span
@@ -94,19 +94,19 @@ export function InquiriesPage() {
     },
     {
       key: "trip",
-      header: "What they asked about and their message",
+      header: "About",
       className: "max-w-md",
       cell: (i) => (
         <div className="min-w-0">
-          <p className="truncate">{i.trip ?? "General question (not about one trip)"}</p>
+          <p className="truncate">{i.trip ?? "General inquiry"}</p>
           {i.message && <p className="truncate text-xs text-muted-foreground">{i.message}</p>}
         </div>
       ),
     },
-    { key: "status", header: "Where this inquiry stands", cell: (i) => <StatusBadge kind="inquiry" status={i.status} /> },
+    { key: "status", header: "Status", cell: (i) => <StatusBadge kind="inquiry" status={i.status} /> },
     {
       key: "received",
-      header: "When it arrived",
+      header: "Received",
       className: "whitespace-nowrap text-muted-foreground",
       cell: (i) => receivedLabel(i.createdAt),
     },
@@ -126,7 +126,7 @@ export function InquiriesPage() {
 
   return (
     <div>
-      <PageHeader title="Customer inquiries" description="Every question a traveller sent through a contact or trip form on your website. Click an inquiry to read the full message and reply by email, phone or WhatsApp. Replying quickly makes a booking much more likely." />
+      <PageHeader title="Inquiries" description="Every question a traveller sent through a contact or trip form on your website. Click an inquiry to read the full message and reply by email, phone or WhatsApp. Replying quickly makes a booking much more likely." />
 
       <Tabs
         value={status}
@@ -138,7 +138,7 @@ export function InquiriesPage() {
       >
         <TabsList>
           <TabsTrigger value="all" className="px-3">
-            All inquiries
+            All
           </TabsTrigger>
           {statusOptions("inquiry").map((o) => (
             <TabsTrigger key={o.value} value={o.value} className="px-3">
@@ -186,25 +186,25 @@ export function InquiriesPage() {
                   <StatusBadge kind="inquiry" status={open.status} />
                 </div>
                 <SheetDescription>
-                  {open.trip ? `About the trip: ${open.trip}` : "General question (not about one trip)"} · Received {receivedLabel(open.createdAt)}
+                  {open.trip ?? "General inquiry"} · {receivedLabel(open.createdAt)}
                 </SheetDescription>
               </SheetHeader>
               <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
                 <ContactActions name={open.name} email={open.email} phone={open.phone} subject={open.trip ?? undefined} />
                 <dl className="grid grid-cols-[6rem_1fr] gap-x-4 gap-y-2 text-sm">
-                  <dt className="text-muted-foreground">Email address</dt>
+                  <dt className="text-muted-foreground">Email</dt>
                   <dd className="truncate">
                     <a href={`mailto:${open.email}`} className="hover:underline">
                       {open.email}
                     </a>
                   </dd>
-                  <dt className="text-muted-foreground">Phone number</dt>
-                  <dd>{open.phone || "Not provided"}</dd>
-                  <dt className="text-muted-foreground">Date received</dt>
+                  <dt className="text-muted-foreground">Phone</dt>
+                  <dd>{open.phone || "—"}</dd>
+                  <dt className="text-muted-foreground">Received</dt>
                   <dd>{new Date(open.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</dd>
                 </dl>
                 <div>
-                  <h3 className="mb-2 text-sm font-medium">What the traveller wrote</h3>
+                  <h3 className="mb-2 text-sm font-medium">Message</h3>
                   <p className="rounded-lg border bg-muted/30 p-4 text-sm leading-relaxed whitespace-pre-wrap">{open.message}</p>
                 </div>
               </div>

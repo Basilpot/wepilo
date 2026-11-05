@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,7 @@ export function PlanPicker({
     return (
       <InfoCard
         type="warning"
-        title="Plans cannot be bought online right now"
+        title="Plans aren't available yet"
         info="Online payment is not available at the moment. Please contact Wepilo support and we will set up your plan with you directly."
       />
     );
@@ -63,8 +63,8 @@ export function PlanPicker({
       {mode === "subscribe" && hasAnnual && (
         <Tabs value={interval} onValueChange={(v) => setInterval(v as BillingInterval)}>
           <TabsList>
-            <TabsTrigger value="monthly" className="px-3">Pay monthly</TabsTrigger>
-            <TabsTrigger value="annual" className="px-3">Pay once a year</TabsTrigger>
+            <TabsTrigger value="monthly" className="px-3">Monthly</TabsTrigger>
+            <TabsTrigger value="annual" className="px-3">Annual</TabsTrigger>
           </TabsList>
         </Tabs>
       )}
@@ -92,7 +92,7 @@ export function PlanPicker({
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-semibold">{plan.name}</h3>
                 {recommended && (
-                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">Most popular choice</span>
+                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">Most popular</span>
                 )}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{plan.tagline}</p>
@@ -102,14 +102,14 @@ export function PlanPicker({
                   <>
                     <p className="text-2xl font-semibold tracking-tight">{trialPrice}</p>
                     <p className="text-xs text-muted-foreground">
-                      one-time payment for a {billing.trial.days}-day trial{anyRecurring ? `. If you decide to continue afterwards, the plan costs ${anyRecurring}` : ""}
+                      for {billing.trial.days} days{anyRecurring ? `, then ${anyRecurring} if you choose to continue` : ""}
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-2xl font-semibold tracking-tight">{recurring ?? (unavailable ? "Not available" : "Price shown at checkout")}</p>
+                    <p className="text-2xl font-semibold tracking-tight">{recurring ?? (unavailable ? "—" : "See checkout")}</p>
                     <p className="text-xs text-muted-foreground">
-                      {unavailable ? `This plan cannot be paid ${interval === "annual" ? "yearly" : "monthly"}` : `Charged ${interval === "annual" ? "once a year" : "every month"} and renews automatically until you cancel`}
+                      {unavailable ? `Not offered ${interval}` : `Charged ${interval === "annual" ? "once a year" : "every month"} and renews automatically until you cancel`}
                     </p>
                   </>
                 )}
@@ -135,12 +135,12 @@ export function PlanPicker({
               >
                 {pending === plan.key && busy && <Loader2 className="animate-spin" />}
                 {mode === "trial"
-                  ? `Start a ${billing.trial.days}-day ${plan.name} trial for ${trialPrice}`
+                  ? `Try ${plan.name} for ${trialPrice}`
                   : current
-                    ? "This is your current plan"
+                    ? "Current plan"
                     : switching
-                      ? `Switch to the ${plan.name} plan`
-                      : `Choose the ${plan.name} plan`}
+                      ? `Switch to ${plan.name}`
+                      : `Choose ${plan.name}`}
               </Button>
             </div>
           );

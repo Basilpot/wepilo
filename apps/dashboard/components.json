@@ -21,5 +21,7 @@
   "rtl": false,
   "menuColor": "default",
   "menuAccent": "bold",
-  "registries": {}
+  "registries": {
+    "@kobra": "https://kobra.systems/r/{name}.json"
+  }
 }

@@ -1,4 +1,4 @@
-import { Mail, MessageCircle, Phone } from "lucide-react";
+import { Mail, MessageCircle, Phone } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 // Opens the agency's own mail, phone or WhatsApp app with the customer's
@@ -29,20 +29,20 @@ export function ContactActions({
 }) {
   const first = name.trim().split(/\s+/)[0] || "there";
   const wa = whatsappNumber(phone);
-  const greeting = `Hi ${first}, thank you for getting in touch with us${subject ? ` about ${subject}` : ""}.`;
+  const greeting = `Hi ${first}, thanks for getting in touch${subject ? ` about ${subject}` : ""}.`;
   return (
     <div className="flex flex-wrap gap-2">
       <Button asChild size={size}>
-        <a href={`mailto:${email}?subject=${encodeURIComponent(subject ? `Re: ${subject}` : "Re: your inquiry with us")}`}>
+        <a href={`mailto:${email}?subject=${encodeURIComponent(subject ? `Re: ${subject}` : "Re: your inquiry")}`}>
           <Mail />
-          Reply by email
+          Email
         </a>
       </Button>
       {wa && (
         <Button asChild size={size} variant="outline">
           <a href={`https://wa.me/${wa}?text=${encodeURIComponent(greeting)}`} target="_blank" rel="noopener noreferrer">
             <MessageCircle />
-            Message on WhatsApp
+            WhatsApp
           </a>
         </Button>
       )}
@@ -50,7 +50,7 @@ export function ContactActions({
         <Button asChild size={size} variant="outline">
           <a href={`tel:${phone.replace(/[^\d+]/g, "")}`}>
             <Phone />
-            Call this number
+            Call
           </a>
         </Button>
       )}

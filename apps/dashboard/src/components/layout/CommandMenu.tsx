@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FilePlus2, Footprints, Plus, Upload } from "lucide-react";
+import { FilePlus2, Footprints, Plus, Upload } from "@/components/icons";
 import {
   CommandDialog,
   CommandEmpty,
@@ -14,9 +14,9 @@ import { NAV_GROUPS, QUICK_LINKS } from "@/components/layout/nav";
 import { api } from "@/lib/api";
 
 const ACTIONS = [
-  { title: "Create a new trip", url: "/trips/new", icon: Plus },
-  { title: "Write a new blog post", url: "/posts/new", icon: FilePlus2 },
-  { title: "Upload images or PDFs to the media library", url: "/media", icon: Upload },
+  { title: "New trip", url: "/trips/new", icon: Plus },
+  { title: "New post", url: "/posts/new", icon: FilePlus2 },
+  { title: "Upload media", url: "/media", icon: Upload },
 ];
 
 type TripHit = { id: number; title: string | null; status: string };
@@ -60,12 +60,12 @@ export function CommandMenu({
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange} title="Search" description="Open any page, start a common task, or find one of your trips by name">
-      <CommandInput placeholder="Type a page name, a task, or a trip title…" value={search} onValueChange={setSearch} />
+      <CommandInput placeholder="Search pages, actions or trips…" value={search} onValueChange={setSearch} />
       <CommandList>
-        <CommandEmpty>{trips.isFetching ? "Searching your trips…" : "Nothing matches that search. Try a different word, or check the spelling."}</CommandEmpty>
+        <CommandEmpty>{trips.isFetching ? "Searching your trips…" : "Nothing matches that search. Try a different word."}</CommandEmpty>
         {trips.data?.data.length ? (
           <>
-            <CommandGroup heading="Matching trips">
+            <CommandGroup heading="Trips">
               {trips.data.data.map((t) => (
                 <CommandItem
                   key={t.id}
@@ -73,9 +73,9 @@ export function CommandMenu({
                   onSelect={() => go(`/trips/${t.id}`)}
                 >
                   <Footprints />
-                  <span className="truncate">{t.title || "Untitled trip (no title yet)"}</span>
+                  <span className="truncate">{t.title || "Untitled trip"}</span>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    {t.status === "PUBLISHED" ? "Published" : "Draft, not public"}
+                    {t.status === "PUBLISHED" ? "Live" : "Draft"}
                   </span>
                 </CommandItem>
               ))}
@@ -83,7 +83,7 @@ export function CommandMenu({
             <CommandSeparator />
           </>
         ) : null}
-        <CommandGroup heading="Common tasks">
+        <CommandGroup heading="Actions">
           {ACTIONS.map((a) => (
             <CommandItem key={a.url} value={a.title} onSelect={() => go(a.url)}>
               <a.icon />
@@ -92,7 +92,7 @@ export function CommandMenu({
           ))}
         </CommandGroup>
         <CommandSeparator />
-        <CommandGroup heading="Daily work">
+        <CommandGroup heading="Go to">
           {QUICK_LINKS.map((item) => (
             <CommandItem key={item.url} value={`${item.title} ${item.keywords ?? ""}`} onSelect={() => go(item.url)}>
               <item.icon />

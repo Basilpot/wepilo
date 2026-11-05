@@ -34,33 +34,33 @@ export function LoginPage() {
 
   return (
     <AuthCard
-      title={welcome ? "Your password is saved" : "Sign in to your dashboard"}
+      title={welcome ? "You're all set" : "Sign in"}
       description={welcome ? "Now sign in with your email and the password you just chose to open your workspace." : "Enter your email address and password to open your Wepilo workspace."}
       footer={
         <>
-          You do not have a workspace yet?{" "}
+          No account yet?{" "}
           <Link to="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
-            Create a workspace and start a trial
+            Start your trial
           </Link>
         </>
       }
     >
       <form onSubmit={form.handleSubmit((v) => login.mutate(v))} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Your email address</Label>
+          <Label htmlFor="email">Email</Label>
           <Input id="email" type="email" autoComplete="email" required {...form.register("email")} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Your password</Label>
+          <Label htmlFor="password">Password</Label>
           <Input id="password" type="password" autoComplete="current-password" required {...form.register("password")} />
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <Button type="submit" className="w-full" disabled={login.isPending}>
-          {login.isPending ? "Signing you in…" : "Sign in"}
+          {login.isPending ? "Signing in…" : "Sign in"}
         </Button>
         <p className="text-center text-sm">
           <Link to="/forgot-password" className="text-muted-foreground hover:text-foreground">
-            I forgot my password
+            Forgot password?
           </Link>
         </p>
       </form>

@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-11-05T04:49:14.435Z",
+        "reason": "user confirmed: chose 'Keep Inter font' as a brand commitment (PRODUCT.md)"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "createdAt": "2026-11-05T05:00:11.873Z",
+        "reason": "brief: user asked for reactbits.dev micro-interactions (spring check, squish switch); spring overshoot limited to badge pop-in and switch thumb"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "animation: var(--ease-spring)",
+        "createdAt": "2026-11-05T05:00:11.894Z",
+        "reason": "same token as above, referenced from the pop-in keyframe"
+      }
+    ]
+  }
+}

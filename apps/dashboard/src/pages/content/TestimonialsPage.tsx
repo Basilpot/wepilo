@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PenLine, Plus, Trash2, Quote } from "lucide-react";
-import { Star } from "lucide-react";
+import { PenLine, Plus, Trash2, Quote } from "@/components/icons";
+import { Star } from "@/components/icons";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Field, FormDialog } from "@/components/form";
@@ -80,10 +80,10 @@ export function TestimonialsPage() {
   };
 
   const columns: Column<Testimonial>[] = [
-    { key: "author", header: "Who said it", cell: (t) => <span className="font-medium">{t.author ?? "Anonymous traveller"}</span> },
+    { key: "author", header: "Author", cell: (t) => <span className="font-medium">{t.author ?? "Anonymous"}</span> },
     {
       key: "rating",
-      header: "Star rating out of 5",
+      header: "Rating",
       cell: (t) =>
         t.rating != null ? (
           <span className="flex items-center gap-0.5">
@@ -95,12 +95,12 @@ export function TestimonialsPage() {
             ))}
           </span>
         ) : (
-          <span className="text-muted-foreground">No rating given</span>
+          <span className="text-muted-foreground">—</span>
         ),
     },
     {
       key: "content",
-      header: "What they wrote",
+      header: "Content",
       className: "max-w-md",
       cell: (t) => <span className="line-clamp-2 text-muted-foreground">{t.content}</span>,
     },
@@ -111,13 +111,13 @@ export function TestimonialsPage() {
       cell: (item) => (
         <RowActions
           actions={[
-            { label: "Edit this testimonial", icon: PenLine, onSelect: () => openEdit(item) },
+            { label: "Edit testimonial", icon: PenLine, onSelect: () => openEdit(item) },
             {
-              label: "Delete this testimonial",
+              label: "Delete",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ title: "Delete this testimonial?", description: "It will be removed from your website for good and cannot be brought back.", confirmLabel: "Yes, delete this testimonial", cancelLabel: "No, keep it" }, () => remove.mutate(item.id)),
+              onSelect: () => confirmDialog({ description: "Delete this testimonial?" }, () => remove.mutate(item.id)),
             },
           ]}
         />
@@ -128,8 +128,8 @@ export function TestimonialsPage() {
   return (
     <div>
       <PageHeader
-        title="Customer testimonials"
-        description="Praise from happy travellers that you choose to show on your public website. You write or paste each quote yourself, so you control exactly what appears. These are different from “Guest trip reviews”, which travellers submit on their own."
+        title="Testimonials"
+        description="Praise from happy travellers that you choose to show on your public website. You write or paste each quote yourself, so you control exactly what appears. These are different from “Reviews”, which travellers submit on their own."
         action={
           <Button
             onClick={() => {
@@ -140,7 +140,7 @@ export function TestimonialsPage() {
             }}
           >
             <Plus />
-            Add a testimonial
+            Add testimonial
           </Button>
         }
       />
@@ -152,28 +152,27 @@ export function TestimonialsPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={Quote}
-        emptyTitle="You have not added any testimonials yet"
-        emptyHint="Quotes from happy travellers build trust with new visitors. Select “Add a testimonial” and paste in a kind message a guest sent you."
+        emptyTitle="No testimonials yet"
+        emptyHint="Quotes from happy travellers build trust with new visitors. Select “Add testimonial” and paste in a kind message a guest sent you."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit this testimonial" : "Add a testimonial"}
+        title={editing ? "Edit testimonial" : "New testimonial"}
         description="Only add a quote when the traveller has agreed to it being shown publicly."
-        submitLabel={editing ? "Save changes to this testimonial" : "Add this testimonial"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="What the traveller said" required hint="Paste or type their words exactly as they wrote them.">
+        <Field label="Content" required hint="Paste or type their words exactly as they wrote them.">
           <Textarea rows={4} value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Traveller’s name (optional)" hint="Example: Sarah, Canada. Leave empty to show it as anonymous.">
+          <Field label="Author" hint="Example: Sarah, Canada. Leave empty to show it as anonymous.">
             <Input value={form.author} onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))} />
           </Field>
-          <Field label="Star rating from 1 to 5 (optional)">
+          <Field label="Rating (1–5)">
             <Input
               type="number"
               min={1}
@@ -183,7 +182,7 @@ export function TestimonialsPage() {
             />
           </Field>
         </div>
-        <Field label="Link to a photo or video (optional)" hint="Paste the full web address of a picture or video from this traveller’s trip.">
+        <Field label="Media URL (optional)" hint="Paste the full web address of a picture or video from this traveller’s trip.">
           <Input value={form.media} onChange={(e) => setForm((f) => ({ ...f, media: e.target.value }))} />
         </Field>
       </FormDialog>

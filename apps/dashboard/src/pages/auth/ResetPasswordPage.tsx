@@ -11,10 +11,10 @@ import { Label } from "@/components/ui/label";
 import { AuthCard, useErrorMessage } from "./shared";
 
 const schema = z.object({
-  password: z.string().min(8, "Your password must be at least 8 characters long"),
+  password: z.string().min(8, "At least 8 characters"),
   confirmPassword: z.string(),
 }).refine((v) => v.password === v.confirmPassword, {
-  message: "The two passwords you typed are not the same. Type the same password in both boxes.",
+  message: "Passwords do not match",
   path: ["confirmPassword"],
 });
 
@@ -49,7 +49,7 @@ export function ResetPasswordPage({ setup = false }: { setup?: boolean }) {
 
   const info = link.data;
   const isSetup = setup || info?.purpose === "SETUP";
-  const title = isSetup ? "Set up your account" : "Choose a new password";
+  const title = isSetup ? "Set up your account" : "Set new password";
   const description = isSetup
     ? info
       ? `${info.companyName ?? "Your workspace"} is ready for you. Choose a password for ${info.email}. You will use it to sign in from now on.`
@@ -64,7 +64,7 @@ export function ResetPasswordPage({ setup = false }: { setup?: boolean }) {
       description={description}
       footer={
         <Link to="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
-          Go back to the sign in page
+          Back to sign in
         </Link>
       }
     >
@@ -72,7 +72,7 @@ export function ResetPasswordPage({ setup = false }: { setup?: boolean }) {
         <p className="text-sm text-destructive">
           {isSetup
             ? "This setup link has expired or has already been used. Ask your Wepilo contact to send you a new setup link."
-            : "This password reset link has expired or has already been used. Go back to the sign in page and select “I forgot my password” to get a new one."}
+            : "This password reset link has expired or has already been used. Go back to the sign in page and select “Forgot password?” to get a new one."}
         </p>
       ) : link.isLoading ? (
         <div className="space-y-3">
@@ -82,14 +82,14 @@ export function ResetPasswordPage({ setup = false }: { setup?: boolean }) {
       ) : (
         <form onSubmit={form.handleSubmit((v) => reset.mutate(v))} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="password">{isSetup ? "Choose your password" : "Your new password"}</Label>
+            <Label htmlFor="password">{isSetup ? "Password" : "New password"}</Label>
             <Input id="password" type="password" autoComplete="new-password" required {...form.register("password")} />
             {form.formState.errors.password && (
               <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Type the same password again</Label>
+            <Label htmlFor="confirmPassword">Confirm password</Label>
             <Input id="confirmPassword" type="password" autoComplete="new-password" required {...form.register("confirmPassword")} />
             {form.formState.errors.confirmPassword && (
               <p className="text-sm text-destructive">{form.formState.errors.confirmPassword.message}</p>
@@ -97,7 +97,7 @@ export function ResetPasswordPage({ setup = false }: { setup?: boolean }) {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={reset.isPending}>
-            {reset.isPending ? "Saving your password…" : isSetup ? "Save my password and continue" : "Save my new password"}
+            {reset.isPending ? "Saving…" : isSetup ? "Set password and continue" : "Save password"}
           </Button>
         </form>
       )}

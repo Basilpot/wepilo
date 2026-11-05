@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { AppShell } from "@/components/layout/AppShell";
@@ -72,7 +72,8 @@ export function useSession() {
   return useQuery({ queryKey: ["session"], queryFn: fetchSession, staleTime: 60_000 });
 }
 
-function RequireAuth({ children }: { children: React.ReactNode }) {
+/** Signed-in layout: the shell mounts once and stays while pages change inside it. */
+function RequireAuth() {
   const { data, isLoading } = useSession();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -101,7 +102,12 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   if (pathname === "/billing/return") return <BillingReturnPage session={data} />;
   // No dashboard without a paid trial or plan.
   if (data.access?.locked) return <PaywallPage session={data} />;
-  return <AppShell session={data}>{children}</AppShell>;
+  return (
+    <AppShell session={data}>
+      {/* Pages remount per route (settings tabs share one), the shell around them does not. */}
+      <Outlet key={pathname.startsWith("/settings") ? "/settings" : pathname} />
+    </AppShell>
+  );
 }
 
 export default function App() {
@@ -113,246 +119,38 @@ export default function App() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/setup-account" element={<ResetPasswordPage setup />} />
       <Route path="/admin/*" element={<AdminApp />} />
-      <Route
-        path="/"
-        element={
-          <RequireAuth>
-            <HomePage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/trips"
-        element={
-          <RequireAuth>
-            <TripsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/trips/new"
-        element={
-          <RequireAuth>
-            <TripEditorPage mode="create" />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/trips/:id"
-        element={
-          <RequireAuth>
-            <TripEditorPage mode="edit" />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/departures"
-        element={
-          <RequireAuth>
-            <DeparturesPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/bookings"
-        element={
-          <RequireAuth>
-            <BookingsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/inquiries"
-        element={
-          <RequireAuth>
-            <InquiriesPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/posts"
-        element={
-          <RequireAuth>
-            <PostsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/posts/:id"
-        element={
-          <RequireAuth>
-            <PostEditorPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/info-pages"
-        element={
-          <RequireAuth>
-            <InfoPagesPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/info-pages/:id"
-        element={
-          <RequireAuth>
-            <InfoPageEditorPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/page-categories"
-        element={
-          <RequireAuth>
-            <PageCategoriesPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/media"
-        element={
-          <RequireAuth>
-            <MediaPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/redirects"
-        element={
-          <RequireAuth>
-            <RedirectsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/team"
-        element={
-          <RequireAuth>
-            <TeamPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/departments"
-        element={
-          <RequireAuth>
-            <DepartmentsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/documents"
-        element={
-          <RequireAuth>
-            <DocumentsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/testimonials"
-        element={
-          <RequireAuth>
-            <TestimonialsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/reviews"
-        element={
-          <RequireAuth>
-            <ReviewsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/authors"
-        element={
-          <RequireAuth>
-            <AuthorsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/locations"
-        element={
-          <RequireAuth>
-            <TaxonomyPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/trip-categories"
-        element={
-          <RequireAuth>
-            <TaxonomyPage initialTab="categories" />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/featured-tags"
-        element={
-          <RequireAuth>
-            <FeaturedTagsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/featured-trips"
-        element={
-          <RequireAuth>
-            <FeaturedTripsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/extras"
-        element={
-          <RequireAuth>
-            <ExtrasPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/newsletter"
-        element={
-          <RequireAuth>
-            <NewsletterPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/settings/*"
-        element={
-          <RequireAuth>
-            <SettingsPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/support"
-        element={
-          <RequireAuth>
-            <SupportPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/support/:id"
-        element={
-          <RequireAuth>
-            <SupportTicketPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/billing/return"
-        element={
-          <RequireAuth>
-            <></>
-          </RequireAuth>
-        }
-      />
+      <Route element={<RequireAuth />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/trips" element={<TripsPage />} />
+        <Route path="/trips/new" element={<TripEditorPage mode="create" />} />
+        <Route path="/trips/:id" element={<TripEditorPage mode="edit" />} />
+        <Route path="/departures" element={<DeparturesPage />} />
+        <Route path="/bookings" element={<BookingsPage />} />
+        <Route path="/inquiries" element={<InquiriesPage />} />
+        <Route path="/posts" element={<PostsPage />} />
+        <Route path="/posts/:id" element={<PostEditorPage />} />
+        <Route path="/info-pages" element={<InfoPagesPage />} />
+        <Route path="/info-pages/:id" element={<InfoPageEditorPage />} />
+        <Route path="/page-categories" element={<PageCategoriesPage />} />
+        <Route path="/media" element={<MediaPage />} />
+        <Route path="/redirects" element={<RedirectsPage />} />
+        <Route path="/team" element={<TeamPage />} />
+        <Route path="/departments" element={<DepartmentsPage />} />
+        <Route path="/documents" element={<DocumentsPage />} />
+        <Route path="/testimonials" element={<TestimonialsPage />} />
+        <Route path="/reviews" element={<ReviewsPage />} />
+        <Route path="/authors" element={<AuthorsPage />} />
+        <Route path="/locations" element={<TaxonomyPage />} />
+        <Route path="/trip-categories" element={<TaxonomyPage initialTab="categories" />} />
+        <Route path="/featured-tags" element={<FeaturedTagsPage />} />
+        <Route path="/featured-trips" element={<FeaturedTripsPage />} />
+        <Route path="/extras" element={<ExtrasPage />} />
+        <Route path="/newsletter" element={<NewsletterPage />} />
+        <Route path="/settings/*" element={<SettingsPage />} />
+        <Route path="/support" element={<SupportPage />} />
+        <Route path="/support/:id" element={<SupportTicketPage />} />
+        <Route path="/billing/return" element={<></>} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

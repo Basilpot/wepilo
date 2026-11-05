@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImagePlus, RefreshCw, X } from "lucide-react";
+import { ImagePlus, RefreshCw, X } from "@/components/icons";
 import { MediaPicker } from "@/components/media-picker";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ export function ImageField({
   value,
   onChange,
   shape = "cover",
-  label = "Choose an image from your media library",
+  label = "Choose image",
   className,
 }: {
   value: string | null | undefined;
@@ -52,12 +52,12 @@ export function ImageField({
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
             {value ? <RefreshCw /> : <ImagePlus />}
-            {value ? "Replace this image" : label}
+            {value ? "Replace" : label}
           </Button>
           {value ? (
             <Button type="button" variant="ghost" size="sm" onClick={() => onChange("")} className="text-muted-foreground">
               <X />
-              Remove this image
+              Remove
             </Button>
           ) : null}
         </div>
@@ -69,7 +69,7 @@ export function ImageField({
           onChange(media.url);
           setOpen(false);
         }}
-        confirmLabel="Use this image"
+        confirmLabel="Use image"
       />
     </div>
   );

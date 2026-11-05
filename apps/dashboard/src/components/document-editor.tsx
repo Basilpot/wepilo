@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Loader2, Save, Upload, X } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Upload, X } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +21,7 @@ export function EditorHeader({
 }) {
   return (
     <div className="sticky top-12 z-10 -mx-4 -mt-6 flex flex-wrap items-center gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:-mx-8 md:-mt-8 md:px-8">
-      <Button variant="ghost" size="icon" aria-label="Go back to the list without leaving unsaved work" onClick={onBack}>
+      <Button variant="ghost" size="icon" aria-label="Back" onClick={onBack}>
         <ArrowLeft />
       </Button>
       <div className="min-w-0 flex-1">
@@ -30,7 +30,7 @@ export function EditorHeader({
           {badge}
         </div>
         <p className="truncate text-xs text-muted-foreground">
-          {dirty ? <span className="text-amber-600 dark:text-amber-400">You have unsaved changes. Save before leaving this page.</span> : subtitle}
+          {dirty ? <span className="text-amber-600 dark:text-amber-400">Unsaved changes</span> : subtitle}
         </p>
       </div>
       <div className="flex gap-2">{actions}</div>
@@ -60,11 +60,11 @@ export function PublishActions({
       <>
         <Button variant="ghost" onClick={() => onSave("unpublish")} disabled={busy || !canSave}>
           {saving === "unpublish" && <Loader2 className="animate-spin" />}
-          Unpublish (hide from website)
+          Unpublish
         </Button>
         <Button onClick={() => onSave("publish")} disabled={busy || !canSave || !dirty}>
           {saving === "publish" ? <Loader2 className="animate-spin" /> : <Save />}
-          Save changes to the live page
+          Save changes
         </Button>
       </>
     );
@@ -73,11 +73,11 @@ export function PublishActions({
     <>
       <Button variant="outline" onClick={() => onSave("draft")} disabled={busy || !canSave || (!isNew && !dirty)}>
         {saving === "draft" ? <Loader2 className="animate-spin" /> : <Save />}
-        Save as a hidden draft
+        Save draft
       </Button>
       <Button onClick={() => onSave("publish")} disabled={busy || !canSave}>
         {saving === "publish" ? <Loader2 className="animate-spin" /> : <Upload />}
-        Publish to my website
+        Publish
       </Button>
     </>
   );
@@ -123,7 +123,7 @@ export function SerpPreview({ title, url, description }: { title: string; url: s
     <div className="rounded-lg border bg-muted/30 p-3">
       <p className="truncate text-xs text-muted-foreground">{url}</p>
       <p className="mt-0.5 line-clamp-1 text-[15px] leading-snug text-[#1a0dab] dark:text-[#8ab4f8]">
-        {title || "Your page title will appear here"}
+        {title || "Page title"}
       </p>
       <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
         {description || "Write a short search description (about 150 characters) so Google shows a clear summary of this page instead of guessing one."}

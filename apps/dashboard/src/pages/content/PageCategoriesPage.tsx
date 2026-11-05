@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PenLine, Plus, Trash2, FolderTree } from "lucide-react";
+import { PenLine, Plus, Trash2, FolderTree } from "@/components/icons";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Field, FormDialog } from "@/components/form";
@@ -61,8 +61,8 @@ export function PageCategoriesPage() {
   };
 
   const columns: Column<Category>[] = [
-    { key: "name", header: "Category name", cell: (c) => <span className="font-medium">{c.name ?? c.handle}</span> },
-    { key: "handle", header: "Web address ending (URL slug)", className: "text-muted-foreground", cell: (c) => c.handle },
+    { key: "name", header: "Name", cell: (c) => <span className="font-medium">{c.name ?? c.handle}</span> },
+    { key: "handle", header: "Handle", className: "text-muted-foreground", cell: (c) => c.handle },
     {
       key: "actions",
       headClassName: "w-12",
@@ -70,13 +70,13 @@ export function PageCategoriesPage() {
       cell: (category) => (
         <RowActions
           actions={[
-            { label: "Edit this category", icon: PenLine, onSelect: () => openEdit(category) },
+            { label: "Edit category", icon: PenLine, onSelect: () => openEdit(category) },
             {
-              label: "Delete this category",
+              label: "Delete",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ title: "Delete this category?", description: "Pages and blog posts in this category will not be deleted, but they will no longer belong to any category.", confirmLabel: "Yes, delete this category", cancelLabel: "No, keep it" }, () => remove.mutate(category.id)),
+              onSelect: () => confirmDialog({ description: "Delete this category?" }, () => remove.mutate(category.id)),
             },
           ]}
         />
@@ -87,7 +87,7 @@ export function PageCategoriesPage() {
   return (
     <div>
       <PageHeader
-        title="Page and post categories"
+        title="Page categories"
         description="Categories are labels used to group your website pages and blog posts, for example “Travel guides”, “Visa information” or “Company policies”. Create the categories here, then choose one when you edit a page or post."
         action={
           <Button
@@ -100,7 +100,7 @@ export function PageCategoriesPage() {
             }}
           >
             <Plus />
-            Create a new category
+            New category
           </Button>
         }
       />
@@ -112,24 +112,23 @@ export function PageCategoriesPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={FolderTree}
-        emptyTitle="You have not created any categories yet"
-        emptyHint="Categories help visitors find related pages and posts. Select “Create a new category” to add your first one."
+        emptyTitle="No categories yet"
+        emptyHint="Categories help visitors find related pages and posts. Select “New category” to add your first one."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit this category" : "Create a new category"}
+        title={editing ? "Edit category" : "New category"}
         description="Choose a short, clear name that describes the pages and posts that will belong to it."
-        submitLabel={editing ? "Save changes to this category" : "Create this category"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Category name (what visitors will see)" required>
+        <Field label="Name" required>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label="Web address ending (optional)" hint="This becomes part of the category link on your website. Leave it empty and we create it automatically from the name.">
+        <Field label="Handle" hint="This becomes part of the category link on your website. Leave it empty and we create it automatically from the name.">
           <Input value={handle} onChange={(e) => setHandle(e.target.value)} />
         </Field>
       </FormDialog>

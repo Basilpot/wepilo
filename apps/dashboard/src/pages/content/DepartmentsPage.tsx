@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PenLine, Plus, Trash2, Building2 } from "lucide-react";
+import { PenLine, Plus, Trash2, Building2 } from "@/components/icons";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Field, FormDialog } from "@/components/form";
@@ -62,8 +62,8 @@ export function DepartmentsPage() {
   };
 
   const columns: Column<Department>[] = [
-    { key: "name", header: "Department name", cell: (d) => <span className="font-medium">{d.name ?? d.id}</span> },
-    { key: "description", header: "What this department does", className: "text-muted-foreground", cell: (d) => d.description ?? "No description added" },
+    { key: "name", header: "Name", cell: (d) => <span className="font-medium">{d.name ?? d.id}</span> },
+    { key: "description", header: "Description", className: "text-muted-foreground", cell: (d) => d.description ?? "No description added" },
     {
       key: "actions",
       headClassName: "w-12",
@@ -71,13 +71,13 @@ export function DepartmentsPage() {
       cell: (dept) => (
         <RowActions
           actions={[
-            { label: "Edit this department", icon: PenLine, onSelect: () => openEdit(dept) },
+            { label: "Edit department", icon: PenLine, onSelect: () => openEdit(dept) },
             {
-              label: "Delete this department",
+              label: "Delete",
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ title: "Delete this department?", description: "Team members in this department are not deleted. They will simply no longer belong to any department.", confirmLabel: "Yes, delete this department", cancelLabel: "No, keep it" }, () => remove.mutate(dept.id)),
+              onSelect: () => confirmDialog({ description: "Delete this department?" }, () => remove.mutate(dept.id)),
             },
           ]}
         />
@@ -88,7 +88,7 @@ export function DepartmentsPage() {
   return (
     <div>
       <PageHeader
-        title="Team departments"
+        title="Departments"
         description="Groups such as Guides, Operations or Sales that organise the people on your website’s team page. Create a department here first, then choose it when you add or edit a team member."
         action={
           <Button
@@ -101,7 +101,7 @@ export function DepartmentsPage() {
             }}
           >
             <Plus />
-            Create a new department
+            New department
           </Button>
         }
       />
@@ -113,23 +113,22 @@ export function DepartmentsPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyIcon={Building2}
-        emptyTitle="You have not created any departments yet"
-        emptyHint="Departments are optional. They help visitors see who does what on your team. Select “Create a new department” to add the first one."
+        emptyTitle="No departments yet"
+        emptyHint="Departments are optional. They help visitors see who does what on your team. Select “New department” to add the first one."
       />
 
       <FormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title={editing ? "Edit this department" : "Create a new department"}
-        submitLabel={editing ? "Save changes to this department" : "Create this department"}
+        title={editing ? "Edit department" : "New department"}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Department name" required hint="Example: Guides, Operations, Customer support">
+        <Field label="Name" required hint="Example: Guides, Operations, Customer support">
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label="Short description (optional)" hint="One or two sentences explaining what this team is responsible for.">
+        <Field label="Description" hint="One or two sentences explaining what this team is responsible for.">
           <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
       </FormDialog>

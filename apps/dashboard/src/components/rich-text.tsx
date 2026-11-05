@@ -17,7 +17,7 @@ import {
   Heading3,
   List,
   ListOrdered,
-  Quote,
+  QuoteGlyph as Quote,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -26,7 +26,7 @@ import {
   Undo2,
   Redo2,
   RemoveFormatting,
-} from "lucide-react";
+} from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -106,7 +106,7 @@ function LinkButton({ editor }: { editor: Editor }) {
         >
           <Input autoFocus value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste the full web address, starting with https://" className="h-8" />
           <Button type="submit" size="sm">
-            {url.trim() ? "Add link" : "Remove link"}
+            {url.trim() ? "Apply" : "Remove"}
           </Button>
         </form>
       </PopoverContent>
@@ -125,64 +125,64 @@ function Toolbar({ editor, sticky }: { editor: Editor; sticky?: string }) {
       )}
       style={sticky ? { top: sticky } : undefined}
     >
-      <ToolbarButton label="Undo your last change" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>
+      <ToolbarButton label="Undo" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>
         <Undo2 className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Redo the change you undid" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}>
+      <ToolbarButton label="Redo" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}>
         <Redo2 className="h-4 w-4" />
       </ToolbarButton>
       <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-5" />
-      <ToolbarButton label="Large heading (Heading 1)" active={editor.isActive("heading", { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
+      <ToolbarButton label="Heading 1" active={editor.isActive("heading", { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
         <Heading1 className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Medium heading (Heading 2)" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+      <ToolbarButton label="Heading 2" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
         <Heading2 className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Small heading (Heading 3)" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+      <ToolbarButton label="Heading 3" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
         <Heading3 className="h-4 w-4" />
       </ToolbarButton>
       <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-5" />
-      <ToolbarButton label="Make selected text bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
+      <ToolbarButton label="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
         <Bold className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Make selected text italic" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()}>
+      <ToolbarButton label="Italic" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()}>
         <Italic className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Underline selected text" active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+      <ToolbarButton label="Underline" active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()}>
         <UnderlineIcon className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Cross out selected text" active={editor.isActive("strike")} onClick={() => editor.chain().focus().toggleStrike().run()}>
+      <ToolbarButton label="Strikethrough" active={editor.isActive("strike")} onClick={() => editor.chain().focus().toggleStrike().run()}>
         <Strikethrough className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Format selected text as code" active={editor.isActive("code")} onClick={() => editor.chain().focus().toggleCode().run()}>
+      <ToolbarButton label="Inline code" active={editor.isActive("code")} onClick={() => editor.chain().focus().toggleCode().run()}>
         <Code className="h-4 w-4" />
       </ToolbarButton>
       <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-5" />
-      <ToolbarButton label="Start a bulleted list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+      <ToolbarButton label="Bullet list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}>
         <List className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Start a numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+      <ToolbarButton label="Numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
         <ListOrdered className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Format as a highlighted quote" active={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+      <ToolbarButton label="Quote" active={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
         <Quote className="h-4 w-4" />
       </ToolbarButton>
       <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-5" />
-      <ToolbarButton label="Align text to the left" active={editor.isActive({ textAlign: "left" })} onClick={() => editor.chain().focus().setTextAlign("left").run()}>
+      <ToolbarButton label="Align left" active={editor.isActive({ textAlign: "left" })} onClick={() => editor.chain().focus().setTextAlign("left").run()}>
         <AlignLeft className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Centre the text" active={editor.isActive({ textAlign: "center" })} onClick={() => editor.chain().focus().setTextAlign("center").run()}>
+      <ToolbarButton label="Align center" active={editor.isActive({ textAlign: "center" })} onClick={() => editor.chain().focus().setTextAlign("center").run()}>
         <AlignCenter className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Align text to the right" active={editor.isActive({ textAlign: "right" })} onClick={() => editor.chain().focus().setTextAlign("right").run()}>
+      <ToolbarButton label="Align right" active={editor.isActive({ textAlign: "right" })} onClick={() => editor.chain().focus().setTextAlign("right").run()}>
         <AlignRight className="h-4 w-4" />
       </ToolbarButton>
       <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-5" />
       <LinkButton editor={editor} />
-      <ToolbarButton label="Insert an image from your media library" onClick={() => setPickerOpen(true)}>
+      <ToolbarButton label="Insert image" onClick={() => setPickerOpen(true)}>
         <ImagePlus className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton label="Remove all formatting from the selected text" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}>
+      <ToolbarButton label="Clear formatting" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}>
         <RemoveFormatting className="h-4 w-4" />
       </ToolbarButton>
 
@@ -190,7 +190,7 @@ function Toolbar({ editor, sticky }: { editor: Editor; sticky?: string }) {
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         multiple={false}
-        confirmLabel="Insert the selected image"
+        confirmLabel="Insert"
         onSelect={(media) => editor.chain().focus().setImage({ src: media.url, alt: media.alt ?? undefined }).run()}
       />
     </div>

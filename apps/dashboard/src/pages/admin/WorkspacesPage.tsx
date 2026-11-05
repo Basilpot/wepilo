@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Plus } from "lucide-react";
+import { Building2, Plus } from "@/components/icons";
 import { api, type Paginated } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
@@ -40,7 +40,7 @@ export function WorkspacesPage() {
   const columns: Column<WorkspaceSummary>[] = [
     {
       key: "name",
-      header: "Customer workspace",
+      header: "Workspace",
       cell: (w) => (
         <div className="min-w-0">
           <p className="truncate font-medium">{w.companyName ?? w.slug}</p>
@@ -48,10 +48,10 @@ export function WorkspacesPage() {
         </div>
       ),
     },
-    { key: "state", header: "Account state", cell: (w) => <StatusBadge kind="workspace" status={workspaceState(w)} /> },
+    { key: "state", header: "Status", cell: (w) => <StatusBadge kind="workspace" status={workspaceState(w)} /> },
     {
       key: "plan",
-      header: "Plan they are on",
+      header: "Plan",
       cell: (w) => (
         <span className="whitespace-nowrap">
           {PLAN_NAMES[w.plan]}
@@ -61,13 +61,13 @@ export function WorkspacesPage() {
     },
     {
       key: "ends",
-      header: "Access runs until",
+      header: "Access until",
       className: "whitespace-nowrap text-muted-foreground",
-      cell: (w) => (w.planExpiresAt ? formatDate(w.planExpiresAt) : w.access.locked ? "Locked, no access" : "No end date"),
+      cell: (w) => (w.planExpiresAt ? formatDate(w.planExpiresAt) : w.access.locked ? "—" : "No end date"),
     },
     {
       key: "created",
-      header: "Date they joined",
+      header: "Created",
       className: "whitespace-nowrap text-muted-foreground",
       cell: (w) => formatDate(w.createdAt),
     },
@@ -76,24 +76,24 @@ export function WorkspacesPage() {
   const o = overview.data;
   const stats = o
     ? [
-        { label: "Total customer workspaces", value: o.total },
-        { label: "Active and paying", value: o.active },
-        { label: "On a trial", value: o.trial },
-        { label: "Locked (no access)", value: o.locked },
-        { label: "Plans arranged by hand", value: o.managed },
+        { label: "Workspaces", value: o.total },
+        { label: "Active", value: o.active },
+        { label: "On trial", value: o.trial },
+        { label: "Locked", value: o.locked },
+        { label: "Managed plans", value: o.managed },
       ]
     : null;
 
   return (
     <div>
       <PageHeader
-        title="Customer workspaces"
+        title="Workspaces"
         description="Every travel agency that uses Wepilo. Select one to see its usage, change its plan or suspend it. To set up an enterprise customer, create a workspace here and then hand it over to them with a one-time setup link."
         action={
           <Button asChild>
             <Link to="/admin/workspaces/new">
               <Plus />
-              Create a customer workspace
+              New workspace
             </Link>
           </Button>
         }
@@ -119,10 +119,10 @@ export function WorkspacesPage() {
         onRetry={() => list.refetch()}
         onRowClick={(w) => navigate(`/admin/workspaces/${w.id}`)}
         search={{ value: search, onChange: setSearch }}
-        searchPlaceholder="Search by company name, workspace address or email…"
+        searchPlaceholder="Search name, slug or email…"
         emptyIcon={Building2}
-        emptyTitle={query ? "No customer workspace matches your search" : "There are no customer workspaces yet"}
-        emptyHint={query ? undefined : "A workspace appears here when an agency signs up, or when you select “Create a customer workspace”."}
+        emptyTitle={query ? "No workspaces match" : "No workspaces yet"}
+        emptyHint={query ? undefined : "A workspace appears here when an agency signs up, or when you select “New workspace”."}
         pagination={
           list.data
             ? {
