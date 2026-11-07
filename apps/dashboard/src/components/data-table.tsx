@@ -64,6 +64,7 @@ export function DataTable<T>({
   onRowClick,
   search,
   searchPlaceholder = "Search…",
+  searchable = true,
   toolbar,
   pagination,
   maxHeight,
@@ -81,26 +82,44 @@ export function DataTable<T>({
   onRowClick?: (row: T) => void;
   search?: { value: string; onChange: (value: string) => void };
   searchPlaceholder?: string;
+  /** Turn off the automatic search box on a table that loads all its rows. */
+  searchable?: boolean;
   toolbar?: React.ReactNode;
   pagination?: DataTablePagination;
   maxHeight?: string;
 }) {
   const colCount = columns.length;
+
+  // Tables that load every row at once get a search box for free. It matches the short text and number
+  // fields of each row. Server-searched or paginated tables bring their own `search` instead.
+  const [localQuery, setLocalQuery] = React.useState("");
+  const autoSearch = !search && !pagination && searchable;
+  const q = localQuery.trim().toLowerCase();
+  const sourceRows = rows;
+  rows = React.useMemo(() => {
+    if (!autoSearch || !q) return sourceRows;
+    return sourceRows.filter((row) =>
+      Object.values(row as Record<string, unknown>).some(
+        (v) => (typeof v === "string" && v.length <= 160 && v.toLowerCase().includes(q)) || (typeof v === "number" && String(v).includes(q)),
+      ),
+    );
+  }, [sourceRows, autoSearch, q]);
+  const activeSearch = search ?? (autoSearch ? { value: localQuery, onChange: setLocalQuery } : undefined);
   // With nothing to list, column headings only add noise above the empty state.
   const isEmpty = !isLoading && !error && rows.length === 0;
 
   return (
     <div>
-      {(search || toolbar) && (
+      {(activeSearch || toolbar) && (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          {search ? (
+          {activeSearch ? (
             <div className="relative w-full sm:w-80">
               <Input
                 type="search"
                 aria-label={searchPlaceholder.replace(/…$/, "")}
                 placeholder={searchPlaceholder}
-                value={search.value}
-                onChange={(e) => search.onChange(e.target.value)}
+                value={activeSearch.value}
+                onChange={(e) => activeSearch.onChange(e.target.value)}
                 className="w-full pl-8 shadow-none"
               />
               <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -116,7 +135,7 @@ export function DataTable<T>({
         <MobileRows columns={columns} rows={rows} getRowId={getRowId} isLoading={isLoading} onRowClick={onRowClick} />
       )}
       <div className={cn(!isEmpty && !error && "hidden sm:block")}>
-      <div className="overflow-hidden rounded-2xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-16px_rgb(0_0_0/0.12)]">
+      <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
         <div className={cn("overflow-x-auto", maxHeight && "overflow-y-auto")} style={maxHeight ? { maxHeight } : undefined}>
           <Table>
             <TableHeader className={cn("bg-muted/50", isEmpty && "hidden")}>
@@ -198,7 +217,7 @@ export function DataTable<T>({
                         {search?.value ? <SearchX className="size-5" /> : <EmptyIcon className="size-5" />}
                       </span>
                       <span className="text-sm font-medium text-foreground">
-                        {search?.value ? `No matches for “${search.value}”` : emptyTitle}
+                        {activeSearch?.value ? `No matches for “${activeSearch.value}”` : emptyTitle}
                       </span>
                       <span className="mt-1 text-sm text-muted-foreground">
                         {search?.value ? "Check the spelling, try a shorter or different word, or clear the search to see the full list again." : emptyHint}

@@ -15,6 +15,7 @@ import {
 } from "@/lib/auth";
 import { requireStaff, requireUser } from "@/middleware/context";
 import { sendEmail, layout, escapeHtml } from "@/lib/email";
+import { enforce, clientIp, LIMITS } from "@/lib/rate-limit";
 import { issueStaffToken, consumeStaffToken, peekStaffToken } from "@/lib/staff-tokens";
 
 const signupSchema = z.object({
@@ -39,6 +40,7 @@ export const authRoutes = new Hono<AppEnv>()
   .post("/tenant/signup", async (c) => {
     const body = signupSchema.parse(await c.req.json());
     const db = c.get("db");
+    await enforce(db, LIMITS.account, clientIp(c));
 
     const existing = await db.query.tenants.findFirst({
       where: eq(schema.tenants.slug, body.slug),
@@ -105,6 +107,7 @@ export const authRoutes = new Hono<AppEnv>()
   .post("/tenant/login", async (c) => {
     const body = loginSchema.parse(await c.req.json());
     const db = c.get("db");
+    await enforce(db, LIMITS.login, `${clientIp(c)}:${body.email.toLowerCase()}`);
     const tenant = await db.query.tenants.findFirst({
       where: eq(schema.tenants.email, body.email.toLowerCase()),
     });
@@ -116,9 +119,10 @@ export const authRoutes = new Hono<AppEnv>()
     const owner = await db.query.tenantStaff.findFirst({
       where: and(eq(schema.tenantStaff.tenantId, tenant.id), eq(schema.tenantStaff.role, "OWNER")),
     });
+    if (!owner) throw new ApiError(409, "This workspace has no owner login. Contact Wepilo support.");
     const token = await signToken(c.env, {
       kind: "staff",
-      staffId: owner?.id ?? tenant.id,
+      staffId: owner.id,
       tenantId: tenant.id,
       role: "OWNER",
     });
@@ -137,6 +141,7 @@ export const authRoutes = new Hono<AppEnv>()
   .post("/staff/login", async (c) => {
     const body = loginSchema.parse(await c.req.json());
     const db = c.get("db");
+    await enforce(db, LIMITS.login, `${clientIp(c)}:${body.email.toLowerCase()}`);
     const staff = await db.query.tenantStaff.findFirst({
       where: eq(schema.tenantStaff.email, body.email.toLowerCase()),
     });
@@ -181,6 +186,7 @@ export const authRoutes = new Hono<AppEnv>()
     const tenantId = c.get("tenantId");
     if (!tenantId) throw new ApiError(400, "Tenant context required");
     const db = c.get("db");
+    await enforce(db, LIMITS.account, `${tenantId}:${clientIp(c)}`);
 
     const existing = await db.query.users.findFirst({
       where: and(eq(schema.users.tenantId, tenantId), eq(schema.users.email, body.email.toLowerCase())),
@@ -208,6 +214,7 @@ export const authRoutes = new Hono<AppEnv>()
     const tenantId = c.get("tenantId");
     if (!tenantId) throw new ApiError(400, "Tenant context required");
     const db = c.get("db");
+    await enforce(db, LIMITS.login, `${tenantId}:${clientIp(c)}:${body.email.toLowerCase()}`);
     const user = await db.query.users.findFirst({
       where: and(eq(schema.users.tenantId, tenantId), eq(schema.users.email, body.email.toLowerCase())),
     });
@@ -223,6 +230,10 @@ export const authRoutes = new Hono<AppEnv>()
     const db = c.get("db");
     const tenant = await db.query.tenants.findFirst({
       where: eq(schema.tenants.id, staff.tenantId),
+    });
+    const paymentSettings = await db.query.tenantPaymentSettings.findFirst({
+      where: eq(schema.tenantPaymentSettings.tenantId, staff.tenantId),
+      columns: { currency: true, currencyTranslation: true },
     });
     return c.json({
       staff: {
@@ -246,6 +257,8 @@ export const authRoutes = new Hono<AppEnv>()
             status: tenant.status,
             plan: tenant.plan,
             planExpiresAt: tenant.planExpiresAt,
+            currency: paymentSettings?.currency ?? "USD",
+            currencyTranslation: paymentSettings?.currencyTranslation ?? false,
           }
         : null,
       access: tenant ? (await loadAccess(db, tenant.id))?.access ?? null : null,
@@ -260,6 +273,7 @@ export const authRoutes = new Hono<AppEnv>()
   .post("/forget-password", async (c) => {
     const body = z.object({ email: z.string().email() }).parse(await c.req.json());
     const db = c.get("db");
+    await enforce(db, LIMITS.account, `reset:${clientIp(c)}`);
     const staff = await db.query.tenantStaff.findFirst({
       where: and(eq(schema.tenantStaff.email, body.email.toLowerCase()), eq(schema.tenantStaff.isActive, true)),
     });
@@ -301,6 +315,7 @@ export const authRoutes = new Hono<AppEnv>()
       .object({ token: z.string().min(1), password: z.string().min(8) })
       .parse(await c.req.json());
     const db = c.get("db");
+    await enforce(db, LIMITS.login, `reset-token:${clientIp(c)}`);
     const used = await consumeStaffToken(db, body.token, await hashPassword(body.password));
     if (!used) throw new ApiError(400, "This link has expired or was already used.", "LINK_INVALID");
     return c.json({ ok: true, email: used.staff.email });
@@ -308,10 +323,11 @@ export const authRoutes = new Hono<AppEnv>()
   .get("/authors/:username", async (c) => {
     const tenantId = c.get("tenantId");
     const db = c.get("db");
-    const author = await db.query.authors.findFirst({
+    const author = await db.query.tenantStaff.findFirst({
       where: and(
-        eq(schema.authors.tenantId, tenantId),
-        eq(schema.authors.username, c.req.param("username")),
+        eq(schema.tenantStaff.tenantId, tenantId),
+        eq(schema.tenantStaff.username, c.req.param("username")),
+        eq(schema.tenantStaff.isActive, true),
       ),
     });
     if (!author) throw new ApiError(404, "Author not found");

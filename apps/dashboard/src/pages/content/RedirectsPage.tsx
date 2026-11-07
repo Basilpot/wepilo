@@ -121,10 +121,10 @@ export function RedirectsPage() {
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="From path" required hint="Type only the part after your website address, starting with a slash. Example: /old-trek-name">
+        <Field label="From path" name="from" required hint="Type only the part after your website address, starting with a slash. Example: /old-trek-name">
           <Input value={from} onChange={(e) => setFrom(e.target.value)} placeholder="/old-trek-name" />
         </Field>
-        <Field label="To path" required hint="Type only the part after your website address, starting with a slash. Example: /trips/everest-base-camp">
+        <Field label="To path" name="to" required hint="Type only the part after your website address, starting with a slash. Example: /trips/everest-base-camp">
           <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="/trips/everest-base-camp" />
         </Field>
         <label className="flex items-center gap-2 text-sm">

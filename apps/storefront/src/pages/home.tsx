@@ -1,0 +1,192 @@
+import { raw } from "hono/html";
+import type { Section } from "@/lib/api";
+import { safeHtml } from "@/lib/format";
+import { Flash, Layout, link, type Ctx } from "@/ui/layout";
+import { PostCard, TripCard } from "@/ui/cards";
+
+const Head = ({ section, more }: { section: Section; more?: { label: string; href: string } }) => (
+  <div class="head">
+    <div>
+      {section.title ? <h2>{section.title}</h2> : null}
+      {section.subtitle ? <p>{section.subtitle}</p> : null}
+    </div>
+    {more ? (
+      <a class="link" href={more.href}>
+        {more.label} →
+      </a>
+    ) : null}
+  </div>
+);
+
+function Render({ s, ctx, flash }: { s: Section; ctx: Ctx; flash: { subscribed?: string; error?: string } }) {
+  const { base } = ctx;
+  const data = s.data ?? [];
+  switch (s.type) {
+    case "HERO":
+      return (
+        <section class="hero">
+          <div class="wrap">
+            <h1>{s.title}</h1>
+            {s.subtitle ? <p class="sub">{s.subtitle}</p> : null}
+            {s.ctaLabel && s.ctaHref ? (
+              <div class="actions">
+                <a class="btn" href={link(base, s.ctaHref)}>
+                  {s.ctaLabel}
+                </a>
+              </div>
+            ) : null}
+            {s.image ? (
+              <figure>
+                <img src={s.image} alt="" />
+              </figure>
+            ) : null}
+          </div>
+        </section>
+      );
+    case "FEATURED_TRIPS":
+      return data.length ? (
+        <section class="block">
+          <div class="wrap">
+            <Head section={s} more={{ label: "All trips", href: `${base}/trips` }} />
+            <div class="grid">
+              {data.map((t) => (
+                <TripCard trip={t as any} base={base} currency={ctx.currency} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null;
+    case "DESTINATIONS":
+      return data.length ? (
+        <section class="block tint">
+          <div class="wrap">
+            <Head section={s} />
+            <div class="tiles">
+              {data.map((d) => (
+                <a class={d.image ? "tile" : "tile plain"} href={`${base}/destinations/${d.handle}`} style={d.image ? "" : "background:#fff;border:1px solid var(--line)"}>
+                  {d.image ? <img src={d.image} alt="" loading="lazy" /> : null}
+                  <span>{d.name}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null;
+    case "CATEGORIES":
+      return data.length ? (
+        <section class="block">
+          <div class="wrap">
+            <Head section={s} />
+            <div class="pills">
+              {data.map((c) => (
+                <a class="pill" href={`${base}/trips/category/${c.handle}`}>
+                  {c.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null;
+    case "TESTIMONIALS":
+      return data.length ? (
+        <section class="block tint">
+          <div class="wrap">
+            <Head section={s} />
+            <div class="quotes">
+              {data.map((t) => (
+                <figure class="quote" style="margin:0">
+                  {t.rating ? <div class="stars" aria-label={`${t.rating} out of 5`}>{"★".repeat(t.rating)}</div> : null}
+                  <p class="q" style={t.rating ? "margin-top:14px" : ""}>“{t.content}”</p>
+                  <figcaption class="by">
+                    {t.media ? <img src={t.media} alt="" /> : null}
+                    <span>{t.author ?? "A happy traveller"}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null;
+    case "LATEST_POSTS":
+      return data.length ? (
+        <section class="block">
+          <div class="wrap">
+            <Head section={s} more={{ label: "All stories", href: `${base}/blog` }} />
+            <div class="grid">
+              {data.map((p) => (
+                <PostCard post={p} base={base} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null;
+    case "NEWSLETTER":
+      return (
+        <section class="block" id="newsletter">
+          <div class="wrap">
+            <div class="panel">
+              {s.title ? <h2>{s.title}</h2> : null}
+              {s.subtitle ? <p>{s.subtitle}</p> : null}
+              {flash.subscribed || flash.error ? (
+                <div style="margin-top:28px">
+                  <Flash subscribed={flash.subscribed} error={flash.error} />
+                </div>
+              ) : (
+                <form class="signup" method="post" action={`${base}/_/subscribe`}>
+                  <input type="hidden" name="back" value={`${base || "/"}#newsletter`} />
+                  <label class="sr" for="nl">
+                    Email address
+                  </label>
+                  <input id="nl" type="email" name="email" placeholder="Your email address" required autocomplete="email" />
+                  <button class="btn light" type="submit">
+                    Subscribe
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </section>
+      );
+    case "CUSTOM_TEXT":
+      return (
+        <section class="block">
+          <div class="wrap">
+            <div class="two" style={s.image ? "" : "grid-template-columns:1fr"}>
+              <div>
+                {s.title ? <h2 style="font-size:clamp(2.1rem,5vw,3.6rem);max-width:14ch;margin-bottom:24px">{s.title}</h2> : null}
+                {s.subtitle ? <p class="muted" style="font-size:1.2rem;margin-bottom:20px">{s.subtitle}</p> : null}
+                <div class="prose">{raw(safeHtml(s.body))}</div>
+                {s.ctaLabel && s.ctaHref ? (
+                  <p style="margin-top:28px">
+                    <a class="btn" href={link(base, s.ctaHref)}>
+                      {s.ctaLabel}
+                    </a>
+                  </p>
+                ) : null}
+              </div>
+              {s.image ? <img src={s.image} alt="" loading="lazy" /> : null}
+            </div>
+          </div>
+        </section>
+      );
+    default:
+      return null;
+  }
+}
+
+export function Home({ ctx, flash }: { ctx: Ctx; flash: { subscribed?: string; error?: string } }) {
+  const sections = ctx.site.homepage;
+  return (
+    <Layout ctx={ctx}>
+      {sections.length ? (
+        sections.map((s) => <Render s={s} ctx={ctx} flash={flash} />)
+      ) : (
+        <section class="hero">
+          <div class="wrap">
+            <h1>{ctx.site.company.name}</h1>
+          </div>
+        </section>
+      )}
+    </Layout>
+  );
+}

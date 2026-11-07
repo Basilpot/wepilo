@@ -30,7 +30,7 @@ export function EditorHeader({
           {badge}
         </div>
         <p className="truncate text-xs text-muted-foreground">
-          {dirty ? <span className="text-amber-600 dark:text-amber-400">Unsaved changes</span> : subtitle}
+          {dirty ? <span className="text-foreground">Unsaved changes</span> : subtitle}
         </p>
       </div>
       <div className="flex gap-2">{actions}</div>
@@ -109,7 +109,7 @@ export function SidebarSection({
 function CharCount({ value, max }: { value: string; max: number }) {
   const n = value.length;
   return (
-    <span className={cn("tabular-nums", n > max ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")}>
+    <span className={cn("tabular-nums", n > max ? "text-foreground" : "text-muted-foreground")}>
       {n}/{max}
     </span>
   );
@@ -122,7 +122,7 @@ export function SerpPreview({ title, url, description }: { title: string; url: s
   return (
     <div className="rounded-lg border bg-muted/30 p-3">
       <p className="truncate text-xs text-muted-foreground">{url}</p>
-      <p className="mt-0.5 line-clamp-1 text-[15px] leading-snug text-[#1a0dab] dark:text-[#8ab4f8]">
+      <p className="mt-0.5 line-clamp-1 text-[15px] leading-snug text-primary">
         {title || "Page title"}
       </p>
       <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">

@@ -23,6 +23,7 @@ import {
   type WorkspaceDetail,
 } from "./admin-api";
 import { SetupLinkPanel } from "./handover";
+import { DatePicker } from "@/components/date-picker";
 
 export function WorkspaceDetailPage() {
   const id = Number(useParams().id);
@@ -369,13 +370,12 @@ function PlanCard({
             </Select>
           </Field>
           <Field label="Access until" htmlFor="plan-end">
-            <Input
+            <DatePicker
               id="plan-end"
-              type="date"
-              required={!openEnded}
               disabled={openEnded}
               value={openEnded ? "" : endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={setEndDate}
+              placeholder={openEnded ? "No end date" : "Choose a date"}
             />
           </Field>
         </div>

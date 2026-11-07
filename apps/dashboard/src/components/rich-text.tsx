@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { DOMSerializer } from "@tiptap/pm/model";
+import { api, toastApiError } from "@/lib/api";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 import StarterKit from "@tiptap/starter-kit";
@@ -26,6 +29,7 @@ import {
   Undo2,
   Redo2,
   RemoveFormatting,
+  LayoutTemplate,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -114,6 +118,91 @@ function LinkButton({ editor }: { editor: Editor }) {
   );
 }
 
+type Template = { id: number; name: string; content: string };
+
+/** Insert a saved snippet, or save the selection (or the whole text) as a new one. */
+function TemplatesButton({ editor }: { editor: Editor }) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const { data } = useQuery({
+    queryKey: ["snippets", "/templates"],
+    queryFn: () => api<{ data: Template[] }>("/templates"),
+    enabled: open,
+  });
+  const save = useMutation({
+    meta: { success: "Saved as a template." },
+    mutationFn: () => {
+      const { from, to, empty } = editor.state.selection;
+      const html = empty ? editor.getHTML() : editor.state.doc.textBetween(from, to) ? sliceHtml(editor) : editor.getHTML();
+      return api("/templates", { body: { name: name.trim(), content: html } });
+    },
+    onSuccess: () => {
+      setName("");
+      void queryClient.invalidateQueries({ queryKey: ["snippets", "/templates"] });
+    },
+    onError: (err) => toastApiError(err),
+  });
+  const selected = !editor.state.selection.empty;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="ghost" size="icon" aria-label="Templates" title="Templates" className="size-8 text-muted-foreground hover:text-foreground">
+          <LayoutTemplate className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 space-y-3 p-3" align="start">
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-muted-foreground">Insert a template</p>
+          {data?.data.length ? (
+            <ul className="max-h-48 space-y-0.5 overflow-y-auto">
+              {data.data.map((t) => (
+                <li key={t.id}>
+                  <button
+                    type="button"
+                    className="w-full truncate rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+                    onClick={() => {
+                      editor.chain().focus().insertContent(t.content).run();
+                      setOpen(false);
+                    }}
+                  >
+                    {t.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">{data ? "No templates yet." : "Loading…"}</p>
+          )}
+        </div>
+        <form
+          className="space-y-2 border-t pt-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (name.trim()) save.mutate();
+          }}
+        >
+          <p className="text-xs font-medium text-muted-foreground">{selected ? "Save the selected text" : "Save all the text"} as a template</p>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Template name" className="h-8" />
+          <Button type="submit" size="sm" className="w-full" disabled={!name.trim() || save.isPending}>
+            Save template
+          </Button>
+        </form>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** HTML of just the selected range. */
+function sliceHtml(editor: Editor) {
+  const { from, to } = editor.state.selection;
+  const fragment = editor.state.doc.slice(from, to).content;
+  const holder = document.createElement("div");
+  holder.appendChild(DOMSerializer.fromSchema(editor.schema).serializeFragment(fragment));
+  return holder.innerHTML;
+}
+
 function Toolbar({ editor, sticky }: { editor: Editor; sticky?: string }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -182,6 +271,7 @@ function Toolbar({ editor, sticky }: { editor: Editor; sticky?: string }) {
       <ToolbarButton label="Insert image" onClick={() => setPickerOpen(true)}>
         <ImagePlus className="h-4 w-4" />
       </ToolbarButton>
+      <TemplatesButton editor={editor} />
       <ToolbarButton label="Clear formatting" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}>
         <RemoveFormatting className="h-4 w-4" />
       </ToolbarButton>
@@ -247,7 +337,7 @@ export function RichTextEditor({
     <div
       className={cn(
         variant === "field"
-          ? "rounded-lg border shadow-xs focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
+          ? "rounded-lg border focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30"
           : "rounded-lg border",
         !stickyToolbar && "overflow-hidden",
         className,

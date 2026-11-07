@@ -6,6 +6,7 @@ Wepilo is a multi-tenant backend for travel agencies. Each agency (a **tenant**)
 apps/
   api/        Hono API on Cloudflare Workers · D1 (SQLite) via Drizzle · R2 for media
   dashboard/  React + Vite + shadcn/ui admin app, served by a Worker that proxies /api
+  storefront/ Hono + JSX Worker that renders an agency's public site from the API (preview and starting point)
 ```
 
 - API integration guide for website developers: [docs/API.md](docs/API.md)
@@ -30,6 +31,7 @@ pnpm --filter @wepilo/api db:migrate:local
 # 3. Run both apps (two terminals, or `pnpm dev` for both)
 pnpm dev:api        # http://localhost:8787
 pnpm dev:dashboard  # http://localhost:5173  (proxies /api and /media/file to :8787)
+pnpm dev:storefront # http://localhost:5176/{workspace-slug}  (reads the API at :8787)
 ```
 
 Open http://localhost:5173/signup to create a workspace. A new workspace is locked behind the paywall until it pays the $1 trial. See [Billing](#billing-dodo-payments) for testing that locally.
@@ -39,6 +41,7 @@ Open http://localhost:5173/signup to create a workspace. A new workspace is lock
 | Command | What it does |
 | --- | --- |
 | `pnpm typecheck` | Type-check both apps |
+| `pnpm --filter @wepilo/api test` | API tests (Vitest inside the Workers runtime, real D1 migrations, no real email) |
 | `pnpm build` | Build both apps |
 | `pnpm --filter @wepilo/api db:generate` | Generate a migration after editing `apps/api/src/db/schema.ts` |
 | `pnpm --filter @wepilo/api db:migrate:local` | Apply migrations to the local D1 database |
@@ -61,6 +64,16 @@ Secrets live in `apps/api/.dev.vars` locally and in Wrangler secrets in producti
 Plain variables (`ENVIRONMENT`, `DODO_ENVIRONMENT` (`test_mode` locally, `live_mode` in production), `COOKIE_DOMAIN`, `API_BASE_URL`, `DASHBOARD_URL`, `SITE_URL`) are in `apps/api/wrangler.jsonc`, with production overrides under `env.production`.
 
 `.gitignore` excludes `.dev.vars*`, `.env*`, keys and local Wrangler state. Only `.dev.vars.example` is tracked.
+
+## Storefront
+
+`apps/storefront` is a small server-rendered site that shows an agency's content the way its visitors would see it: home page sections, trips, destinations, journal, pages and an enquiry form. It only reads the same public API a website developer would, so it doubles as a worked example.
+
+- **Preview any agency:** open `/{workspace-slug}`. The dashboard's **Preview site** button does this. The preview is marked `noindex`.
+- **One agency on its own domain:** set `TENANT_SLUG` in `apps/storefront/wrangler.jsonc` and the site is served from the root.
+- **Needs an active plan:** the public API is closed to workspaces on a trial or without a plan, so the preview says the site isn't live yet.
+- **Settings it follows:** homepage sections, menus, announcement, social links and currency all come from the dashboard.
+- Deploy with `pnpm deploy:storefront`. Set `VITE_STOREFRONT_URL` for the dashboard build so the Preview button points at it.
 
 ## Deploying
 

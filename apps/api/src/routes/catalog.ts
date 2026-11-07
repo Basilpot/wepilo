@@ -1,12 +1,24 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { eq, and, desc, asc, like, or, sql, count, inArray } from "drizzle-orm";
+import { eq, and, desc, asc, or, sql, count, inArray } from "drizzle-orm";
 import * as schema from "@/db/schema";
 import type { AppEnv } from "@/types";
-import { ApiError, slugify, paginate, paginationSchema, getOffset } from "@/lib/http";
+import { ApiError, slugify, paginate, paginationSchema, getOffset, contains } from "@/lib/http";
 import { requireStaff, requireTenant, assertPlanLimit } from "@/middleware/context";
 
 const jsonList = z.array(z.union([z.string(), z.number(), z.object({}).passthrough()])).optional();
+
+/** Keeps only the tenant's own locations, and works out the country, region and city slots from them. */
+async function resolveLocations(db: AppEnv["Variables"]["db"], tenantId: number, ids: number[]) {
+  const rows = ids.length
+    ? await db.query.locations.findMany({
+        where: and(eq(schema.locations.tenantId, tenantId), inArray(schema.locations.id, ids)),
+        columns: { id: true, type: true },
+      })
+    : [];
+  const first = (type: string) => rows.find((r) => r.type === type)?.id ?? null;
+  return { ids: rows.map((r) => r.id), countryId: first("COUNTRY"), regionId: first("REGION"), cityId: first("CITY") };
+}
 
 const activityBaseSchema = z.object({
   title: z.string().min(1),
@@ -63,6 +75,8 @@ const activityBaseSchema = z.object({
   difficultyLevel: z.enum(["EASY", "MODERATE", "HARD", "EXTREME"]).nullable().optional(),
   isFeatured: z.boolean().optional(),
   status: z.enum(["DRAFT", "PUBLISHED"]).optional(),
+  /** Every place the trip visits, of any category. Country, region and city are filled in from these. */
+  locationIds: z.array(z.number().int()).optional(),
   countryId: z.number().int().nullable().optional(),
   regionId: z.number().int().nullable().optional(),
   cityId: z.number().int().nullable().optional(),
@@ -98,6 +112,8 @@ export const catalogRoutes = new Hono<AppEnv>()
       regionId: z.coerce.number().int().optional(),
       countryId: z.coerce.number().int().optional(),
       featuredTagId: z.coerce.number().int().optional(),
+      /** Trips that visit this place, of any category (country, city, landmark and so on). */
+      locationId: z.coerce.number().int().optional(),
       sort: z.enum(["newest", "price_asc", "price_desc", "popular"]).default("newest"),
     }).parse(c.req.query());
 
@@ -110,12 +126,20 @@ export const catalogRoutes = new Hono<AppEnv>()
     if (q.cityId) conditions.push(eq(schema.activities.cityId, q.cityId));
     if (q.regionId) conditions.push(eq(schema.activities.regionId, q.regionId));
     if (q.countryId) conditions.push(eq(schema.activities.countryId, q.countryId));
+    if (q.locationId) {
+      conditions.push(
+        inArray(
+          schema.activities.id,
+          db.select({ id: schema.activityLocations.activityId }).from(schema.activityLocations).where(eq(schema.activityLocations.locationId, q.locationId)),
+        ),
+      );
+    }
     if (q.search) {
       conditions.push(
         or(
-          like(schema.activities.title, `%${q.search}%`),
-          like(schema.activities.slug, `%${q.search}%`),
-          like(schema.activities.overview, `%${q.search}%`),
+          contains(schema.activities.title, q.search),
+          contains(schema.activities.slug, q.search),
+          contains(schema.activities.overview, q.search),
         )!,
       );
     }
@@ -198,6 +222,7 @@ export const catalogRoutes = new Hono<AppEnv>()
         country: true,
         tripSeo: true,
         featuredTags: { with: { featuredTag: true } },
+        locations: { with: { location: true } },
         extras: { with: { extra: true } },
       },
     });
@@ -215,6 +240,7 @@ export const catalogRoutes = new Hono<AppEnv>()
           country: true,
           tripSeo: true,
           featuredTags: { with: { featuredTag: true } },
+          locations: { with: { location: true } },
           extras: { with: { extra: true } },
         },
       });
@@ -244,6 +270,7 @@ export const catalogRoutes = new Hono<AppEnv>()
         country: true,
         tripSeo: true,
         featuredTags: { with: { featuredTag: true } },
+        locations: { with: { location: true } },
         extras: { with: { extra: true } },
       },
     });
@@ -271,12 +298,14 @@ export const catalogRoutes = new Hono<AppEnv>()
       tripSeoId = seo.id;
     }
 
-    const { tripSeo: _seo, extraIds, featuredTagIds, ...activityData } = body;
+    const { tripSeo: _seo, extraIds, featuredTagIds, locationIds, ...activityData } = body;
+    const places = locationIds ? await resolveLocations(db, tenantId, locationIds) : null;
     const [activity] = await db
       .insert(schema.activities)
       .values({
         tenantId,
         ...activityData,
+        ...(places ? { countryId: places.countryId, regionId: places.regionId, cityId: places.cityId } : {}),
         slug,
         tripSeoId,
         status: body.status ?? "DRAFT",
@@ -292,6 +321,9 @@ export const catalogRoutes = new Hono<AppEnv>()
       await db
         .insert(schema.activityToFeaturedTag)
         .values(featuredTagIds.map((featuredTagId) => ({ activityId: activity.id, featuredTagId })));
+    }
+    if (places?.ids.length) {
+      await db.insert(schema.activityLocations).values(places.ids.map((locationId) => ({ activityId: activity.id, locationId })));
     }
 
     return c.json({ activity }, 201);
@@ -320,8 +352,13 @@ export const catalogRoutes = new Hono<AppEnv>()
       }
     }
 
-    const { tripSeo: _seo, extraIds, featuredTagIds, slug: newSlug, ...updates } = body;
-    const updatePayload: Partial<typeof schema.activities.$inferInsert> = { ...updates, updatedAt: new Date() };
+    const { tripSeo: _seo, extraIds, featuredTagIds, locationIds, slug: newSlug, ...updates } = body;
+    const places = locationIds ? await resolveLocations(db, tenantId, locationIds) : null;
+    const updatePayload: Partial<typeof schema.activities.$inferInsert> = {
+      ...updates,
+      ...(places ? { countryId: places.countryId, regionId: places.regionId, cityId: places.cityId } : {}),
+      updatedAt: new Date(),
+    };
 
     if (newSlug !== undefined) {
       const slug = slugify(newSlug);
@@ -362,6 +399,12 @@ export const catalogRoutes = new Hono<AppEnv>()
           .values(featuredTagIds.map((featuredTagId) => ({ activityId: id, featuredTagId })));
       }
     }
+    if (places) {
+      await db.delete(schema.activityLocations).where(eq(schema.activityLocations.activityId, id));
+      if (places.ids.length) {
+        await db.insert(schema.activityLocations).values(places.ids.map((locationId) => ({ activityId: id, locationId })));
+      }
+    }
 
     return c.json({ activity });
   })
@@ -393,21 +436,30 @@ export const catalogRoutes = new Hono<AppEnv>()
 
 type TaxonomyTable = typeof schema.locations | typeof schema.tripCategories;
 
+/** What kind of place a location is. The trip editor files a trip's place by this category. */
+export const LOCATION_TYPES = ["COUNTRY", "REGION", "CITY", "TOWN", "ISLAND", "MOUNTAIN", "PARK", "LANDMARK", "AIRPORT"] as const;
+const locationType = z.enum(LOCATION_TYPES);
+
 const taxonomyBody = z.object({
-  handle: z.string().min(1),
+  /** Locations only: the category of the place. Fixed by the route on /countries, /regions and /cities. */
+  type: locationType.optional(),
+  /** Defaults to the name. */
+  handle: z.string().min(1).optional(),
   name: z.string().min(1),
   image: z.string().nullable().optional(),
   showOnHomepage: z.boolean().optional(),
   translations: z.record(z.string(), z.any()).optional(),
 });
 
-function taxonomyRoutes(table: TaxonomyTable, name: string, locationType?: string) {
+function taxonomyRoutes(table: TaxonomyTable, name: string, fixedType?: string) {
   return new Hono<AppEnv>()
     .get("/", requireTenant(), async (c) => {
       const db = c.get("db");
       const scoped = table as unknown as { tenantId: never; type: never };
       const conditions = [eq(scoped.tenantId, c.get("tenantId"))];
-      if (locationType) conditions.push(eq(scoped.type, locationType as never));
+      // /locations lists every category and can be narrowed with ?type=CITY.
+      const type = fixedType ?? (table === schema.locations ? c.req.query("type")?.toUpperCase() : undefined);
+      if (type) conditions.push(eq(scoped.type, type as never));
       const rows = await db
         .select()
         .from(table as TaxonomyTable)
@@ -419,12 +471,14 @@ function taxonomyRoutes(table: TaxonomyTable, name: string, locationType?: strin
       const body = taxonomyBody.parse(await c.req.json());
       const db = c.get("db");
       const tenantId = c.get("tenantId");
+      const type = fixedType ?? body.type;
+      if (table === schema.locations && !type) throw new ApiError(400, `type is required: ${LOCATION_TYPES.join(", ")}`, "VALIDATION");
       const [row] = await db
         .insert(table as TaxonomyTable)
         .values({
           tenantId,
-          ...(locationType ? { type: locationType } : {}),
-          handle: slugify(body.handle),
+          ...(table === schema.locations ? { type } : {}),
+          handle: slugify(body.handle ?? body.name),
           name: body.name,
           image: body.image ?? null,
           showOnHomepage: body.showOnHomepage ?? false,
@@ -440,6 +494,7 @@ function taxonomyRoutes(table: TaxonomyTable, name: string, locationType?: strin
         .update(table as TaxonomyTable)
         .set({
           ...(body.handle !== undefined ? { handle: slugify(body.handle) } : {}),
+          ...(table === schema.locations && !fixedType && body.type !== undefined ? { type: body.type } : {}),
           ...(body.name !== undefined ? { name: body.name } : {}),
           ...(body.image !== undefined ? { image: body.image } : {}),
           ...(body.showOnHomepage !== undefined ? { showOnHomepage: body.showOnHomepage } : {}),
@@ -472,6 +527,8 @@ function taxonomyRoutes(table: TaxonomyTable, name: string, locationType?: strin
     });
 }
 
+/** One list of places, each with a category. The three routes below are the same table, kept so existing websites keep working. */
+export const locationRoutes = taxonomyRoutes(schema.locations, "location");
 export const countryRoutes = taxonomyRoutes(schema.locations, "country", "COUNTRY");
 export const regionRoutes = taxonomyRoutes(schema.locations, "region", "REGION");
 export const cityRoutes = taxonomyRoutes(schema.locations, "city", "CITY");

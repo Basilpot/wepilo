@@ -1,6 +1,8 @@
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
 import { app } from "@/app";
 import type { Env } from "@/env";
+import { reconcileStripePayments } from "@/lib/payments";
+import { sweepRateLimits } from "@/lib/rate-limit";
 import { getDb } from "@/db";
 import { sendExpiryNotices } from "@/lib/billing";
 import { mcpHandler } from "@/mcp/server";
@@ -34,8 +36,9 @@ export default {
   fetch: (request: Request, env: Env, ctx: ExecutionContext) => oauthProvider(env).fetch(request, env, ctx),
   // Cron (wrangler.jsonc → triggers.crons): email owners whose trial or plan just ended.
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(
-      sendExpiryNotices(env, getDb(env)).then((r) => console.log("expiry notices", JSON.stringify(r))),
-    );
+    const db = getDb(env);
+    ctx.waitUntil(sendExpiryNotices(env, db).then((r) => console.log("expiry notices", JSON.stringify(r))));
+    ctx.waitUntil(sweepRateLimits(db));
+    ctx.waitUntil(reconcileStripePayments(env, db).then((r) => console.log("stripe reconcile", JSON.stringify(r))));
   },
 } satisfies ExportedHandler<Env>;

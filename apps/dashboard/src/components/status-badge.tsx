@@ -6,18 +6,18 @@ type Tone = "neutral" | "info" | "success" | "warning" | "danger";
 
 const TONE_CLASSES: Record<Tone, string> = {
   neutral: "bg-muted text-muted-foreground ring-border",
-  info: "bg-blue-50 text-blue-700 ring-blue-600/15 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-400/20",
-  success: "bg-emerald-50 text-emerald-700 ring-emerald-600/15 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/20",
-  warning: "bg-amber-50 text-amber-800 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-400/20",
-  danger: "bg-red-50 text-red-700 ring-red-600/15 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-400/20",
+  info: "bg-secondary text-secondary-foreground ring-border",
+  success: "bg-primary text-primary-foreground ring-transparent",
+  warning: "bg-background text-foreground ring-border",
+  danger: "bg-destructive/10 text-destructive ring-destructive/20",
 };
 
 const DOT_CLASSES: Record<Tone, string> = {
   neutral: "bg-muted-foreground/60",
-  info: "bg-blue-500",
-  success: "bg-emerald-500",
-  warning: "bg-amber-500",
-  danger: "bg-red-500",
+  info: "bg-secondary-foreground/60",
+  success: "bg-primary-foreground",
+  warning: "bg-foreground",
+  danger: "bg-destructive",
 };
 
 type StatusDef = { label: string; tone: Tone };
@@ -26,6 +26,11 @@ const STATUSES = {
   trip: {
     DRAFT: { label: "Draft", tone: "neutral" },
     PUBLISHED: { label: "Live on site", tone: "success" },
+  },
+  review: {
+    PENDING: { label: "Awaiting approval", tone: "warning" },
+    PUBLISHED: { label: "Published", tone: "success" },
+    HIDDEN: { label: "Hidden", tone: "neutral" },
   },
   content: {
     draft: { label: "Draft", tone: "neutral" },

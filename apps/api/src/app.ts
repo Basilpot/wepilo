@@ -6,9 +6,15 @@ import { handleRouteError } from "@/lib/http";
 import { authRoutes } from "@/routes/auth";
 import { tenantRoutes } from "@/routes/tenant";
 import { billingRoutes } from "@/routes/billing";
+import { emailSettingsRoutes } from "@/routes/email-settings";
+import { paymentRoutes } from "@/routes/payments";
+import { domainRoutes } from "@/routes/tenant-domain";
+import { onboardingRoutes } from "@/routes/onboarding";
+import { siteRoutes, savedSectionRoutes, templateRoutes } from "@/routes/site";
 import { platformRoutes } from "@/routes/platform";
 import {
   catalogRoutes,
+  locationRoutes,
   countryRoutes,
   regionRoutes,
   cityRoutes,
@@ -35,6 +41,7 @@ import {
   documentRoutes,
 } from "@/routes/content";
 import { supportRoutes, authorRoutes, publicRoutes } from "@/routes/support";
+import { reviewLinkRoutes, publicReviewRoutes } from "@/routes/review-collection";
 import { connectRoutes, oauthAuthorizeRoutes } from "@/mcp/oauth";
 import apiGuide from "../../../docs/API.md";
 
@@ -74,12 +81,16 @@ app.use("/api/v1/*", requirePaidAccess);
 const v1 = new Hono<{ Bindings: Env; Variables: AppVariables }>();
 
 v1.route("/auth", authRoutes);
+v1.route("/tenant/email-settings", emailSettingsRoutes);
+v1.route("/tenant/domain", domainRoutes);
+v1.route("/tenant/onboarding", onboardingRoutes);
 v1.route("/tenant", tenantRoutes);
 v1.route("/billing", billingRoutes);
 // Wepilo's own team: create and hand over workspaces. Separate login and cookie.
 v1.route("/platform", platformRoutes);
 
 v1.route("/", catalogRoutes);
+v1.route("/locations", locationRoutes);
 v1.route("/countries", countryRoutes);
 v1.route("/regions", regionRoutes);
 v1.route("/cities", cityRoutes);
@@ -88,6 +99,10 @@ v1.route("/featured-tags", featuredTagRoutes);
 v1.route("/extras", extraRoutes);
 v1.route("/departures", departureRoutes);
 v1.route("/bookings", bookingRoutes);
+v1.route("/payments", paymentRoutes);
+v1.route("/site", siteRoutes);
+v1.route("/saved-sections", savedSectionRoutes);
+v1.route("/templates", templateRoutes);
 v1.route("/inquiries", inquiryRoutes);
 v1.route("/reviews", reviewRoutes);
 v1.route("/wishlists", wishlistRoutes);
@@ -103,6 +118,8 @@ v1.route("/departments", departmentRoutes);
 v1.route("/documents", documentRoutes);
 v1.route("/support", supportRoutes);
 v1.route("/authors", authorRoutes);
+v1.route("/review-links", reviewLinkRoutes);
+v1.route("/public/review", publicReviewRoutes);
 v1.route("/public", publicRoutes);
 v1.route("/connect", connectRoutes);
 

@@ -9,6 +9,7 @@ import { DataTable, RowActions, type Column } from "@/components/data-table";
 import { confirmDialog } from "@/components/confirm";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Thumb } from "@/components/thumb";
 import {
   Select,
   SelectContent,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/select";
 
 type Post = {
+  coverImage?: string | null;
   id: number;
   title: string;
   slug: string;
@@ -70,8 +72,10 @@ export function PostsPage() {
     {
       key: "title",
       header: "Title",
-      cell: (post) =>
-        trashed ? (
+      cell: (post) => (
+        <div className="flex items-center gap-3">
+          <Thumb src={post.coverImage} name={post.title ?? ""} />
+          {trashed ? (
           <span className="font-medium">{post.title}</span>
         ) : (
           <Link
@@ -81,7 +85,9 @@ export function PostsPage() {
           >
             {post.title}
           </Link>
-        ),
+        )}
+        </div>
+      ),
     },
     { key: "type", header: "Type", className: "text-muted-foreground", cell: (p) => p.postType.replace("_", " ") },
     { key: "category", header: "Category", className: "text-muted-foreground", cell: (p) => p.blogCategory?.name ?? "—" },

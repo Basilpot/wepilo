@@ -1,4 +1,4 @@
-import { Info, TriangleAlert, CircleAlert, CheckCircle2 } from "@/components/icons";
+import { HelpCircle, Info, TriangleAlert, CircleAlert, CheckCircle2 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -16,7 +16,7 @@ export function InstructionTooltip({ instruction }: { instruction: string }) {
             aria-label="Show more details about this setting"
             className="inline-flex text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Info className="h-3.5 w-3.5" />
+            <HelpCircle className="size-4" />
           </button>
         </TooltipTrigger>
         <TooltipContent className="max-w-xs text-xs leading-relaxed">{instruction}</TooltipContent>
@@ -27,9 +27,9 @@ export function InstructionTooltip({ instruction }: { instruction: string }) {
 
 const INFO_VARIANTS = {
   info: { icon: Info, cls: "border-border bg-muted/40 text-muted-foreground" },
-  warning: { icon: TriangleAlert, cls: "border-amber-300/60 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200" },
+  warning: { icon: TriangleAlert, cls: "border-border bg-muted/40 text-foreground" },
   error: { icon: CircleAlert, cls: "border-destructive/30 bg-destructive/10 text-destructive" },
-  success: { icon: CheckCircle2, cls: "border-emerald-300/60 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200" },
+  success: { icon: CheckCircle2, cls: "border-border bg-muted/40 text-foreground" },
 };
 
 export function InfoCard({

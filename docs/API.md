@@ -57,6 +57,7 @@ Errors use a regular HTTP status with a JSON body:
 | 401 / 403 | Not signed in / not allowed |
 | 404 | Not found, or not published |
 | 409 | Conflict, such as `DEPARTURE_CLOSED` or `NOT_ENOUGH_SPOTS` |
+| 429 | `RATE_LIMITED`: too many requests from one visitor. Wait the number of seconds in the `Retry-After` header. Public forms (bookings, inquiries, newsletter) allow about 12 submissions per visitor per 10 minutes. |
 | 402 | `API_ACCESS_INACTIVE`: the agency has no paid plan (new, on trial, or lapsed more than 15 days ago). `PLAN_LIMIT` / `PAYMENT_REQUIRED` only affect dashboard actions. |
 
 ### Dates and money
@@ -124,10 +125,12 @@ Each item includes the trip fields plus `tripCategory`, `country`, `region`, `ci
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /countries`, `GET /regions`, `GET /cities` | `{ data: [...] }`, sorted by `handle` |
+| `GET /locations` | `{ data: [...] }`, sorted by `handle`. Every place in one list, each with a `type` of `COUNTRY`, `REGION` or `CITY`. Narrow it with `?type=CITY`. |
+| `GET /countries`, `GET /regions`, `GET /cities` | The same list filtered to one type: `{ data: [...] }`, sorted by `handle` |
 | `GET /trip-categories` | `{ data: [...] }` |
 | `GET /featured-tags` | Curated groupings, for example "Best for families" |
 | `GET /extras` | Optional add-ons with `price` per person |
+| `GET /public/currency` | `{ base, translation, rates, updatedAt }`. `base` is the currency every price is stored in. When the agency has switched on currency translation, `rates` holds one unit of `base` in each currency (about 160), refreshed daily. To show a price in the visitor's currency, multiply it by `rates[their currency]`. When translation is off, `rates` is `null`. Rates come from exchangerate-api.com (free tier), so please link to it. They are a guide for browsing: travellers are always charged in `base`. |
 | `GET /public/homepage/sections` | Everything flagged *Show on homepage*: `{ categories, countries, regions, cities, tags }` |
 
 ## 4. Departures and bookings
@@ -170,8 +173,40 @@ Each item includes the trip fields plus `tripCategory`, `country`, `region`, `ci
 On success it returns `201 { "booking": { "id": 42, "status": "PENDING", "totalPrice": 2900, ... } }`.
 
 - `totalPrice` is `departure.price × groupSize + Σ(extra.price × groupSize)`, worked out on the server.
-- No payment is taken. The agency confirms the booking in the dashboard, and that takes the seats. Show travellers something like "Request received, we'll confirm within 24 hours".
-- Errors: `404` if the trip or departure isn't found, `409 DEPARTURE_CLOSED`, `409 NOT_ENOUGH_SPOTS`.
+- Creating a booking takes no payment. Without online payments the agency confirms it in the dashboard (that takes the seats): show something like "Request received, we'll confirm within 24 hours". With payments on, continue to [Paying for a booking](#paying-for-a-booking).
+- `extraIds` must be extras offered on that trip (`400` otherwise). Duplicates are counted once. `groupSize` is 1 to 200.
+- The agency is emailed about each new request, with the traveller's address as Reply-To.
+- Errors: `404` if the trip or departure isn't found, `409 DEPARTURE_CLOSED` (full, delayed, or already started), `409 NOT_ENOUGH_SPOTS`, `429 RATE_LIMITED`.
+
+### Paying for a booking
+
+If the agency has switched on payments (`GET /payments/options` says `online: true`), send the traveller to pay right after creating the booking. The booking response includes a secret `publicToken` (it is never shown in the dashboard or returned again), plus the `currency` the price is in. Keep both in your server session; the token is what proves this traveller owns the booking.
+
+`GET /payments/options` returns:
+
+```json
+{ "currency": "EUR", "stripe": true, "bankTransfer": { "instructions": "IBAN …" }, "depositPercent": 25, "online": true }
+```
+
+**Card (Stripe)**: `POST /payments/checkout`
+
+```json
+{
+  "bookingId": 42,
+  "token": "bk_…",
+  "kind": "DEPOSIT",
+  "successUrl": "https://youragency.com/thanks?booking=42",
+  "cancelUrl": "https://youragency.com/cart"
+}
+```
+
+`kind` is `FULL` (default; pays whatever is still due) or `DEPOSIT` (only before anything is paid, and only if `depositPercent` is set). The amount is always worked out on the server. It returns `{ "url": "https://checkout.stripe.com/…", "amountMinor": 25000, "currency": "EUR", "kind": "DEPOSIT" }`: redirect the traveller to `url`. `successUrl` and `cancelUrl` must be pages on the agency's own website (the address saved under Business profile → Website, or a verified custom domain). Over HTTPS only, except `localhost` in development.
+
+The booking is marked paid when Stripe confirms, usually within seconds, and the agency is emailed. Depending on the agency's setting the booking is confirmed automatically or waits for them. Don't treat the redirect to `successUrl` as proof of payment; show "payment received, we'll confirm shortly" and let the agency's confirmation email do the rest.
+
+**Bank transfer**: `POST /payments/bank-transfer` with `{ "bookingId", "token", "kind" }` returns `{ "reference": "WP-42", "amountMinor": …, "currency": "…", "instructions": "…" }`. Show the instructions and reference. The agency marks it received in the dashboard once the money arrives. Calling it again returns the same pending payment.
+
+Errors: `404` for an unknown booking or wrong token (the same answer for both), `409 PAYMENTS_OFF`, `409 ALREADY_PAID`, `409 BOOKING_CLOSED` (cancelled or completed), `400` for a `successUrl` that isn't the agency's site, `502 CHECKOUT_FAILED` when the payment provider refuses, `429 RATE_LIMITED`.
 
 ## 5. Inquiries and newsletter
 
@@ -196,7 +231,36 @@ On success it returns `201 { "booking": { "id": 42, "status": "PENDING", "totalP
 | Endpoint | Body / notes |
 | --- | --- |
 | `POST /newsletter/subscribe` | `{ "email": "reader@example.com" }` |
-| `GET /newsletter/unsubscribe/:secret` | Unsubscribe link included in newsletter emails |
+| `GET /newsletter/unsubscribe/:secret` | Unsubscribe link included in every newsletter email. Shows a confirmation page in a browser. `POST` to the same path is the one-click variant mail apps use. |
+
+## 5b. Site shell and homepage
+
+`GET /site` returns everything a website needs for its shell and homepage in one cacheable request (`Cache-Control: public, max-age=60`). The agency controls it in the dashboard under **Website → Homepage and menus**, so changing the homepage needs no code change.
+
+```json
+{
+  "company": { "name": "…", "logo": "…", "description": "…", "phone": "…", "address": "…", "website": "…", "email": "…" },
+  "seo": { "siteTitle": "…", "description": "…", "ogImage": "…" },
+  "social": { "instagram": "https://instagram.com/…", "whatsapp": "+977…" },
+  "announcement": { "enabled": true, "text": "Autumn sale", "href": "/trips" },
+  "navigation": {
+    "header": [{ "label": "Trips", "href": "/trips", "children": [{ "label": "Trekking", "href": "/trips/category/trek" }] }],
+    "footer": [{ "title": "Company", "items": [{ "label": "About us", "href": "/about" }] }]
+  },
+  "homepage": [
+    { "id": "hero", "type": "HERO", "title": "…", "subtitle": "…", "image": "…", "ctaLabel": "Browse trips", "ctaHref": "/trips" },
+    { "id": "featured_trips", "type": "FEATURED_TRIPS", "title": "Featured trips", "data": [{ "id": 1, "title": "…", "url": "/trips/ebc", "image": "…", "price": 1200 }] }
+  ]
+}
+```
+
+- `homepage` lists only the enabled sections, in the order the agency chose. Render by `type`: `HERO`, `FEATURED_TRIPS`, `DESTINATIONS`, `CATEGORIES`, `TESTIMONIALS`, `LATEST_POSTS`, `NEWSLETTER`, `CUSTOM_TEXT`. List sections carry their content in `data`; `HERO`, `NEWSLETTER` and `CUSTOM_TEXT` carry their text and image directly.
+- `navigation` is either built automatically from published content or exactly what the agency typed in. Links use the URL patterns the agency set under **Links and details → Page addresses** (for example `/trips/{slug}`), so they match your routes.
+- Only published content appears. The announcement is `null` when switched off.
+
+### Identifying the agency by domain
+
+If the agency verified its domain in **Settings → Domain**, requests from that site's browser (with or without `www`) are recognised from the `Origin` header alone. Server-side requests still send `x-api-key` or `x-tenant-slug`.
 
 ## 6. Website content
 
@@ -206,12 +270,12 @@ On success it returns `201 { "booking": { "id": 42, "status": "PENDING", "totalP
 | `GET /blogs/slug/:slug` | One live post, with `blogCategory`, `author` and `writer` |
 | `GET /info-pages/slug/:slug` | One published page (About, Terms, Privacy and so on) with its `category` |
 | `GET /info-page-categories` | Categories for grouping pages in menus or footers |
-| `GET /auth/authors/:username` | Public author profile |
+| `GET /auth/authors/:username` | Public author profile. Authors are staff logins (role Author) with a username, photo and short bio. |
 | `GET /team` | Team members |
 | `GET /public/team/public` | `{ departments, members }` in one call, for an About page |
 | `GET /departments` | Team departments |
 | `GET /testimonials`, `GET /public/testimonials/public` | Testimonials |
-| `GET /reviews?activityId=` | Paginated trip reviews |
+| `GET /reviews?activityId=` | Paginated trip reviews. Only reviews the agency has published are returned, each with `author`, `rating`, `title`, `text` and `images` (photo URLs). A trip's `averageRating` counts published reviews only. |
 | `GET /documents` | Licences and certificates to show for trust |
 
 ### Redirects

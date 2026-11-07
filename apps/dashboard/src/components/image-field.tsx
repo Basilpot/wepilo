@@ -22,15 +22,18 @@ export function ImageField({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  // An empty picker is a drop zone as wide as its field. A chosen picture is shown at a sensible size under it.
   const frame =
     shape === "avatar"
       ? "size-20 rounded-full"
       : shape === "square"
         ? "aspect-square w-32 rounded-lg"
-        : "aspect-video w-full max-w-sm rounded-lg";
+        : value
+          ? "aspect-video w-full max-w-xl rounded-lg"
+          : "h-36 w-full rounded-lg";
 
   return (
-    <div className={cn("flex items-center gap-4", shape === "cover" && "flex-col items-start gap-2", className)}>
+    <div className={cn("flex items-center gap-4", shape === "cover" && "w-full flex-col items-start gap-2", className)}>
       {value ? (
         <div className={cn("group relative overflow-hidden border bg-muted", frame)}>
           <img src={value} alt="" className="size-full object-cover" />

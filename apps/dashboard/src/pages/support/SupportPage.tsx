@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTableSearch } from "@/hooks/use-table-search";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, LifeBuoy } from "@/components/icons";
@@ -45,6 +46,7 @@ export function SupportPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const tableSearch = useTableSearch(() => setPage(1));
   const [status, setStatus] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(empty);
@@ -52,10 +54,10 @@ export function SupportPage() {
   const errorMessage = useErrorMessage();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["support", page, limit, status],
+    queryKey: ["support", page, limit, status, tableSearch.term],
     queryFn: () =>
       api<Paginated<Ticket>>("/support", {
-        query: { page, limit, status: status === "all" ? undefined : status },
+        query: { page, limit, status: status === "all" ? undefined : status, search: tableSearch.term },
       }),
   });
 
@@ -128,6 +130,8 @@ export function SupportPage() {
       />
 
       <DataTable
+        search={tableSearch.search}
+        searchPlaceholder="Search by subject…"
         columns={columns}
         rows={data?.data ?? []}
         getRowId={(t) => t.id}
@@ -175,7 +179,7 @@ export function SupportPage() {
         {error && <p className="text-sm text-destructive">{error}</p>}
         <Field label="Category" required>
           <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -201,7 +205,7 @@ export function SupportPage() {
           </Field>
           <Field label="Priority">
             <Select value={form.priority} onValueChange={(v) => setForm((f) => ({ ...f, priority: v }))}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

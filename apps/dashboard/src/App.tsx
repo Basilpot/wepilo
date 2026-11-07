@@ -1,44 +1,50 @@
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { setDefaultCurrency } from "@/lib/format";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { SignupPage } from "@/pages/auth/SignupPage";
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
-import { HomePage } from "@/pages/HomePage";
-import { TripsPage } from "@/pages/trips/TripsPage";
-import { TripEditorPage } from "@/pages/trips/TripEditorPage";
-import { DeparturesPage } from "@/pages/DeparturesPage";
-import { BookingsPage } from "@/pages/BookingsPage";
-import { InquiriesPage } from "@/pages/InquiriesPage";
-import { PostsPage } from "@/pages/content/PostsPage";
-import { PostEditorPage } from "@/pages/content/PostEditorPage";
-import { InfoPagesPage } from "@/pages/content/InfoPagesPage";
-import { InfoPageEditorPage } from "@/pages/content/InfoPageEditorPage";
-import { PageCategoriesPage } from "@/pages/content/PageCategoriesPage";
-import { MediaPage } from "@/pages/content/MediaPage";
-import { RedirectsPage } from "@/pages/content/RedirectsPage";
-import { TeamPage } from "@/pages/content/TeamPage";
-import { DepartmentsPage } from "@/pages/content/DepartmentsPage";
-import { DocumentsPage } from "@/pages/content/DocumentsPage";
-import { TestimonialsPage } from "@/pages/content/TestimonialsPage";
-import { ReviewsPage } from "@/pages/ReviewsPage";
-import { AuthorsPage } from "@/pages/content/AuthorsPage";
-import { TaxonomyPage } from "@/pages/catalog/TaxonomyPage";
-import { FeaturedTagsPage } from "@/pages/catalog/FeaturedTagsPage";
-import { FeaturedTripsPage } from "@/pages/catalog/FeaturedTripsPage";
-import { ExtrasPage } from "@/pages/catalog/ExtrasPage";
-import { NewsletterPage } from "@/pages/NewsletterPage";
-import { SettingsPage } from "@/pages/settings/SettingsPage";
-import { SupportPage } from "@/pages/support/SupportPage";
-import { SupportTicketPage } from "@/pages/support/SupportTicketPage";
-import { BillingReturnPage, PaywallPage } from "@/pages/billing/PaywallPage";
 import type { Access } from "@/pages/billing/billing";
-import { AdminApp } from "@/pages/admin/AdminApp";
-import { ConnectPage } from "@/pages/connect/ConnectPage";
+
+// Each screen loads on first visit, so the first paint ships only the shell and sign-in.
+const HomePage = lazy(() => import("@/pages/HomePage").then((m) => ({ default: m.HomePage })));
+const TripsPage = lazy(() => import("@/pages/trips/TripsPage").then((m) => ({ default: m.TripsPage })));
+const TripEditorPage = lazy(() => import("@/pages/trips/TripEditorPage").then((m) => ({ default: m.TripEditorPage })));
+const DeparturesPage = lazy(() => import("@/pages/DeparturesPage").then((m) => ({ default: m.DeparturesPage })));
+const BookingsPage = lazy(() => import("@/pages/BookingsPage").then((m) => ({ default: m.BookingsPage })));
+const InquiriesPage = lazy(() => import("@/pages/InquiriesPage").then((m) => ({ default: m.InquiriesPage })));
+const PostsPage = lazy(() => import("@/pages/content/PostsPage").then((m) => ({ default: m.PostsPage })));
+const PostEditorPage = lazy(() => import("@/pages/content/PostEditorPage").then((m) => ({ default: m.PostEditorPage })));
+const InfoPagesPage = lazy(() => import("@/pages/content/InfoPagesPage").then((m) => ({ default: m.InfoPagesPage })));
+const InfoPageEditorPage = lazy(() => import("@/pages/content/InfoPageEditorPage").then((m) => ({ default: m.InfoPageEditorPage })));
+const PageCategoriesPage = lazy(() => import("@/pages/content/PageCategoriesPage").then((m) => ({ default: m.PageCategoriesPage })));
+const MediaPage = lazy(() => import("@/pages/content/MediaPage").then((m) => ({ default: m.MediaPage })));
+const RedirectsPage = lazy(() => import("@/pages/content/RedirectsPage").then((m) => ({ default: m.RedirectsPage })));
+const TeamPage = lazy(() => import("@/pages/content/TeamHubPage").then((m) => ({ default: m.TeamHubPage })));
+const DepartmentsPage = lazy(() => import("@/pages/content/DepartmentsPage").then((m) => ({ default: m.DepartmentsPage })));
+const DocumentsPage = lazy(() => import("@/pages/content/DocumentsPage").then((m) => ({ default: m.DocumentsPage })));
+const TestimonialsPage = lazy(() => import("@/pages/content/TestimonialsPage").then((m) => ({ default: m.TestimonialsPage })));
+const ReviewsPage = lazy(() => import("@/pages/ReviewsPage").then((m) => ({ default: m.ReviewsPage })));
+const AuthorsPage = lazy(() => import("@/pages/content/AuthorsPage").then((m) => ({ default: m.AuthorsPage })));
+const TaxonomyPage = lazy(() => import("@/pages/catalog/TaxonomyPage").then((m) => ({ default: m.TaxonomyPage })));
+const FeaturedTagsPage = lazy(() => import("@/pages/catalog/FeaturedTagsPage").then((m) => ({ default: m.FeaturedTagsPage })));
+const FeaturedTripsPage = lazy(() => import("@/pages/catalog/FeaturedTripsPage").then((m) => ({ default: m.FeaturedTripsPage })));
+const ExtrasPage = lazy(() => import("@/pages/catalog/ExtrasPage").then((m) => ({ default: m.ExtrasPage })));
+const NewsletterPage = lazy(() => import("@/pages/NewsletterPage").then((m) => ({ default: m.NewsletterPage })));
+const WebsitePage = lazy(() => import("@/pages/website/WebsitePage").then((m) => ({ default: m.WebsitePage })));
+const SettingsPage = lazy(() => import("@/pages/settings/SettingsPage").then((m) => ({ default: m.SettingsPage })));
+const SupportPage = lazy(() => import("@/pages/support/SupportPage").then((m) => ({ default: m.SupportPage })));
+const SupportTicketPage = lazy(() => import("@/pages/support/SupportTicketPage").then((m) => ({ default: m.SupportTicketPage })));
+const BillingReturnPage = lazy(() => import("@/pages/billing/PaywallPage").then((m) => ({ default: m.BillingReturnPage })));
+const PaywallPage = lazy(() => import("@/pages/billing/PaywallPage").then((m) => ({ default: m.PaywallPage })));
+const PublicReviewPage = lazy(() => import("@/pages/reviews/PublicReviewPage").then((m) => ({ default: m.PublicReviewPage })));
+const AdminApp = lazy(() => import("@/pages/admin/AdminApp").then((m) => ({ default: m.AdminApp })));
+const ConnectPage = lazy(() => import("@/pages/connect/ConnectPage").then((m) => ({ default: m.ConnectPage })));
 
 export type Session = {
   staff: { id: number; name: string; email: string; role: string };
@@ -57,13 +63,17 @@ export type Session = {
     status: string;
     plan: string;
     planExpiresAt: string | null;
+    currency?: string;
+    currencyTranslation?: boolean;
   } | null;
   access: Access | null;
 };
 
 export async function fetchSession(): Promise<Session | null> {
   try {
-    return await api<Session>("/auth/me");
+    const session = await api<Session>("/auth/me");
+    setDefaultCurrency(session.tenant?.currency);
+    return session;
   } catch {
     return null;
   }
@@ -103,16 +113,36 @@ function RequireAuth() {
   if (pathname === "/billing/return") return <BillingReturnPage session={data} />;
   // No dashboard without a paid trial or plan.
   if (data.access?.locked) return <PaywallPage session={data} />;
+  // The trip editor is a focused full-screen workspace: no app sidebar, it scrolls on its own.
+  if (/^\/trips\/(new|\d+)$/.test(pathname)) {
+    return (
+      <Suspense fallback={<PageFallback />}>
+        <Outlet key={pathname} />
+      </Suspense>
+    );
+  }
   return (
     <AppShell session={data}>
       {/* Pages remount per route (settings tabs share one), the shell around them does not. */}
-      <Outlet key={pathname.startsWith("/settings") ? "/settings" : pathname} />
+      <Suspense fallback={<PageFallback />}>
+        <Outlet key={pathname.startsWith("/settings") ? "/settings" : pathname} />
+      </Suspense>
     </AppShell>
+  );
+}
+
+function PageFallback() {
+  return (
+    <div className="space-y-4 p-6" aria-busy="true">
+      <Skeleton className="h-8 w-56" />
+      <Skeleton className="h-64 w-full" />
+    </div>
   );
 }
 
 export default function App() {
   return (
+    <Suspense fallback={<PageFallback />}>
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
@@ -121,6 +151,7 @@ export default function App() {
       <Route path="/setup-account" element={<ResetPasswordPage setup />} />
       <Route path="/admin/*" element={<AdminApp />} />
       <Route path="/connect" element={<ConnectPage />} />
+      <Route path="/review/:token" element={<PublicReviewPage />} />
       <Route element={<RequireAuth />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/trips" element={<TripsPage />} />
@@ -137,17 +168,18 @@ export default function App() {
         <Route path="/media" element={<MediaPage />} />
         <Route path="/redirects" element={<RedirectsPage />} />
         <Route path="/team" element={<TeamPage />} />
-        <Route path="/departments" element={<DepartmentsPage />} />
+        <Route path="/departments" element={<Navigate to="/team?tab=departments" replace />} />
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/testimonials" element={<TestimonialsPage />} />
         <Route path="/reviews" element={<ReviewsPage />} />
-        <Route path="/authors" element={<AuthorsPage />} />
+        <Route path="/authors" element={<Navigate to="/settings/staff" replace />} />
         <Route path="/locations" element={<TaxonomyPage />} />
         <Route path="/trip-categories" element={<TaxonomyPage initialTab="categories" />} />
         <Route path="/featured-tags" element={<FeaturedTagsPage />} />
         <Route path="/featured-trips" element={<FeaturedTripsPage />} />
         <Route path="/extras" element={<ExtrasPage />} />
         <Route path="/newsletter" element={<NewsletterPage />} />
+        <Route path="/website" element={<WebsitePage />} />
         <Route path="/settings/*" element={<SettingsPage />} />
         <Route path="/support" element={<SupportPage />} />
         <Route path="/support/:id" element={<SupportTicketPage />} />
@@ -155,5 +187,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 }

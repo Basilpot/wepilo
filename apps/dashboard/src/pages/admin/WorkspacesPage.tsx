@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Building2, Plus } from "@/components/icons";
 import { api, type Paginated } from "@/lib/api";
 import { formatDate } from "@/lib/format";
@@ -37,6 +37,11 @@ export function WorkspacesPage() {
     queryFn: () => api<Paginated<WorkspaceSummary>>("/platform/tenants", { query: { page, limit, search: query } }),
   });
 
+  const openAsOwner = useMutation({
+    mutationFn: (id: number) => api(`/platform/tenants/${id}/impersonate`, { body: {} }),
+    onSuccess: () => window.location.assign("/"),
+  });
+
   const columns: Column<WorkspaceSummary>[] = [
     {
       key: "name",
@@ -71,6 +76,24 @@ export function WorkspacesPage() {
       className: "whitespace-nowrap text-muted-foreground",
       cell: (w) => formatDate(w.createdAt),
     },
+    {
+      key: "open",
+      header: "",
+      className: "w-px whitespace-nowrap text-right",
+      cell: (w) => (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={w.status === "SUSPENDED" || openAsOwner.isPending}
+          onClick={(e) => {
+            e.stopPropagation();
+            openAsOwner.mutate(w.id);
+          }}
+        >
+          Open as owner
+        </Button>
+      ),
+    },
   ];
 
   const o = overview.data;
@@ -100,11 +123,11 @@ export function WorkspacesPage() {
       />
 
       {stats && (
-        <dl className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-5">
+        <dl className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border bg-border shadow-sm sm:grid-cols-5">
           {stats.map((s) => (
             <div key={s.label} className="bg-card px-4 py-3">
-              <dt className="text-xs text-muted-foreground">{s.label}</dt>
-              <dd className="mt-1 text-xl font-semibold tabular-nums">{s.value}</dd>
+              <dt className="text-xs font-medium text-muted-foreground">{s.label}</dt>
+              <dd className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{s.value}</dd>
             </div>
           ))}
         </dl>

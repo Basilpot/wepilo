@@ -164,7 +164,7 @@ export function ExtrasPage() {
         </Field>
         <Field label="Type">
           <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v as Extra["type"] }))}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

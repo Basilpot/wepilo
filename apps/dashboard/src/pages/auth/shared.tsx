@@ -43,7 +43,7 @@ export function AuthCard({
         </div>
         <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Wepilo</p>
       </div>
-      <aside className="relative hidden overflow-hidden bg-[oklch(0.27_0.06_155)] text-white lg:flex lg:flex-col lg:justify-end">
+      <aside className="relative hidden overflow-hidden bg-primary text-primary-foreground lg:flex lg:flex-col lg:justify-end">
         <div
           aria-hidden
           className="absolute inset-0 opacity-[0.07]"
@@ -53,7 +53,7 @@ export function AuthCard({
             backgroundSize: "48px 48px",
           }}
         />
-        <div aria-hidden className="absolute -top-32 -right-32 size-[28rem] rounded-full bg-[oklch(0.62_0.17_150)] opacity-30 blur-3xl" />
+        <div aria-hidden className="absolute -top-32 -right-32 size-[28rem] rounded-full bg-primary-foreground opacity-10 blur-3xl" />
         <div className="relative p-12 xl:p-16">
           <p className="max-w-md text-3xl leading-tight font-semibold tracking-tight">
             Run your travel agency's website from one dashboard.
@@ -61,10 +61,10 @@ export function AuthCard({
           <ul className="mt-10 max-w-md space-y-6">
             {POINTS.map((point) => (
               <li key={point.title} className="flex gap-3">
-                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[oklch(0.8_0.15_150)]" />
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary-foreground" />
                 <div>
                   <p className="font-medium">{point.title}</p>
-                  <p className="mt-0.5 text-sm text-white/65">{point.body}</p>
+                  <p className="mt-0.5 text-sm text-primary-foreground/70">{point.body}</p>
                 </div>
               </li>
             ))}

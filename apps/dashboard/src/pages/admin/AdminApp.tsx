@@ -43,7 +43,7 @@ function RequireAdmin() {
         <Route path="workspaces/new" element={<NewWorkspacePage />} />
         <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
         <Route path="admins" element={<AdminsPage me={admin} />} />
-        <Route path="*" element={<Navigate to="workspaces" replace />} />
+        <Route path="*" element={<Navigate to="/admin/workspaces" replace />} />
       </Routes>
     </AdminShell>
   );
@@ -59,17 +59,17 @@ function AdminShell({ admin, children }: { admin: PlatformAdmin; children: React
   };
   const navClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      "rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
-      isActive ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground",
+      "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+      isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
     );
 
   return (
     <div className="min-h-svh bg-background">
-      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b bg-card/85 backdrop-blur-md">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-4 px-4 md:px-8">
           <Link to="/admin/workspaces" className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-md bg-foreground text-background">
-              <ShieldCheck className="size-4" />
+            <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground ">
+              <ShieldCheck className="size-[18px]" />
             </span>
             <span className="text-sm font-semibold tracking-tight">Wepilo</span>
             <span className="hidden text-sm text-muted-foreground sm:inline">Platform</span>
@@ -91,7 +91,7 @@ function AdminShell({ admin, children }: { admin: PlatformAdmin; children: React
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">{children}</main>
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 md:px-8 md:py-10">{children}</main>
     </div>
   );
 }
@@ -113,10 +113,10 @@ function AdminLoginPage() {
   });
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-muted/30 px-4">
-      <div className="w-full max-w-sm rounded-xl border bg-card p-6 shadow-sm">
+    <div className="flex min-h-svh items-center justify-center bg-[radial-gradient(60rem_30rem_at_50%_-10%,color-mix(in_oklch,var(--primary)_14%,transparent),transparent)] bg-background px-4">
+      <div className="w-full max-w-sm rounded-3xl border bg-card p-8 shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-md bg-foreground text-background">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground ">
             <ShieldCheck className="size-4" />
           </span>
           <span className="text-sm font-semibold tracking-tight">Wepilo Platform</span>

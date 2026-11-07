@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, Search, Upload, Check, Library, ImageIcon } from "@/components/icons";
+import { Loader2, Search, Upload, Check, Library, ImageIcon, FileText } from "@/components/icons";
 import { api, uploadFile, type Paginated, toastApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -31,18 +31,23 @@ type MediaListResponse = Paginated<MediaItem> & { storageUsedBytes: number };
 
 const LIMIT = 40;
 
+const isImage = (m: Pick<MediaItem, "mimeType">) => !m.mimeType || m.mimeType.startsWith("image/");
+
 export function MediaPicker({
   open,
   onOpenChange,
   onSelect,
   multiple,
-  accept = "image/*",
+  kind = "image",
+  accept = kind === "document" ? "application/pdf" : kind === "video" ? "video/mp4,video/webm,video/quicktime" : "image/*",
   confirmLabel = "Insert",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (media: MediaItem) => void;
   multiple?: boolean;
+  /** What the field can hold: images (default), documents such as PDFs, or video. */
+  kind?: "image" | "document" | "video";
   accept?: string;
   confirmLabel?: string;
 }) {
@@ -62,7 +67,9 @@ export function MediaPicker({
   const load = (nextPage: number, query: string, append: boolean) => {
     if (nextPage === 1) setLoading(true);
     else setLoadingMore(true);
-    api<MediaListResponse>("/media", { query: { page: nextPage, limit: LIMIT, search: query || undefined } })
+    api<MediaListResponse>("/media", {
+      query: { page: nextPage, limit: LIMIT, search: query || undefined, type: kind },
+    })
       .then((res) => {
         setItems((prev) => (append ? [...prev, ...res.data] : res.data));
         setTotal(res.pagination.total);
@@ -110,7 +117,7 @@ export function MediaPicker({
       setPending(res.media);
       setMeta({ alt: "", title: "", caption: "", description: "" });
     } catch (err) {
-      toastApiError(err, "The file could not be uploaded. Check your internet connection and that the file is an image or PDF, then try again.");
+      toastApiError(err, "The file could not be uploaded. Check your internet connection and the file type and size (images and PDFs up to 10MB, videos up to 25MB), then try again.");
     } finally {
       setUploading(false);
     }
@@ -198,17 +205,30 @@ export function MediaPicker({
                         type="button"
                         onClick={() => toggle(item)}
                         className={cn(
-                          "group relative aspect-square overflow-hidden rounded-xl border bg-muted transition-all",
-                          isSelected ? "ring-2 ring-foreground" : "hover:ring-2 hover:ring-foreground/30",
+                          "group relative aspect-square overflow-hidden rounded-xl border bg-muted outline-none",
                         )}
                       >
-                        <img src={item.url} alt={item.alt ?? item.filename} className="h-full w-full object-cover" />
+                        {isImage(item) ? (
+                          <img src={item.url} alt={item.alt ?? item.filename} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="flex h-full w-full flex-col items-center justify-center gap-1 pb-5 text-muted-foreground">
+                            <FileText className="h-8 w-8" />
+                            <span className="text-[10px] font-medium uppercase">{item.mimeType?.split("/")[1] ?? "file"}</span>
+                          </span>
+                        )}
+                        <span
+                          aria-hidden
+                          className={cn(
+                            "pointer-events-none absolute inset-0 rounded-[inherit] ring-2 ring-inset transition-colors",
+                            isSelected ? "ring-foreground" : "ring-transparent group-hover:ring-foreground/30 group-focus-visible:ring-foreground/50",
+                          )}
+                        />
                         {isSelected && (
-                          <span className="absolute top-1 right-1 rounded-xl bg-foreground p-0.5 text-background">
+                          <span className="absolute top-1.5 right-1.5 rounded-xl bg-foreground p-0.5 text-background">
                             <Check className="h-3 w-3" />
                           </span>
                         )}
-                        <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1 text-left text-[10px] text-white">
+                        <span className="absolute inset-x-0 bottom-0 truncate bg-background/85 backdrop-blur-sm px-1.5 py-1 text-left text-[10px] text-foreground">
                           {item.filename}
                         </span>
                       </button>
@@ -260,7 +280,14 @@ export function MediaPicker({
             ) : (
               <div className="grid min-h-0 flex-1 gap-6 overflow-hidden lg:grid-cols-2">
                 <div className="flex min-h-0 items-center justify-center overflow-hidden rounded-xl border bg-muted/30 p-4">
-                  <img src={pending.url} alt="Preview" className="max-h-full max-w-full rounded-xl object-contain" />
+                  {isImage(pending) ? (
+                    <img src={pending.url} alt="Preview" className="max-h-full max-w-full rounded-xl object-contain" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <FileText className="h-14 w-14" />
+                      <span className="text-sm">{pending.filename}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex min-h-0 flex-col">
                   <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
@@ -269,7 +296,7 @@ export function MediaPicker({
                       <Input id="mp-filename" value={pending.filename} disabled />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="mp-alt">Image description for search engines and screen readers</Label>
+                      <Label htmlFor="mp-alt">{isImage(pending) ? "Image description for search engines and screen readers" : "Description"}</Label>
                       <Input id="mp-alt" value={meta.alt} onChange={(e) => setMeta({ ...meta, alt: e.target.value })} placeholder="Example: Hikers crossing a suspension bridge above a river valley" />
                     </div>
                     <div className="space-y-1.5">

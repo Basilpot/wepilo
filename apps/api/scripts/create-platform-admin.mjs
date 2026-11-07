@@ -37,9 +37,15 @@ const sql =
   `ON CONFLICT(email) DO UPDATE SET name = excluded.name, password = excluded.password, is_active = 1, ` +
   `updated_at = unixepoch() * 1000;`;
 
-execFileSync(
-  "pnpm",
-  ["wrangler", "d1", "execute", "DB", remote ? "--remote" : "--local", "--command", sql],
-  { stdio: "inherit" },
-);
+try {
+  execFileSync(
+    "pnpm",
+    ["wrangler", "d1", "execute", "DB", remote ? "--remote" : "--local", "--command", sql],
+    { stdio: "inherit" },
+  );
+} catch {
+  // Wrangler already printed the reason above. Don't let Node dump the command: it holds the password hash.
+  console.error(`\nCouldn't save the admin. See the wrangler error above, fix it, and run this again.`);
+  process.exit(1);
+}
 console.log(`\nPlatform admin ready: ${email}. Sign in at /admin/login.`);

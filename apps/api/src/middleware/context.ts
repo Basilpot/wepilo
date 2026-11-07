@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import { getCookie } from "hono/cookie";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import type { Env } from "@/env";
 import { getDb, type Db } from "@/db";
 import * as schema from "@/db/schema";
@@ -9,6 +9,7 @@ import { sha256Hex } from "@/lib/crypto";
 import { ApiError } from "@/lib/http";
 import { loadAccess, limitsFor, websiteApiOpen } from "@/lib/billing";
 import { PLANS } from "@/lib/plans";
+import { isTrustedOrigin } from "@/lib/origin";
 
 export type AppVariables = {
   db: Db;
@@ -32,7 +33,11 @@ export const appContext = createMiddleware<{ Bindings: Env; Variables: AppVariab
     c.set("impersonatedBy", null);
     c.set("platformAdmin", null);
 
-    const staffToken = getCookie(c, staffCookieName);
+    // Cookie sessions only count from our own apps. A page on another site can make the
+    // browser attach the cookie, but it can't forge the Origin header.
+    const trustedOrigin = isTrustedOrigin(c.env, c.req.header("origin"));
+
+    const staffToken = trustedOrigin ? getCookie(c, staffCookieName) : undefined;
     if (staffToken) {
       const payload = await verifyToken<StaffTokenPayload>(c.env, staffToken);
       if (payload?.kind === "staff") {
@@ -92,6 +97,32 @@ export const appContext = createMiddleware<{ Bindings: Env; Variables: AppVariab
         if (tenant && tenant.status === "ACTIVE") {
           c.set("tenantId", tenant.id);
           c.set("tenant", tenant);
+        }
+      }
+    }
+
+    // A verified custom domain identifies its agency without a key or slug header.
+    if (!c.get("tenantId")) {
+      const origin = c.req.header("origin");
+      if (origin) {
+        let host: string | null = null;
+        try {
+          host = new URL(origin).hostname.toLowerCase();
+        } catch {
+          /* not a URL: ignore */
+        }
+        if (host) {
+          const tenant = await db.query.tenants.findFirst({
+            where: and(
+              // The verified domain with or without a leading www.
+              inArray(schema.tenants.customDomain, [host, host.replace(/^www\./, ''), `www.${host.replace(/^www\./, '')}`]),
+              sql`${schema.tenants.customDomainVerifiedAt} IS NOT NULL`,
+            ),
+          });
+          if (tenant && tenant.status === "ACTIVE") {
+            c.set("tenantId", tenant.id);
+            c.set("tenant", tenant);
+          }
         }
       }
     }

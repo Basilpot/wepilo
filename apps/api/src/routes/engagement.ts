@@ -3,21 +3,42 @@ import { z } from "zod";
 import { eq, and, desc, count, sql } from "drizzle-orm";
 import * as schema from "@/db/schema";
 import type { AppEnv } from "@/types";
-import { ApiError, paginate, paginationSchema, slugify } from "@/lib/http";
+import { ApiError, paginate, paginationSchema, slugify, contains } from "@/lib/http";
 import { requireStaff, requireTenant, requireUser } from "@/middleware/context";
 import { randomApiKey } from "@/lib/crypto";
-import { sendEmail, layout, escapeHtml } from "@/lib/email";
+import { layout, escapeHtml } from "@/lib/email";
+import { sendBatchAsTenant } from "@/lib/mailer";
+import { rateLimit, LIMITS } from "@/lib/rate-limit";
 
 // ── Reviews ──────────────────────────────────────────────────────────────────
+
+/** A trip's rating is the average of its published reviews only. */
+export async function refreshTripRating(db: AppEnv["Variables"]["db"], activityId: number) {
+  await db.run(sql`
+    UPDATE ${schema.activities}
+    SET average_rating = COALESCE((SELECT ROUND(AVG(${schema.reviews.rating}), 1) FROM ${schema.reviews} WHERE ${schema.reviews.activityId} = ${activityId} AND ${schema.reviews.status} = 'PUBLISHED'), 0),
+        updated_at = unixepoch() * 1000
+    WHERE id = ${activityId}
+  `);
+}
 
 export const reviewRoutes = new Hono<AppEnv>()
   .get("/", requireTenant(), async (c) => {
     const db = c.get("db");
+    const staff = c.get("staff");
     const q = paginationSchema
-      .extend({ activityId: z.coerce.number().int().optional() })
+      .extend({
+        activityId: z.coerce.number().int().optional(),
+        search: z.string().trim().max(100).optional(),
+        status: z.enum(["PENDING", "PUBLISHED", "HIDDEN"]).optional(),
+      })
       .parse(c.req.query());
     const conditions = [eq(schema.reviews.tenantId, c.get("tenantId"))];
+    // Visitors to the website only ever see published reviews. Staff see everything and can filter by status.
+    if (!staff) conditions.push(eq(schema.reviews.status, "PUBLISHED"));
+    else if (q.status) conditions.push(eq(schema.reviews.status, q.status));
     if (q.activityId) conditions.push(eq(schema.reviews.activityId, q.activityId));
+    if (q.search) conditions.push(contains(schema.reviews.text, q.search));
     const [totalRow] = await db.select({ value: count() }).from(schema.reviews).where(and(...conditions));
     const rows = await db.query.reviews.findMany({
       where: and(...conditions),
@@ -29,14 +50,20 @@ export const reviewRoutes = new Hono<AppEnv>()
       limit: q.limit,
       offset: (q.page - 1) * q.limit,
     });
-    return c.json(paginate(rows, q.page, q.limit, totalRow.value));
+    const data = rows.map(({ reviewerEmail, ...r }) => ({
+      ...r,
+      author: r.reviewerName ?? r.reviewer?.name ?? "Guest",
+      // The reviewer's email is for the agency only.
+      ...(staff ? { reviewerEmail } : {}),
+    }));
+    return c.json(paginate(data, q.page, q.limit, totalRow.value));
   })
   .post("/", requireUser(), requireTenant(), async (c) => {
     const body = z
       .object({
         activityId: z.number().int(),
         rating: z.number().int().min(1).max(5),
-        text: z.string().optional(),
+        text: z.string().max(5000).optional(),
       })
       .parse(await c.req.json());
     const db = c.get("db");
@@ -61,37 +88,53 @@ export const reviewRoutes = new Hono<AppEnv>()
         activityId: body.activityId,
         rating: body.rating,
         text: body.text ?? null,
+        status: "PUBLISHED",
+        source: "WEBSITE",
+        publishedAt: new Date(),
       })
       .returning();
 
-    await db.run(sql`
-      UPDATE ${schema.activities}
-      SET average_rating = (SELECT ROUND(AVG(${schema.reviews.rating}), 1) FROM ${schema.reviews} WHERE ${schema.reviews.activityId} = ${body.activityId}),
-          updated_at = unixepoch() * 1000
-      WHERE id = ${body.activityId}
-    `);
-
+    await refreshTripRating(db, body.activityId);
     return c.json({ review }, 201);
   })
-  .delete("/:id", requireUser(), requireTenant(), async (c) => {
+  // Moderation: staff decide what the website shows.
+  .patch("/:id", requireStaff("OWNER", "ADMIN", "MANAGER"), requireTenant(), async (c) => {
+    const body = z.object({ status: z.enum(["PENDING", "PUBLISHED", "HIDDEN"]) }).parse(await c.req.json());
     const db = c.get("db");
-    const user = c.get("user")!;
+    const id = Number(c.req.param("id"));
+    const current = await db.query.reviews.findFirst({
+      where: and(eq(schema.reviews.id, id), eq(schema.reviews.tenantId, c.get("tenantId"))),
+    });
+    if (!current) throw new ApiError(404, "We couldn't find that review. It may have been deleted.");
+    const [review] = await db
+      .update(schema.reviews)
+      .set({
+        status: body.status,
+        publishedAt: body.status === "PUBLISHED" ? (current.publishedAt ?? new Date()) : current.publishedAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.reviews.id, id))
+      .returning();
+    await refreshTripRating(db, current.activityId);
+    return c.json({ review });
+  })
+  .delete("/:id", requireTenant(), async (c) => {
+    const db = c.get("db");
+    const id = Number(c.req.param("id"));
+    const staff = c.get("staff");
+    const user = c.get("user");
+    if (!staff && !user) throw new ApiError(401, "Authentication required");
+    if (staff && !["OWNER", "ADMIN", "MANAGER"].includes(staff.role)) throw new ApiError(403, "Insufficient permissions");
     const deleted = await db
       .delete(schema.reviews)
       .where(
-        and(
-          eq(schema.reviews.id, Number(c.req.param("id"))),
-          eq(schema.reviews.reviewerId, user.id),
-        ),
+        staff
+          ? and(eq(schema.reviews.id, id), eq(schema.reviews.tenantId, c.get("tenantId")))
+          : and(eq(schema.reviews.id, id), eq(schema.reviews.reviewerId, user!.id)),
       )
       .returning({ id: schema.reviews.id, activityId: schema.reviews.activityId });
-    if (!deleted.length) throw new ApiError(404, "Review not found");
-    await db.run(sql`
-      UPDATE ${schema.activities}
-      SET average_rating = COALESCE((SELECT ROUND(AVG(${schema.reviews.rating}), 1) FROM ${schema.reviews} WHERE ${schema.reviews.activityId} = ${deleted[0].activityId}), 0),
-          updated_at = unixepoch() * 1000
-      WHERE id = ${deleted[0].activityId}
-    `);
+    if (!deleted.length) throw new ApiError(404, "We couldn't find that review. It may have been deleted.");
+    await refreshTripRating(db, deleted[0].activityId);
     return c.json({ ok: true });
   });
 
@@ -210,22 +253,23 @@ export const testimonialRoutes = new Hono<AppEnv>()
 export const newsletterRoutes = new Hono<AppEnv>()
   .get("/", requireStaff(), requireTenant(), async (c) => {
     const db = c.get("db");
-    const q = paginationSchema.parse(c.req.query());
+    const q = paginationSchema.extend({ search: z.string().trim().max(100).optional() }).parse(c.req.query());
     const tenantId = c.get("tenantId");
-    const [totalRow] = await db
-      .select({ value: count() })
-      .from(schema.newsletterSubscribers)
-      .where(eq(schema.newsletterSubscribers.tenantId, tenantId));
+    const where = and(
+      eq(schema.newsletterSubscribers.tenantId, tenantId),
+      q.search ? contains(schema.newsletterSubscribers.email, q.search) : undefined,
+    );
+    const [totalRow] = await db.select({ value: count() }).from(schema.newsletterSubscribers).where(where);
     const rows = await db.query.newsletterSubscribers.findMany({
-      where: eq(schema.newsletterSubscribers.tenantId, tenantId),
+      where,
       orderBy: [desc(schema.newsletterSubscribers.createdAt)],
       limit: q.limit,
       offset: (q.page - 1) * q.limit,
     });
     return c.json(paginate(rows, q.page, q.limit, totalRow.value));
   })
-  .post("/subscribe", requireTenant(), async (c) => {
-    const body = z.object({ email: z.string().email() }).parse(await c.req.json());
+  .post("/subscribe", requireTenant(), rateLimit(LIMITS.publicForm), async (c) => {
+    const body = z.object({ email: z.string().trim().email().max(200) }).parse(await c.req.json());
     const db = c.get("db");
     const tenantId = c.get("tenantId");
     const email = body.email.toLowerCase();
@@ -239,6 +283,7 @@ export const newsletterRoutes = new Hono<AppEnv>()
       });
     return c.json({ ok: true }, 201);
   })
+  // Linked from newsletter emails, so it answers with a page a person can read.
   .get("/unsubscribe/:secret", async (c) => {
     const db = c.get("db");
     const row = await db.query.newsletterSubscribers.findFirst({
@@ -250,6 +295,20 @@ export const newsletterRoutes = new Hono<AppEnv>()
         .set({ isActive: false, unsubscribedAt: new Date(), updatedAt: new Date() })
         .where(eq(schema.newsletterSubscribers.id, row.id));
     }
+    if (c.req.header("accept")?.includes("text/html")) {
+      return c.html(
+        `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font-family:system-ui,sans-serif;max-width:420px;margin:15vh auto;padding:0 24px;color:#0f172a"><h2 style="font-size:20px">You're unsubscribed</h2><p style="color:#475569">You won't get any more emails from this list.</p></body>`,
+      );
+    }
+    return c.json({ ok: true });
+  })
+  // One-click unsubscribe (RFC 8058): mail clients POST here.
+  .post("/unsubscribe/:secret", async (c) => {
+    const db = c.get("db");
+    await db
+      .update(schema.newsletterSubscribers)
+      .set({ isActive: false, unsubscribedAt: new Date(), updatedAt: new Date() })
+      .where(eq(schema.newsletterSubscribers.unsubSecret, c.req.param("secret")));
     return c.json({ ok: true });
   })
   .patch("/:id/toggle", requireStaff(), requireTenant(), async (c) => {
@@ -278,18 +337,22 @@ export const newsletterRoutes = new Hono<AppEnv>()
     const subscribers = await db.query.newsletterSubscribers.findMany({
       where: and(eq(schema.newsletterSubscribers.tenantId, tenantId), eq(schema.newsletterSubscribers.isActive, true)),
     });
-    let sent = 0;
-    for (const subscriber of subscribers) {
-      const ok = await sendEmail({
-        apiKey: c.env.RESEND_API_KEY,
-        from: c.env.PLATFORM_EMAIL_FROM,
+    const messages = subscribers.map((subscriber) => {
+      const unsubscribeUrl = `${c.env.API_BASE_URL}/api/v1/newsletter/unsubscribe/${subscriber.unsubSecret}`;
+      const footer = `<p style="color:#64748b;font-size:12px;margin-top:24px"><a href="${unsubscribeUrl}" style="color:#64748b">Unsubscribe</a></p>`;
+      const html = body.html.includes("</body>")
+        ? body.html.replace("</body>", `${footer}</body>`)
+        : layout(escapeHtml(body.subject), `<div>${body.html}</div>${footer}`);
+      return {
         to: subscriber.email,
         subject: body.subject,
-        html: body.html.includes("<html")
-          ? body.html
-          : layout(body.subject, `<div>${body.html}</div>`),
-      });
-      if (ok) sent += 1;
-    }
+        html,
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
+      };
+    });
+    const sent = await sendBatchAsTenant(c.env, db, tenantId, messages);
     return c.json({ sent, total: subscribers.length });
   });

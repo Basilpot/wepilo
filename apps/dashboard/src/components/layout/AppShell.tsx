@@ -6,6 +6,7 @@ import {
   ChevronsUpDown,
   CreditCard,
   ExternalLink,
+  Eye,
   Globe,
   KeyRound,
   LifeBuoy,
@@ -17,10 +18,7 @@ import {
   Sun,
 } from "@/components/icons";
 import { motion } from "motion/react";
-import { TextMorph } from "torph/react";
 import { ThemeContext } from "@/components/theme-provider";
-import { ThemeIcon } from "@/components/ui/morphing-icons";
-import { SoundToggle, setSoundMuted, useSoundMuted } from "@/components/ui/sound";
 import { CommandMenu } from "@/components/layout/CommandMenu";
 import { NAV_GROUPS, QUICK_LINKS, findNavItem, isActive, type NavItem } from "@/components/layout/nav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -117,7 +115,7 @@ function NavLinkItem({ item, badge }: { item: NavItem; badge?: number }) {
             <motion.span
               layoutId="nav-active-pill"
               aria-hidden
-              className="absolute inset-0 -z-10 rounded-full bg-sidebar-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.5),0_1px_2px_rgb(0_0_0/0.06)] dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]"
+              className="absolute inset-0 -z-10 rounded-full bg-sidebar-accent shadow-sm dark:shadow-sm"
               transition={{ type: "spring", stiffness: 520, damping: 42, mass: 0.8 }}
             />
           )}
@@ -130,9 +128,9 @@ function NavLinkItem({ item, badge }: { item: NavItem; badge?: number }) {
         <SidebarMenuBadge
           key={badge}
           aria-hidden
-          className="animate-pop-in rounded-full bg-attention px-1.5 font-semibold text-[oklch(0.25_0.05_60)] tabular-nums peer-data-[active=true]/menu-button:text-[oklch(0.25_0.05_60)]"
+          className="rounded-full bg-primary px-1.5 font-semibold text-primary-foreground tabular-nums peer-hover/menu-button:text-primary-foreground peer-data-active/menu-button:text-primary-foreground"
         >
-          <TextMorph>{badge > 99 ? "99+" : String(badge)}</TextMorph>
+          {badge > 99 ? "99+" : String(badge)}
         </SidebarMenuBadge>
       ) : null}
     </SidebarMenuItem>
@@ -140,37 +138,80 @@ function NavLinkItem({ item, badge }: { item: NavItem; badge?: number }) {
 }
 
 function WorkspaceHeader({ session }: { session: Session }) {
+  const { isMobile } = useSidebar();
   const tenant = session.tenant;
   const name = tenant?.companyName ?? tenant?.slug ?? "Workspace";
   const paid = session.access?.state === "ACTIVE" || session.access?.state === "PAST_DUE";
+  const website = tenant?.website ? (/^https?:\/\//.test(tenant.website) ? tenant.website : `https://${tenant.website}`) : null;
+  const logo = (
+    <div className="flex aspect-square size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary text-primary-foreground ">
+      {tenant?.companyLogo ? <img src={tenant.companyLogo} alt="" className="size-full bg-background object-contain" /> : <Mountain className="size-4" />}
+    </div>
+  );
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton size="lg" asChild>
-          <Link to="/">
-            <div className="flex aspect-square size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary text-primary-foreground shadow-pill">
-              {tenant?.companyLogo ? (
-                <img src={tenant.companyLogo} alt="" className="size-full bg-background object-contain" />
-              ) : (
-                <Mountain className="size-4" />
-              )}
-            </div>
-            <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">{name}</span>
-              <span className="mt-0.5 flex items-center gap-1.5 text-xs">
-                <span
-                  className={cn(
-                    "shrink-0 rounded px-1.5 font-medium whitespace-nowrap",
-                    paid ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {planLabel(session)}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+              {logo}
+              <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">{name}</span>
+                <span className="mt-0.5 flex items-center gap-1.5 text-xs">
+                  <span
+                    className={cn(
+                      "shrink-0 rounded px-1.5 font-medium whitespace-nowrap",
+                      paid ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {planLabel(session)}
+                  </span>
                 </span>
-                <span className="truncate text-muted-foreground">{tenant?.slug}</span>
-              </span>
-            </div>
-          </Link>
-        </SidebarMenuButton>
+              </div>
+              <ChevronsUpDown className="ml-auto size-4" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-60 rounded-lg"
+            side={isMobile ? "bottom" : "right"}
+            align="start"
+            sideOffset={6}
+          >
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">{name}</DropdownMenuLabel>
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link to="/">
+                  <Mountain />
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
+              {tenant?.slug ? (
+                <DropdownMenuItem asChild>
+                  {/* The storefront shows this workspace's content the way visitors would see it. */}
+                  <a href={`${STOREFRONT_URL}/${tenant.slug}`} target="_blank" rel="noopener noreferrer">
+                    <Eye />
+                    Preview site
+                  </a>
+                </DropdownMenuItem>
+              ) : null}
+              {website ? (
+                <DropdownMenuItem asChild>
+                  <a href={website} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink />
+                    Open your website
+                  </a>
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/settings">
+                <Settings />
+                Business profile
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
   );
@@ -250,7 +291,7 @@ function UserMenu({ session }: { session: Session }) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <MenuSoundRow />
+            
             <div className="flex items-center justify-between px-2 py-1.5 text-sm">
               <span className="text-muted-foreground">Theme</span>
               <div className="flex rounded-full border p-0.5">
@@ -367,13 +408,14 @@ function AppSidebar({ session }: { session: Session }) {
 function ImpersonationBanner({ session }: { session: Session }) {
   if (!session.impersonatedBy) return null;
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b bg-primary px-4 py-2 text-center text-sm text-primary-foreground">
-      <span>
-        You're viewing <strong>{session.tenant?.companyName ?? session.tenant?.slug}</strong> as a Wepilo admin with the owner's full access. Every change you make is real. This session ends automatically within an hour.
+    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 bg-foreground px-4 py-2 text-center text-[13px] text-background">
+      <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-primary-foreground uppercase">Admin view</span>
+      <span className="text-background/80">
+        Signed in to <strong className="font-semibold text-background">{session.tenant?.companyName ?? session.tenant?.slug}</strong> as its owner. Changes are real. Ends automatically within an hour.
       </span>
       <button
         type="button"
-        className="font-medium underline underline-offset-4"
+        className="rounded-full border border-background/25 px-3 py-0.5 font-medium transition-colors hover:bg-background/10"
         onClick={async () => {
           await api("/auth/logout", { method: "POST" }).catch(() => {});
           window.location.href = session.tenant ? `/admin/workspaces/${session.tenant.id}` : "/admin";
@@ -427,7 +469,7 @@ function BillingBanner({ session }: { session: Session }) {
         "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b px-4 py-2 text-center text-sm",
         tone === "danger"
           ? "bg-destructive/10 text-destructive"
-          : "bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-200",
+          : "bg-muted text-foreground",
       )}
     >
       <span>{text}</span>
@@ -447,39 +489,10 @@ function HeaderThemeToggle() {
       onClick={toggle}
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={dark}
-      data-sound={dark ? "toggleOff" : "toggleOn"}
       className="text-muted-foreground hover:text-foreground"
     >
-      <ThemeIcon dark={dark} size={18} />
+      {dark ? <Sun /> : <Moon />}
     </Button>
-  );
-}
-
-/** Mute switch inside the account menu, mirroring the header speaker. */
-function MenuSoundRow() {
-  const muted = useSoundMuted();
-  return (
-    <div className="flex items-center justify-between px-2 py-1.5 text-sm">
-      <span className="text-muted-foreground">Interface sounds</span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={!muted}
-        aria-label="Interface sounds"
-        onClick={() => setSoundMuted(!muted)}
-        className={cn(
-          "relative h-5 w-9 rounded-full transition-colors duration-200",
-          muted ? "bg-muted-foreground/30" : "bg-primary",
-        )}
-      >
-        <span
-          className={cn(
-            "absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow-sm transition-transform duration-300 ease-[var(--ease-spring)]",
-            !muted && "translate-x-4",
-          )}
-        />
-      </button>
-    </div>
   );
 }
 
@@ -493,7 +506,7 @@ function SiteHeader({ session, onSearch }: { session: Session; onSearch: () => v
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mx-1.5 data-[orientation=vertical]:h-4" />
         <span className="truncate text-sm font-semibold">
-          <TextMorph>{current?.title ?? ""}</TextMorph>
+          {current?.title ?? ""}
         </span>
         <div className="ml-auto flex items-center gap-1.5">
           <Button
@@ -512,7 +525,6 @@ function SiteHeader({ session, onSearch }: { session: Session; onSearch: () => v
             <Search />
           </Button>
           <HeaderThemeToggle />
-          <SoundToggle className="size-8 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground" />
           {website ? (
             <Button asChild variant="outline" size="sm">
               <a href={website} target="_blank" rel="noopener noreferrer">
@@ -527,6 +539,9 @@ function SiteHeader({ session, onSearch }: { session: Session; onSearch: () => v
     </header>
   );
 }
+
+/** Where the storefront runs. It renders any agency under /{slug}. */
+const STOREFRONT_URL = (import.meta.env.VITE_STOREFRONT_URL as string | undefined)?.replace(/\/$/, "") ?? "http://localhost:5176";
 
 export function AppShell({ session, children }: { session: Session; children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -558,7 +573,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
         <BillingBanner session={session} />
         <SiteHeader session={session} onSearch={() => setSearchOpen(true)} />
         <div className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
-          <div className="mx-auto w-full max-w-[1400px]">{children}</div>
+          <div key={pathname.split("/")[1] ?? ""} className="mx-auto w-full max-w-[1400px]">{children}</div>
         </div>
       </SidebarInset>
       <CommandMenu open={searchOpen} onOpenChange={setSearchOpen} onNavigate={(url) => navigate(url)} />

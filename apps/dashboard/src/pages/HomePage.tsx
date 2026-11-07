@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { ArrowRight, CalendarCheck, Check, ExternalLink, Inbox, Plus, Receipt, Star } from "@/components/icons";
-import { TextMorph } from "torph/react";
 import { api } from "@/lib/api";
+import { OnboardingCard } from "@/pages/OnboardingCard";
 import { useSession } from "@/App";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/status-badge";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
+import { money } from "@/lib/format";
 
 type Analytics = {
   trips: { total: number; published: number; drafts: number };
@@ -36,9 +37,6 @@ type Analytics = {
 };
 
 type Inquiry = { id: number; name: string; email: string; trip: string | null; status: string; createdAt: string };
-
-const money = (n: number) =>
-  new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
 const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -191,21 +189,21 @@ function TodayStrip({ data, isLoading }: { data: Analytics | undefined; isLoadin
           key={item.key}
           to={item.to}
           className={cn(
-            "group relative flex min-w-0 items-start gap-3.5 rounded-2xl border bg-card p-4 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_12px_28px_-18px_rgb(0_0_0/0.3)] motion-reduce:hover:translate-y-0",
-            item.urgent && "border-attention/50 bg-attention/[0.06]",
+            "group relative flex min-w-0 items-start gap-3.5 rounded-2xl border bg-card p-4 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm motion-reduce:hover:translate-y-0",
+            item.urgent && "border-border bg-primary/[0.06]",
           )}
         >
           <span
             className={cn(
               "relative flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary",
-              item.urgent && "bg-attention/20 text-attention-foreground",
+              item.urgent && "bg-primary/20 text-foreground",
             )}
           >
             <item.icon className="size-[18px]" />
             {item.urgent && (
               <span aria-hidden className="absolute -top-0.5 -right-0.5 flex size-2.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-attention opacity-60 motion-reduce:animate-none" />
-                <span className="relative inline-flex size-2.5 rounded-full bg-attention" />
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60 motion-reduce:animate-none" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-primary" />
               </span>
             )}
           </span>
@@ -215,7 +213,7 @@ function TodayStrip({ data, isLoading }: { data: Analytics | undefined; isLoadin
               <Skeleton className="my-1 h-7 w-12" />
             ) : (
               <span className="block text-2xl font-semibold tracking-tight tabular-nums">
-                <TextMorph>{String(item.value)}</TextMorph>
+                {String(item.value)}
               </span>
             )}
             <span className="block truncate text-xs text-muted-foreground">{isLoading ? " " : item.hint}</span>
@@ -354,7 +352,7 @@ export function HomePage() {
         </div>
       ) : null}
 
-      {data && <SetupChecklist data={data} />}
+      <OnboardingCard />
 
       <TodayStrip data={data} isLoading={isLoading} />
 
@@ -378,7 +376,7 @@ export function HomePage() {
               <Skeleton className="my-1 h-7 w-16" />
             ) : (
               <span className="text-2xl font-semibold tracking-tight tabular-nums">
-                <TextMorph>{String(stat.value ?? 0)}</TextMorph>
+                {String(stat.value ?? 0)}
               </span>
             )}
             <span className="text-xs text-muted-foreground">{isLoading ? " " : stat.sub}</span>
@@ -474,7 +472,7 @@ export function HomePage() {
                       <p className="truncate text-sm font-medium">{d.activity.title ?? "Untitled trip"}</p>
                       <div className="mt-1.5 flex items-center gap-2">
                         <div className="h-1 w-24 overflow-hidden rounded-full bg-muted">
-                          <div className="animate-seat-fill h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                          <div className=" h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
                         </div>
                         <span className="text-xs text-muted-foreground tabular-nums">
                           {booked}/{d.capacity} booked
@@ -511,7 +509,7 @@ export function HomePage() {
                     </div>
                     {t.averageRating > 0 && (
                       <span className="inline-flex items-center gap-1 text-sm tabular-nums">
-                        <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                        <Star className="size-3.5 fill-primary text-primary" />
                         {t.averageRating.toFixed(1)}
                       </span>
                     )}

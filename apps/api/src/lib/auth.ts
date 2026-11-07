@@ -12,7 +12,7 @@ export type StaffTokenPayload = {
   kind: "staff";
   staffId: number;
   tenantId: number;
-  role: "OWNER" | "ADMIN" | "MANAGER" | "EDITOR";
+  role: "OWNER" | "ADMIN" | "MANAGER" | "EDITOR" | "AUTHOR";
   /** Set when a platform admin opened this workspace as its owner. */
   impersonatedBy?: number;
 };

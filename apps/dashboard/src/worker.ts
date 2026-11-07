@@ -8,7 +8,13 @@ export default {
     if (url.pathname.startsWith("/api/")) {
       const upstream = new URL(request.url);
       upstream.host = API_ORIGIN;
-      return fetch(upstream, request);
+      // A Worker-to-Worker subrequest reaches the API with a shared Cloudflare address, so
+      // pass the real visitor along for rate limiting. The API only trusts this in that case.
+      const forwarded = new Request(upstream, request);
+      const visitor = request.headers.get("cf-connecting-ip");
+      if (visitor) forwarded.headers.set("x-wepilo-client-ip", visitor);
+      else forwarded.headers.delete("x-wepilo-client-ip");
+      return fetch(forwarded);
     }
     return env.ASSETS.fetch(request);
   },

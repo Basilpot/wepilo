@@ -1,5 +1,6 @@
 import { MoneyInput } from "@/components/money-input";
 import { useState } from "react";
+import { useTableSearch } from "@/hooks/use-table-search";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Clock, PenLine, Plus, Trash2, CalendarCheck } from "@/components/icons";
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/date-picker";
 import {
   Select,
   SelectContent,
@@ -59,6 +61,7 @@ export function DeparturesPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const tableSearch = useTableSearch(() => setPage(1));
   const [status, setStatus] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Departure | null>(null);
@@ -67,10 +70,10 @@ export function DeparturesPage() {
   const errorMessage = useErrorMessage();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["departures", page, limit, status],
+    queryKey: ["departures", page, limit, status, tableSearch.term],
     queryFn: () =>
       api<Paginated<Departure>>("/departures", {
-        query: { page, limit, status: status === "all" ? undefined : status },
+        query: { page, limit, status: status === "all" ? undefined : status, search: tableSearch.term },
       }),
   });
 
@@ -228,16 +231,28 @@ export function DeparturesPage() {
         }
       />
 
-      <Tabs className="mb-3" value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
-        <TabsList>
-          <TabsTrigger value="all" className="px-3">All</TabsTrigger>
-          <TabsTrigger value="OPEN" className="px-3">Open</TabsTrigger>
-          <TabsTrigger value="FULL" className="px-3">Full</TabsTrigger>
-          <TabsTrigger value="DELAYED" className="px-3">Delayed</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
       <DataTable
+        toolbar={
+          <Select
+            value={status}
+            onValueChange={(v) => {
+              setStatus(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-44" aria-label="Filter by status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="OPEN">Open</SelectItem>
+              <SelectItem value="FULL">Full</SelectItem>
+              <SelectItem value="DELAYED">Delayed</SelectItem>
+            </SelectContent>
+          </Select>
+        }
+        search={tableSearch.search}
+        searchPlaceholder="Search by trip…"
         columns={columns}
         rows={data?.data ?? []}
         getRowId={(d) => d.id}
@@ -271,7 +286,7 @@ export function DeparturesPage() {
         {error && <p className="text-sm text-destructive">{error}</p>}
         <Field label="Trip" required>
           <Select value={form.activityId || "none"} onValueChange={(v) => setForm((f) => ({ ...f, activityId: v === "none" ? "" : v }))}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Click to choose a trip" />
             </SelectTrigger>
             <SelectContent>
@@ -286,14 +301,10 @@ export function DeparturesPage() {
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Start date" required>
-            <Input
-              type="date"
-              value={form.startDate}
-              onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
-            />
+            <DatePicker value={form.startDate} onChange={(v) => setForm((f) => ({ ...f, startDate: v }))} placeholder="Choose the start date" />
           </Field>
           <Field label="End date">
-            <Input type="date" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} />
+            <DatePicker value={form.endDate} min={form.startDate || undefined} onChange={(v) => setForm((f) => ({ ...f, endDate: v }))} placeholder="Choose the end date" />
           </Field>
           <Field label="Capacity" required>
             <Input
@@ -309,7 +320,7 @@ export function DeparturesPage() {
         </div>
         <Field label="Status">
           <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as FormState["status"] }))}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

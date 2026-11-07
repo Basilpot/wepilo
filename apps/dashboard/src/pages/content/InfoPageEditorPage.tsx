@@ -184,7 +184,7 @@ export function InfoPageEditorPage() {
         badge={<StatusBadge kind="content" status={published ? "published" : "draft"} />}
         dirty={dirty}
         subtitle={isNew ? "Not saved yet" : `/${form.slug}`}
-        onBack={() => confirmLeave() && navigate("/info-pages")}
+        onBack={() => confirmLeave(() => navigate("/info-pages"))}
         actions={
           <PublishActions
             published={published}

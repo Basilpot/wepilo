@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { KeyRound, Loader2, Power, Trash2, UserPlus, Users2 } from "@/components/icons";
+import { KeyRound, Loader2, PenLine, Power, Trash2, UserPlus, Users2 } from "@/components/icons";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
@@ -14,6 +14,10 @@ import { PlanPicker } from "@/pages/billing/PlanPicker";
 import { PLAN_NAMES, useBilling, useBillingPortal } from "@/pages/billing/billing";
 import { Field, FormDialog } from "@/components/form";
 import { ImageField } from "@/components/image-field";
+import { SettingsSection } from "@/pages/settings/parts";
+import { EmailTab } from "@/pages/settings/EmailTab";
+import { PaymentsTab } from "@/pages/settings/PaymentsTab";
+import { DomainTab } from "@/pages/settings/DomainTab";
 import { DataTable, RowActions, type Column } from "@/components/data-table";
 import { confirmDialog } from "@/components/confirm";
 import { useErrorMessage } from "@/pages/shared";
@@ -24,7 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CopyIcon } from "@/components/ui/morphing-icons";
-import { TextMorph } from "torph/react";
+import { Thumb } from "@/components/thumb";
 
 type StaffMember = {
   id: number;
@@ -32,44 +36,34 @@ type StaffMember = {
   email: string;
   role: string;
   isActive: boolean;
+  /** Public byline profile, shown with the posts this person writes. */
+  username?: string | null;
+  bio?: string | null;
+  image?: string | null;
 };
 
 const TABS = [
   { value: "profile", label: "Business profile" },
   { value: "staff", label: "Staff logins" },
   { value: "api-keys", label: "API keys" },
+  { value: "payments", label: "Payments" },
+  { value: "email", label: "Email" },
+  { value: "website", label: "Domain" },
   { value: "billing", label: "Billing" },
 ] as const;
+
+/** Tabs whose API calls need an owner or admin. */
+const ADMIN_ONLY_TABS: string[] = ["email", "payments", "website"];
 
 const ROLES = [
   { value: "ADMIN", label: "Admin", hint: "Can see and change everything except the plan and billing, and the developer API keys." },
   { value: "MANAGER", label: "Manager", hint: "Can manage trips, departure dates, customer bookings and inquiries, and all website content." },
   { value: "EDITOR", label: "Editor", hint: "Can only write and edit blog posts, website pages and the media library. Cannot see customer bookings or business settings." },
+  { value: "AUTHOR", label: "Author", hint: "Can only write blog posts and use the media library. Their name, photo and short bio appear on the posts they write. Cannot edit website pages or see anything else." },
 ];
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-
-/** Two-column settings row: what it is on the left, the controls on the right. */
-function SettingsSection({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="grid gap-x-10 gap-y-4 border-b py-8 first:pt-2 last:border-b-0 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
-      <div>
-        <h2 className="text-sm font-semibold">{title}</h2>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
-      </div>
-      <div className="min-w-0 max-w-2xl space-y-5">{children}</div>
-    </section>
-  );
-}
 
 function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -89,7 +83,7 @@ function CopyButton({ value, label = "Copy" }: { value: string; label?: string }
       }
     >
       <CopyIcon copied={copied} size={16} />
-      <TextMorph>{copied ? "Copied" : label}</TextMorph>
+      {copied ? "Copied" : label}
     </Button>
   );
 }
@@ -205,7 +199,8 @@ function ProfileTab() {
 function StaffTab() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "EDITOR" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "EDITOR", bio: "", image: "" });
+  const [profile, setProfile] = useState<{ member: StaffMember; bio: string; image: string; username: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const errorMessage = useErrorMessage();
   const { data: session } = useSession();
@@ -220,11 +215,11 @@ function StaffTab() {
 
   const create = useMutation({
     meta: { success: "The staff login was created. Share the temporary password with them privately." },
-    mutationFn: () => api("/tenant/staff", { body: form }),
+    mutationFn: () => api("/tenant/staff", { body: { ...form, bio: form.bio || undefined, image: form.image || undefined } }),
     onSuccess: () => {
       invalidate();
       setDialogOpen(false);
-      setForm({ name: "", email: "", password: "", role: "EDITOR" });
+      setForm({ name: "", email: "", password: "", role: "EDITOR", bio: "", image: "" });
     },
     onError: (err) => setError(errorMessage(err)),
   });
@@ -248,9 +243,7 @@ function StaffTab() {
       header: "Person",
       cell: (m) => (
         <div className="flex items-center gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
-            {m.name.slice(0, 1).toUpperCase()}
-          </span>
+          <Thumb round src={m.image} name={m.name} />
           <div className="min-w-0">
             <p className="truncate font-medium">
               {m.name}
@@ -296,6 +289,11 @@ function StaffTab() {
         isOwner && m.role !== "OWNER" ? (
           <RowActions
             actions={[
+              {
+                label: "Edit public profile",
+                icon: PenLine,
+                onSelect: () => setProfile({ member: m, bio: m.bio ?? "", image: m.image ?? "", username: m.username ?? "" }),
+              },
               {
                 label: m.isActive ? "Disable login" : "Enable login",
                 icon: Power,
@@ -379,7 +377,7 @@ function StaffTab() {
         <Field label="Email" htmlFor="staff-email" required>
           <Input id="staff-email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
         </Field>
-        <Field label="Temporary password" htmlFor="staff-pass" required hint="Use at least 8 characters. Ask them to change it after their first sign in.">
+        <Field label="Temporary password" name="password" htmlFor="staff-pass" required hint="Use at least 8 characters. Ask them to change it after their first sign in.">
           <Input
             id="staff-pass"
             type="password"
@@ -403,6 +401,41 @@ function StaffTab() {
           </Select>
           <p className="text-xs text-muted-foreground">{ROLES.find((r) => r.value === form.role)?.hint}</p>
         </Field>
+        <Field label="Short bio" name="bio" hint="Optional. Shown under their name on the posts they write.">
+          <Textarea rows={3} value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))} />
+        </Field>
+        <Field label="Photo" hint="Optional.">
+          <ImageField value={form.image} onChange={(url) => setForm((f) => ({ ...f, image: url }))} />
+        </Field>
+      </FormDialog>
+
+      <FormDialog
+        open={Boolean(profile)}
+        onOpenChange={(o) => !o && setProfile(null)}
+        title={profile ? `Public profile for ${profile.member.name}` : "Public profile"}
+        description="This is what readers see next to the posts this person writes."
+        onSubmit={() =>
+          profile &&
+          update.mutate(
+            { id: profile.member.id, body: { bio: profile.bio || null, image: profile.image || null, ...(profile.username ? { username: profile.username } : {}) } },
+            { onSuccess: () => setProfile(null) },
+          )
+        }
+        pending={update.isPending}
+      >
+        {profile && (
+          <>
+            <Field label="Username" hint="Used in the address of their author page on your website.">
+              <Input value={profile.username} onChange={(e) => setProfile((p) => p && { ...p, username: e.target.value })} />
+            </Field>
+            <Field label="Short bio">
+              <Textarea rows={4} value={profile.bio} onChange={(e) => setProfile((p) => p && { ...p, bio: e.target.value })} />
+            </Field>
+            <Field label="Photo">
+              <ImageField value={profile.image} onChange={(url) => setProfile((p) => p && { ...p, image: url })} />
+            </Field>
+          </>
+        )}
       </FormDialog>
     </>
   );
@@ -451,8 +484,8 @@ function ApiKeysTab() {
         }
       >
         {newKey ? (
-          <div className="space-y-3 rounded-lg border border-amber-300/60 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
-            <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+          <div className="space-y-3 rounded-lg border border-border bg-muted p-4">
+            <p className="text-sm font-medium text-foreground">
               Copy this key now and store it somewhere safe. For your security, it will never be shown again after you leave this page.
             </p>
             <div className="flex items-center gap-2">
@@ -720,7 +753,10 @@ export function SettingsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const segments = location.pathname.split("/").filter(Boolean);
-  const active = TABS.some((t) => t.value === segments[1]) ? segments[1] : "profile";
+  const { data: session } = useSession();
+  const canConfigure = session?.staff.role === "OWNER" || session?.staff.role === "ADMIN";
+  const tabs = TABS.filter((t) => canConfigure || !ADMIN_ONLY_TABS.includes(t.value));
+  const active = tabs.some((t) => t.value === segments[1]) ? segments[1] : "profile";
 
 
   return (
@@ -728,7 +764,7 @@ export function SettingsPage() {
       <PageHeader title="Settings" description="Your business details, who can sign in, website access and your plan. Pick a tab to change one of them." />
       <Tabs value={active} onValueChange={(value) => navigate(value === "profile" ? "/settings" : `/settings/${value}`)}>
         <TabsList variant="line" className="w-full justify-start border-b">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value} className="flex-none px-3">
               {tab.label}
             </TabsTrigger>
@@ -742,6 +778,15 @@ export function SettingsPage() {
         </TabsContent>
         <TabsContent value="api-keys" className="pt-4">
           <ApiKeysTab />
+        </TabsContent>
+        <TabsContent value="payments" className="pt-4">
+          <PaymentsTab />
+        </TabsContent>
+        <TabsContent value="website" className="pt-4">
+          <DomainTab />
+        </TabsContent>
+        <TabsContent value="email" className="pt-4">
+          <EmailTab />
         </TabsContent>
         <TabsContent value="billing" className="pt-4">
           <BillingTab />

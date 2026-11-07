@@ -215,7 +215,7 @@ export function MediaPage() {
             onClick={() => fileRef.current?.click()}
             className="group flex w-full flex-col items-center rounded-2xl border border-dashed px-6 py-16 text-center transition-colors hover:border-primary/50 hover:bg-primary/[0.03]"
           >
-            <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-300 group-hover:-translate-y-0.5">
+            <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform group-hover:-translate-y-0.5">
               <Images className="size-5" />
             </span>
             <span className="mt-3 text-sm font-medium">Drop images here or click to upload</span>
@@ -240,7 +240,7 @@ export function MediaPage() {
                         src={item.url}
                         alt={item.alt ?? ""}
                         loading="lazy"
-                        className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        className="size-full object-cover transition-transform group-hover:scale-[1.03]"
                       />
                     ) : (
                       <span className="flex size-full flex-col items-center justify-center gap-1 text-muted-foreground">
@@ -272,14 +272,14 @@ export function MediaPage() {
                         aria-label={a.label}
                         title={a.label}
                         onClick={a.onClick}
-                        className="pointer-events-auto flex size-7 items-center justify-center rounded-md bg-background/90 text-foreground shadow-sm ring-1 ring-black/5 backdrop-blur hover:bg-background"
+                        className="pointer-events-auto flex size-7 items-center justify-center rounded-md bg-background/90 text-foreground shadow-sm ring-1 ring-border backdrop-blur hover:bg-background"
                       >
                         <a.icon className="size-3.5" />
                       </button>
                     ))}
                   </div>
                   {isImage && !item.alt && (
-                    <span className="absolute bottom-1.5 left-1.5 rounded bg-amber-100/95 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">
+                    <span className="absolute bottom-1.5 left-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground">
                       No alt text
                     </span>
                   )}

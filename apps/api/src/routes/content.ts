@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { eq, and, desc, like, or, count, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, or, count, sql, inArray } from "drizzle-orm";
 import * as schema from "@/db/schema";
 import type { AppEnv } from "@/types";
-import { ApiError, slugify, paginate, paginationSchema } from "@/lib/http";
+import { ApiError, slugify, paginate, paginationSchema, contains } from "@/lib/http";
 import { requireStaff, requireTenant, assertPlanLimit, tenantLimits } from "@/middleware/context";
 import { deleteObject, getObject, mediaKey, putObject } from "@/lib/storage";
 
@@ -26,6 +26,9 @@ const blogBaseSchema = z.object({
   translations: z.record(z.string(), z.any()).optional(),
 });
 
+/** Authors write posts and use the media library. Pages and the rest of the website content are for the other roles. */
+const NOT_AUTHOR = ["OWNER", "ADMIN", "MANAGER", "EDITOR"] as const;
+
 export const blogRoutes = new Hono<AppEnv>()
   .get("/", requireStaff(), requireTenant(), async (c) => {
     const db = c.get("db");
@@ -43,7 +46,7 @@ export const blogRoutes = new Hono<AppEnv>()
     if (q.published === "true") conditions.push(eq(schema.blogs.published, true));
     if (q.published === "false") conditions.push(eq(schema.blogs.published, false));
     if (q.categoryId) conditions.push(eq(schema.blogs.blogCategoryId, q.categoryId));
-    if (q.search) conditions.push(like(schema.blogs.title, `%${q.search}%`));
+    if (q.search) conditions.push(contains(schema.blogs.title, q.search));
 
     const [totalRow] = await db.select({ value: count() }).from(schema.blogs).where(and(...conditions));
     const rows = await db.query.blogs.findMany({
@@ -51,7 +54,7 @@ export const blogRoutes = new Hono<AppEnv>()
       with: {
         blogCategory: { columns: { id: true, name: true, handle: true } },
         author: { columns: { id: true, name: true } },
-        writer: { columns: { id: true, name: true, username: true } },
+        writer: { columns: { id: true, name: true, username: true, image: true } },
       },
       orderBy: [desc(schema.blogs.createdAt)],
       limit: q.limit,
@@ -69,12 +72,12 @@ export const blogRoutes = new Hono<AppEnv>()
       eq(schema.blogs.published, true),
       eq(schema.blogs.inTrash, false),
     ];
-    if (q.search) conditions.push(like(schema.blogs.title, `%${q.search}%`));
+    if (q.search) conditions.push(contains(schema.blogs.title, q.search));
     if (q.categoryId) conditions.push(eq(schema.blogs.blogCategoryId, q.categoryId));
     const [totalRow] = await db.select({ value: count() }).from(schema.blogs).where(and(...conditions));
     const rows = await db.query.blogs.findMany({
       where: and(...conditions),
-      with: { blogCategory: { columns: { id: true, name: true, handle: true } }, writer: { columns: { id: true, name: true, image: true } } },
+      with: { blogCategory: { columns: { id: true, name: true, handle: true } }, writer: { columns: { id: true, name: true, username: true, image: true } } },
       orderBy: [desc(schema.blogs.publishedAt)],
       limit: q.limit,
       offset: (q.page - 1) * q.limit,
@@ -102,7 +105,7 @@ export const blogRoutes = new Hono<AppEnv>()
         // Website visitors only see live posts; staff can preview drafts.
         c.get("staff") ? undefined : and(eq(schema.blogs.published, true), eq(schema.blogs.inTrash, false)),
       ),
-      with: { blogCategory: true, author: { columns: { id: true, name: true } }, writer: true },
+      with: { blogCategory: true, author: { columns: { id: true, name: true } }, writer: { columns: { id: true, name: true, username: true, bio: true, image: true } } },
     });
     if (!row) throw new ApiError(404, "Post not found");
     return c.json({ post: row });
@@ -211,7 +214,7 @@ export const blogRoutes = new Hono<AppEnv>()
 // ── Info pages ───────────────────────────────────────────────────────────────
 
 export const infoPageRoutes = new Hono<AppEnv>()
-  .get("/", requireStaff(), requireTenant(), async (c) => {
+  .get("/", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const db = c.get("db");
     const rows = await db.query.infoPages.findMany({
       where: eq(schema.infoPages.tenantId, c.get("tenantId")),
@@ -233,7 +236,7 @@ export const infoPageRoutes = new Hono<AppEnv>()
     if (!row) throw new ApiError(404, "Page not found");
     return c.json({ page: row });
   })
-  .get("/:id{[0-9]+}", requireStaff(), requireTenant(), async (c) => {
+  .get("/:id{[0-9]+}", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const db = c.get("db");
     const row = await db.query.infoPages.findFirst({
       where: and(eq(schema.infoPages.tenantId, c.get("tenantId")), eq(schema.infoPages.id, Number(c.req.param("id")))),
@@ -241,7 +244,7 @@ export const infoPageRoutes = new Hono<AppEnv>()
     if (!row) throw new ApiError(404, "Page not found");
     return c.json({ page: row });
   })
-  .post("/", requireStaff(), requireTenant(), async (c) => {
+  .post("/", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z
       .object({
         title: z.string().min(1),
@@ -275,7 +278,7 @@ export const infoPageRoutes = new Hono<AppEnv>()
       .returning();
     return c.json({ page: row }, 201);
   })
-  .patch("/:id", requireStaff(), requireTenant(), async (c) => {
+  .patch("/:id", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z
       .object({
         title: z.string().min(1).optional(),
@@ -331,7 +334,7 @@ export const infoPageCategoryRoutes = new Hono<AppEnv>()
     });
     return c.json({ data: rows });
   })
-  .post("/", requireStaff(), requireTenant(), async (c) => {
+  .post("/", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z.object({ name: z.string().min(1), handle: z.string().optional() }).parse(await c.req.json());
     const db = c.get("db");
     const [row] = await db
@@ -344,7 +347,7 @@ export const infoPageCategoryRoutes = new Hono<AppEnv>()
       .returning();
     return c.json({ category: row }, 201);
   })
-  .patch("/:id", requireStaff(), requireTenant(), async (c) => {
+  .patch("/:id", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z.object({ name: z.string().min(1).optional(), handle: z.string().optional() }).parse(await c.req.json());
     const db = c.get("db");
     const [row] = await db
@@ -386,7 +389,14 @@ const ALLOWED_MIME = new Set([
   "image/gif",
   "image/svg+xml",
   "application/pdf",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
 ]);
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+/** Uploads are buffered by the runtime, so video is capped lower. Longer clips belong on YouTube or Vimeo. */
+const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
 
 async function assertStorageQuota(
   db: AppEnv["Variables"] extends { db: infer D } ? D : never,
@@ -407,9 +417,15 @@ async function assertStorageQuota(
 export const mediaRoutes = new Hono<AppEnv>()
   .get("/", requireStaff(), requireTenant(), async (c) => {
     const db = c.get("db");
-    const q = paginationSchema.extend({ search: z.string().optional() }).parse(c.req.query());
+    const q = paginationSchema
+      .extend({ search: z.string().optional(), type: z.enum(["image", "document", "video"]).optional() })
+      .parse(c.req.query());
     const conditions = [eq(schema.media.tenantId, c.get("tenantId"))];
-    if (q.search) conditions.push(like(schema.media.filename, `%${q.search}%`));
+    if (q.search) conditions.push(contains(schema.media.filename, q.search));
+    // Pickers ask for just the kind of file the field can hold.
+    if (q.type === "image") conditions.push(sql`${schema.media.mimeType} LIKE 'image/%'`);
+    if (q.type === "video") conditions.push(sql`${schema.media.mimeType} LIKE 'video/%'`);
+    if (q.type === "document") conditions.push(sql`${schema.media.mimeType} IN ('application/pdf')`);
     const [totalRow] = await db.select({ value: count() }).from(schema.media).where(and(...conditions));
     const rows = await db.query.media.findMany({
       where: and(...conditions),
@@ -433,11 +449,14 @@ export const mediaRoutes = new Hono<AppEnv>()
     const file = form.get("file");
     if (!(file instanceof File)) throw new ApiError(400, "file field is required");
     if (!ALLOWED_MIME.has(file.type)) throw new ApiError(415, `Unsupported file type: ${file.type}`);
-    if (file.size > 10 * 1024 * 1024) throw new ApiError(413, "File exceeds 10MB limit");
+    const limitBytes = file.type.startsWith("video/") ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+    if (file.size > limitBytes) {
+      throw new ApiError(413, `File exceeds the ${limitBytes / 1024 / 1024}MB limit${file.type.startsWith("video/") ? ". For longer videos, paste a YouTube or Vimeo link instead" : ""}.`);
+    }
 
     const { limits } = await tenantLimits(db, tenantId);
     const buffer = await file.arrayBuffer();
-    await assertStorageQuota(db, tenantId, limits.storageBytes, buffer.byteLength);
+    await assertStorageQuota(db, tenantId, limits.storageBytes, file.size);
 
     const key = mediaKey(tenantId, file.name);
     const stored = await putObject(c.env, key, buffer, file.type);
@@ -488,19 +507,34 @@ export const mediaRoutes = new Hono<AppEnv>()
 
 export const mediaFileRoutes = new Hono<AppEnv>().get("/:key{.+}", async (c) => {
   const key = c.req.param("key");
-  const object = await getObject(c.env, key);
+  // Only the public library lives here. Other prefixes (support attachments) are private.
+  if (!key.startsWith("tenants/")) return c.json({ error: "Not found" }, 404);
+  // Range requests let browsers seek inside video.
+  const ranged = c.req.header("range") !== undefined;
+  const object = await c.env.MEDIA.get(key, ranged ? { range: c.req.raw.headers } : undefined);
   if (!object) return c.json({ error: "Not found" }, 404);
   const headers = new Headers();
   headers.set("Content-Type", object.httpMetadata?.contentType ?? "application/octet-stream");
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
   headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Accept-Ranges", "bytes");
+  headers.set("ETag", object.httpEtag);
+  const range = (object as R2ObjectBody & { range?: { offset?: number; length?: number; suffix?: number } }).range;
+  if (ranged && range) {
+    const start = range.suffix !== undefined ? object.size - range.suffix : (range.offset ?? 0);
+    const length = range.suffix !== undefined ? range.suffix : (range.length ?? object.size - start);
+    headers.set("Content-Range", `bytes ${start}-${start + length - 1}/${object.size}`);
+    headers.set("Content-Length", String(length));
+    return new Response(object.body, { status: 206, headers });
+  }
+  headers.set("Content-Length", String(object.size));
   return new Response(object.body, { headers });
 });
 
 // ── Redirects ────────────────────────────────────────────────────────────────
 
 export const redirectRoutes = new Hono<AppEnv>()
-  .get("/", requireStaff(), requireTenant(), async (c) => {
+  .get("/", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const db = c.get("db");
     const rows = await db.query.redirects.findMany({
       where: eq(schema.redirects.tenantId, c.get("tenantId")),
@@ -508,7 +542,7 @@ export const redirectRoutes = new Hono<AppEnv>()
     });
     return c.json({ data: rows });
   })
-  .put("/", requireStaff(), requireTenant(), async (c) => {
+  .put("/", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z
       .object({
         from: z.string().min(1),
@@ -565,7 +599,7 @@ export const teamRoutes = new Hono<AppEnv>()
     });
     return c.json({ departments, members });
   })
-  .post("/", requireStaff(), requireTenant(), async (c) => {
+  .post("/", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z
       .object({
         name: z.string().min(1),
@@ -582,7 +616,7 @@ export const teamRoutes = new Hono<AppEnv>()
       .returning();
     return c.json({ member: row }, 201);
   })
-  .patch("/:id", requireStaff(), requireTenant(), async (c) => {
+  .patch("/:id", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z
       .object({
         name: z.string().min(1).optional(),
@@ -627,7 +661,7 @@ export const departmentRoutes = new Hono<AppEnv>()
     });
     return c.json({ data: rows });
   })
-  .post("/", requireStaff(), requireTenant(), async (c) => {
+  .post("/", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z
       .object({ name: z.string().min(1), description: z.string().nullable().optional() })
       .parse(await c.req.json());
@@ -638,7 +672,7 @@ export const departmentRoutes = new Hono<AppEnv>()
       .returning();
     return c.json({ department: row }, 201);
   })
-  .patch("/:id", requireStaff(), requireTenant(), async (c) => {
+  .patch("/:id", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z
       .object({ name: z.string().min(1).optional(), description: z.string().nullable().optional() })
       .parse(await c.req.json());
@@ -679,7 +713,7 @@ export const documentRoutes = new Hono<AppEnv>()
     });
     return c.json({ data: rows });
   })
-  .get("/all", requireStaff(), requireTenant(), async (c) => {
+  .get("/all", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const db = c.get("db");
     const rows = await db.query.documents.findMany({
       where: eq(schema.documents.tenantId, c.get("tenantId")),
@@ -687,7 +721,7 @@ export const documentRoutes = new Hono<AppEnv>()
     });
     return c.json({ data: rows });
   })
-  .post("/", requireStaff(), requireTenant(), async (c) => {
+  .post("/", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z
       .object({ title: z.string().min(1), path: z.string().min(1), published: z.boolean().optional() })
       .parse(await c.req.json());
@@ -698,7 +732,7 @@ export const documentRoutes = new Hono<AppEnv>()
       .returning();
     return c.json({ document: row }, 201);
   })
-  .patch("/:id", requireStaff(), requireTenant(), async (c) => {
+  .patch("/:id", requireStaff(...NOT_AUTHOR), requireTenant(), async (c) => {
     const body = z
       .object({ title: z.string().min(1).optional(), path: z.string().min(1).optional(), published: z.boolean().optional() })
       .parse(await c.req.json());

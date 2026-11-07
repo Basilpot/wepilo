@@ -1,0 +1,1 @@
+ALTER TABLE `tenant_payment_settings` ADD `currency_translation` integer DEFAULT false NOT NULL;

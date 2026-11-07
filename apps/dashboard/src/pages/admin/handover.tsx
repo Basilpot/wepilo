@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { SetupLink } from "./admin-api";
 import { CopyIcon } from "@/components/ui/morphing-icons";
-import { TextMorph } from "torph/react";
 
 /** The one-time link that lets the client set a password and take over the workspace. */
 export function SetupLinkPanel({ link, ownerEmail }: { link: SetupLink; ownerEmail: string }) {
@@ -22,9 +21,9 @@ export function SetupLinkPanel({ link, ownerEmail }: { link: SetupLink; ownerEma
   };
 
   return (
-    <div className="rounded-lg border border-emerald-600/20 bg-emerald-50/60 p-4 dark:border-emerald-400/20 dark:bg-emerald-500/5">
+    <div className="rounded-lg border border-border bg-muted p-4">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-background text-emerald-700 ring-1 ring-emerald-600/20 dark:text-emerald-300">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-background text-foreground ring-1 ring-border">
           <KeyRound className="size-4" />
         </span>
         <div className="min-w-0 flex-1">
@@ -37,7 +36,7 @@ export function SetupLinkPanel({ link, ownerEmail }: { link: SetupLink; ownerEma
             <Input readOnly value={link.url} onFocus={(e) => e.currentTarget.select()} className="bg-background font-mono text-xs" />
             <Button type="button" variant="outline" onClick={copy} className="shrink-0">
               <CopyIcon copied={copied} size={16} />
-              <TextMorph>{copied ? "Copied" : "Copy"}</TextMorph>
+              {copied ? "Copied" : "Copy"}
             </Button>
           </div>
         </div>

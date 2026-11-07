@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTableSearch } from "@/hooks/use-table-search";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Inbox } from "@/components/icons";
 import { api, type Paginated } from "@/lib/api";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Inquiry = {
   id: number;
@@ -53,14 +55,15 @@ export function InquiriesPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const tableSearch = useTableSearch(() => setPage(1));
   const [status, setStatus] = useState("all");
   const [open, setOpen] = useState<Inquiry | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["inquiries", page, limit, status],
+    queryKey: ["inquiries", page, limit, status, tableSearch.term],
     queryFn: () =>
       api<Paginated<Inquiry>>("/inquiries", {
-        query: { page, limit, status: status === "all" ? undefined : status },
+        query: { page, limit, status: status === "all" ? undefined : status, search: tableSearch.term },
       }),
     placeholderData: (prev) => prev,
   });
@@ -83,7 +86,7 @@ export function InquiriesPage() {
         <div className="flex min-w-0 items-center gap-3">
           <span
             aria-hidden
-            className={cn("size-2 shrink-0 rounded-full", i.status === "NEW" ? "bg-blue-500" : "bg-transparent")}
+            className={cn("size-2 shrink-0 rounded-full", i.status === "NEW" ? "bg-muted" : "bg-transparent")}
           />
           <div className="min-w-0">
             <p className={cn("truncate", i.status === "NEW" ? "font-semibold" : "font-medium")}>{i.name}</p>
@@ -128,27 +131,30 @@ export function InquiriesPage() {
     <div>
       <PageHeader title="Inquiries" description="Every question a traveller sent through a contact or trip form on your website. Click an inquiry to read the full message and reply by email, phone or WhatsApp. Replying quickly makes a booking much more likely." />
 
-      <Tabs
-        value={status}
-        onValueChange={(v) => {
-          setStatus(v);
-          setPage(1);
-        }}
-        className="mb-3"
-      >
-        <TabsList>
-          <TabsTrigger value="all" className="px-3">
-            All
-          </TabsTrigger>
-          {statusOptions("inquiry").map((o) => (
-            <TabsTrigger key={o.value} value={o.value} className="px-3">
-              {o.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-
       <DataTable
+        toolbar={
+          <Select
+            value={status}
+            onValueChange={(v) => {
+              setStatus(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-44" aria-label="Filter by status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {statusOptions("inquiry").map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        }
+        search={tableSearch.search}
+        searchPlaceholder="Search by name, email or trip…"
         columns={columns}
         rows={data?.data ?? []}
         getRowId={(i) => i.id}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { InstructionTooltip } from "@/components/atoms";
 import { cn } from "@/lib/utils";
+import { clearFieldError, useFieldError } from "@/lib/field-errors";
 export function FormDialog({
   open,
   onOpenChange,
@@ -25,9 +26,9 @@ export function FormDialog({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg">
-        <SheetHeader className="border-b px-6 py-4 pr-14">
-          <SheetTitle>{title}</SheetTitle>
+      <SheetContent className="sm:max-w-xl">
+        <SheetHeader className="space-y-2 px-6 pt-6 pb-4 pr-14">
+          <SheetTitle className="text-xl font-semibold tracking-tight">{title}</SheetTitle>
           {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
         <form
@@ -40,11 +41,11 @@ export function FormDialog({
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-6">
             {children}
           </div>
-          <SheetFooter className="flex-row justify-end gap-2 border-t bg-muted/30 px-6 py-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+          <SheetFooter className="flex-row gap-3 border-t bg-muted/50 px-6 py-4">
+            <Button type="button" variant="secondary" size="lg" onClick={() => onOpenChange(false)} disabled={pending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={pending} className="min-w-24">
+            <Button type="submit" size="lg" disabled={pending} className="flex-1">
               {pending && <Loader2 className="animate-spin" />}
               {pending ? "Saving…" : submitLabel}
             </Button>
@@ -55,6 +56,16 @@ export function FormDialog({
   );
 }
 
+/** "Meeting point" → "meetingPoint": the field name the server most likely uses for it. */
+const keyFromLabel = (label: string) =>
+  label
+    .toLowerCase()
+    .replace(/\(.*?\)/g, "")
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+    .map((w, i) => (i === 0 ? w : w[0].toUpperCase() + w.slice(1)))
+    .join("");
+
 export function Field({
   label,
   htmlFor,
@@ -63,27 +74,57 @@ export function Field({
   tooltip,
   children,
   required,
+  className,
+  name,
 }: {
   label: string;
   htmlFor?: string;
+  /** Overrides the server's message for this field. */
   error?: string;
   hint?: string;
   tooltip?: string;
   children: React.ReactNode;
   required?: boolean;
+  className?: string;
+  /** The field's name in the request, when it differs from the label ("Short bio" is `bio`). Used to place the server's validation message. */
+  name?: string;
 }) {
+  const key = name ?? keyFromLabel(label);
+  const serverError = useFieldError(key);
+  const message = error ?? serverError;
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  // Bring a field with a problem into view, so nobody has to hunt for what went wrong.
+  React.useEffect(() => {
+    if (serverError) ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [serverError]);
+
   return (
-    <div className="space-y-1.5">
+    <div
+      ref={ref}
+      data-invalid={message ? "true" : undefined}
+      // Typing in the field dismisses its message.
+      onInput={() => serverError && clearFieldError(key)}
+      onChange={() => serverError && clearFieldError(key)}
+      className={cn(
+        "space-y-2 data-[invalid=true]:[&_input]:border-destructive data-[invalid=true]:[&_textarea]:border-destructive data-[invalid=true]:[&_[role=combobox]]:border-destructive",
+        className,
+      )}
+    >
       <div className="flex items-center gap-1.5">
-        <label htmlFor={htmlFor} className="text-sm font-medium leading-none">
+        <label htmlFor={htmlFor} className="text-sm font-semibold leading-none">
           {label}
           {required && <span className="text-destructive"> *</span>}
         </label>
         {tooltip && <InstructionTooltip instruction={tooltip} />}
       </div>
       {children}
-      {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {hint && !message && <p className="text-[13px] leading-relaxed text-muted-foreground">{hint}</p>}
+      {message && (
+        <p role="alert" className="text-[13px] leading-relaxed text-destructive">
+          {message}
+        </p>
+      )}
     </div>
   );
 }

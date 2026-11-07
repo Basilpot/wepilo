@@ -9,6 +9,7 @@ import { DataTable, RowActions, type Column } from "@/components/data-table";
 import { confirmDialog } from "@/components/confirm";
 import { useErrorMessage } from "@/pages/shared";
 import { Button } from "@/components/ui/button";
+import { FileField } from "@/components/file-field";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -140,7 +141,7 @@ export function DocumentsPage() {
         onRowClick={openEdit}
         emptyIcon={FileText}
         emptyTitle="No documents"
-        emptyHint="First upload the PDF or image in the “Media”. Then select “New document” here and paste the file’s location."
+        emptyHint="Select “New document”, give it a name and choose a PDF from your media library."
       />
 
       <FormDialog
@@ -152,11 +153,11 @@ export function DocumentsPage() {
         pending={save.isPending}
       >
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Field label="Title" required hint="Example: Nepal Tourism Board licence">
+        <Field label="Title" required hint="Example: Tourism board operating licence">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} />
         </Field>
-        <Field label="Path or URL" required hint="Upload the file in the “Media” first, open it, choose “Copy link”, and paste that link here.">
-          <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/media/file/..." />
+        <Field label="File" required hint="Pick a PDF from your media library, or upload a new one.">
+          <FileField value={path} onChange={setPath} label="Choose a PDF" />
         </Field>
         <label className="flex items-center gap-2 text-sm">
           <Checkbox checked={published} onCheckedChange={(v) => setPublished(v === true)} />

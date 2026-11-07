@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PLAN_NAMES, type PlanKey } from "@/pages/billing/billing";
 import { fromDateInput, toDateInput, type SetupLink, type WorkspaceSummary } from "./admin-api";
 import { SetupLinkPanel } from "./handover";
+import { DatePicker } from "@/components/date-picker";
 
 const slugFrom = (name: string) =>
   name
@@ -181,14 +182,13 @@ export function NewWorkspacePage() {
               </Select>
             </Field>
             <Field label="Access until" htmlFor="endDate" required={!openEnded}>
-              <Input
+              <DatePicker
                 id="endDate"
-                type="date"
-                required={!openEnded}
                 disabled={openEnded}
                 min={toDateInput(new Date().toISOString())}
                 value={openEnded ? "" : form.endDate}
-                onChange={(e) => set("endDate", e.target.value)}
+                onChange={(v) => set("endDate", v)}
+                placeholder={openEnded ? "No end date" : "Choose a date"}
               />
             </Field>
           </div>

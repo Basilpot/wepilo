@@ -29,21 +29,22 @@ One place for sales and site. Trips, departures, bookings and inquiries live nex
 
 ## Capabilities and Constraints
 
-- Stack: React 19 + Vite + Tailwind v4 + shadcn/ui, with TanStack Query and react-router. Served by a Cloudflare Worker that proxies `/api`.
+- Stack: React 19 + Vite + Tailwind v4 + shadcn/ui (radix-maia), with TanStack Query and react-router. Served by a Cloudflare Worker that proxies `/api`.
 - Currency is shown as USD.
 - Copy rule: labels, buttons, menu items and headers stay short. Descriptions, hints, empty-state text and confirmations are detailed and explain what to do next.
 
 ## Brand Commitments
 
 - Name: Wepilo. Each agency's own name and logo appear in its workspace.
-- Keep the green primary colour.
-- Use the operating system's default UI font (system-ui stack). Load no web fonts.
+- The UI follows the shadcn preset `b1x9M8ZeJW` and nothing custom on top of it:
+  - Style maia, theme taupe, radius medium, subtle menu accent, translucent menu colour.
+  - Body font Outfit, heading font Raleway (both via `@fontsource-variable`).
+  - Icons from hugeicons (`@hugeicons/react`, `@hugeicons/core-free-icons`), through the single wrapper in `src/components/icons.tsx`. Lucide fills only the glyphs hugeicons lacks.
+  - Components are the preset's own shadcn components. Do not restyle them with bespoke buttons, shadows or motion.
+- Colour comes only from the preset's tokens (`--primary`, `--muted`, `--destructive`, `--chart-*`, `--sidebar-*` and so on). Do not add custom colour tokens or hard-code palette colours (`amber-500`, hex, oklch) in components. Status is told apart by badge variant and label, not by a bespoke colour.
+- Keep motion minimal and standard. No sound effects, text-morph animations or entrance animations.
 - Light and dark mode must both stay supported.
-- Binding UI references from the owner:
-  - Icons from the Pikaicons free set (`@pikaicons/react`, `@pikaicons/core-free`).
-  - Pill buttons modelled on review.basilpot.com `.btn-pill`: fully rounded, inset top highlight, soft drop shadow, 2px lift on hover.
-  - Kobra morphing icons and Kobra UI sounds, with a mute toggle.
-  - Micro-interactions in the spirit of reactbits.dev "micro".
+- The trip editor follows GetYourGuide's supplier flow: a step list with progress, one step per screen, a tips panel, and "Save and exit" / "Continue" at the bottom. The itinerary follows Viator: a list of days with Edit and Delete, edited in a side sheet.
 
 ## Evidence on Hand
 

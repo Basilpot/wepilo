@@ -11,6 +11,8 @@ import { useErrorMessage } from "@/pages/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Thumb } from "@/components/thumb";
+import { Combobox } from "@/components/combobox";
 import {
   Select,
   SelectContent,
@@ -40,13 +42,14 @@ type FormState = {
 
 const empty: FormState = { name: "", designation: "", about: "", image: "", departmentId: "" };
 
-export function TeamPage() {
+export function TeamPage({ tabs }: { tabs?: React.ReactNode } = {}) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Member | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [error, setError] = useState<string | null>(null);
   const errorMessage = useErrorMessage();
+  const [deptFilter, setDeptFilter] = useState("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["team"],
@@ -101,13 +104,7 @@ export function TeamPage() {
       header: "Member",
       cell: (m) => (
         <div className="flex items-center gap-3">
-          {m.image ? (
-            <img src={m.image} alt="" className="h-8 w-8 rounded-full object-cover" />
-          ) : (
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-              {m.name.slice(0, 1).toUpperCase()}
-            </span>
-          )}
+          <Thumb round src={m.image} name={m.name} />
           <div>
             <p className="font-medium">{m.name}</p>
             <p className="text-xs text-muted-foreground">{m.designation ?? "—"}</p>
@@ -147,7 +144,7 @@ export function TeamPage() {
     <div>
       <PageHeader
         title="Team"
-        description="The people introduced on your public website, such as guides, founders and office staff, each with a photo, job title and short biography. This list is only for your website. To give someone access to this dashboard, use “Staff logins” instead."
+        description="The people introduced on your public website, such as guides, founders and office staff, each with a photo, job title and short biography, grouped by department. This list is only for your website. To give someone access to this dashboard, use “Staff logins” instead."
         action={
           <Button
             onClick={() => {
@@ -162,10 +159,28 @@ export function TeamPage() {
           </Button>
         }
       />
+      {tabs}
 
       <DataTable
+        toolbar={
+          (data?.departments.length ?? 0) > 0 ? (
+            <Select value={deptFilter} onValueChange={setDeptFilter}>
+              <SelectTrigger className="w-48" aria-label="Filter by department">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All departments</SelectItem>
+                {data?.departments.map((d) => (
+                  <SelectItem key={d.id} value={String(d.id)}>
+                    {d.name ?? d.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : undefined
+        }
         columns={columns}
-        rows={data?.members ?? []}
+        rows={(data?.members ?? []).filter((m) => deptFilter === "all" || String(m.departmentId ?? "") === deptFilter)}
         getRowId={(m) => m.id}
         isLoading={isLoading}
         onRowClick={openEdit}
@@ -195,23 +210,20 @@ export function TeamPage() {
         <Field label="Photo">
           <ImageField shape="avatar" label="Add photo" value={form.image} onChange={(url) => setForm((f) => ({ ...f, image: url }))} />
         </Field>
-        <Field label="Department" hint="Departments are created in the “Departments” page.">
-          <Select
-            value={form.departmentId || "none"}
-            onValueChange={(v) => setForm((f) => ({ ...f, departmentId: v === "none" ? "" : v }))}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              {data?.departments.map((dept) => (
-                <SelectItem key={dept.id} value={String(dept.id)}>
-                  {dept.name ?? dept.id}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Field label="Department" hint="Optional. Type a new name to create a department on the spot.">
+          <Combobox
+            value={form.departmentId}
+            setValue={(v) => setForm((f) => ({ ...f, departmentId: v }))}
+            placeholder="Choose or create a department"
+            optional={{ label: "No department", value: "" }}
+            options={(data?.departments ?? []).map((d) => ({ value: String(d.id), label: d.name ?? String(d.id) }))}
+            onCreate={async (label) => {
+              const res = await api<{ department: { id: number } }>("/departments", { body: { name: label } });
+              await queryClient.invalidateQueries({ queryKey: ["team"] });
+              await queryClient.invalidateQueries({ queryKey: ["departments"] });
+              return String(res.department.id);
+            }}
+          />
         </Field>
       </FormDialog>
     </div>

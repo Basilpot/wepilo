@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 type Department = { id: number; name: string | null; description: string | null };
 
-export function DepartmentsPage() {
+export function DepartmentsPage({ tabs }: { tabs?: React.ReactNode } = {}) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Department | null>(null);
@@ -88,8 +88,8 @@ export function DepartmentsPage() {
   return (
     <div>
       <PageHeader
-        title="Departments"
-        description="Groups such as Guides, Operations or Sales that organise the people on your website’s team page. Create a department here first, then choose it when you add or edit a team member."
+        title="Team"
+        description="Groups such as Guides, Operations or Sales that organise the people on your website’s team page. You can also create a department while adding a team member."
         action={
           <Button
             onClick={() => {
@@ -105,6 +105,7 @@ export function DepartmentsPage() {
           </Button>
         }
       />
+      {tabs}
 
       <DataTable
         columns={columns}

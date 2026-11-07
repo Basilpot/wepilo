@@ -39,9 +39,8 @@ export type TripForm = {
   /** Long-form body, used by PAGE trips. */
   content: string;
   tripCategoryId: string;
-  countryId: string;
-  cityId: string;
-  regionId: string;
+  /** Every place the trip visits, of any category. */
+  locationIds: number[];
   featuredTagIds: number[];
   highlights: string;
   itinerary: ItineraryVariant[];
@@ -116,9 +115,7 @@ export const emptyTripForm: TripForm = {
   overview: "",
   content: "",
   tripCategoryId: "",
-  countryId: "",
-  cityId: "",
-  regionId: "",
+  locationIds: [],
   featuredTagIds: [],
   highlights: "",
   itinerary: [newVariant(0, true)],
@@ -169,16 +166,15 @@ export type TripStep = {
 export const TRIP_STEPS: TripStep[] = [
   { n: 1, key: "basics", title: "Basic information", description: "Give the trip a name travellers will recognise. The web address is created from it automatically.", fields: ["title", "slug"] },
   { n: 2, key: "overview", title: "Overview", description: "Write a short introduction that tells travellers what they will experience.", fields: ["overview"] },
-  { n: 3, key: "categorization", title: "Categorization", description: "Say what kind of trip it is, where it takes place, and which homepage themes it belongs to.", fields: ["tripCategoryId", "countryId", "cityId", "regionId", "featuredTagIds"] },
+  { n: 3, key: "categorization", title: "Locations and category", description: "Say where the trip takes place, what kind of trip it is, and which homepage themes it belongs to.", fields: ["tripCategoryId", "locationIds", "featuredTagIds"] },
   { n: 4, key: "highlights", title: "Highlights", description: "List the best experiences and moments of the trip.", fields: ["highlights"] },
   { n: 5, key: "itinerary", title: "Itinerary", description: "Describe what happens on each day of the trip.", fields: ["itinerary"] },
-  { n: 6, key: "media", title: "Media", description: "Add the photos travellers see, and an optional introduction video.", fields: ["images", "videoUrl"] },
+  { n: 6, key: "media", title: "Photos", description: "Add the photos travellers see, and an optional introduction video.", fields: ["images", "videoUrl"] },
   { n: 7, key: "map", title: "Map", description: "Add a map picture and explain the route.", fields: ["routeMap", "mapDescription"] },
   { n: 8, key: "inclusions", title: "Inclusions", description: "List everything the traveller does not need to pay for separately.", fields: ["inclusions"] },
   { n: 9, key: "exclusions", title: "Exclusions", description: "List what travellers must pay for themselves.", fields: ["exclusions"] },
   { n: 10, key: "duration", title: "Duration & altitude", description: "Say how long the trip lasts and how high it goes.", fields: ["duration", "maximumAltitude", "altitudeChart"] },
-  { n: 11, key: "capacity", title: "Capacity & difficulty", description: "Say how many people can join and how demanding the trip is.", fields: ["guestCapacity", "difficultyLevel"] },
-  { n: 12, key: "points", title: "Meeting & drop-off", description: "Say where travellers meet you and where the trip finishes.", fields: ["meetingPoint", "dropOffPoint"] },
+  { n: 11, key: "capacity", title: "Group size & meeting points", description: "Say how many people can join, how demanding the trip is, and where it starts and finishes.", fields: ["guestCapacity", "difficultyLevel", "meetingPoint", "dropOffPoint"] },
   { n: 13, key: "stay", title: "Accommodation & meals", description: "List where travellers sleep and which meals are included.", fields: ["accommodations", "meals"] },
   { n: 14, key: "pricing", title: "Pricing", description: "Set the price for one traveller and any discounts for larger groups.", fields: ["price", "maxPrice", "groupDiscount", "showGroupDiscount"] },
   { n: 15, key: "extras", title: "Extras & languages", description: "Choose the add-ons travellers can buy and the languages your guides speak.", fields: ["extraIds", "languages"] },
@@ -202,9 +198,7 @@ export function toFormState(activity: Record<string, unknown>): TripForm {
     overview: str(activity.overview),
     content: str(activity.content),
     tripCategoryId: num(activity.tripCategoryId),
-    countryId: num(activity.countryId),
-    cityId: num(activity.cityId),
-    regionId: num(activity.regionId),
+    locationIds: ids(activity.locations, "location"),
     featuredTagIds: ids(activity.featuredTags, "featuredTag"),
     highlights: str(activity.highlights),
     itinerary: normalizeItinerary(activity.itinerary),
@@ -253,7 +247,7 @@ export function getStepProgress(form: TripForm): Record<string, number> {
   const title = form.title.trim();
   p.basics = title.length >= 3 ? 1 : title ? 0.5 : 0;
   p.overview = hasHtml(form.overview) ? 1 : has(form.overview) ? 0.5 : 0;
-  const cat = [form.tripCategoryId, form.countryId, form.cityId, form.regionId].filter(Boolean).length + (form.featuredTagIds.length ? 1 : 0);
+  const cat = [form.tripCategoryId, form.locationIds.length ? "x" : ""].filter(Boolean).length + (form.featuredTagIds.length ? 1 : 0);
   p.categorization = cat >= 2 ? 1 : cat ? 0.5 : 0;
   p.highlights = hasHtml(form.highlights) ? 1 : has(form.highlights) ? 0.5 : 0;
   const days = form.itinerary.reduce((n, v) => n + v.days.length, 0);
@@ -263,8 +257,8 @@ export function getStepProgress(form: TripForm): Record<string, number> {
   p.inclusions = hasHtml(form.inclusions) ? 1 : has(form.inclusions) ? 0.5 : 0;
   p.exclusions = hasHtml(form.exclusions) ? 1 : has(form.exclusions) ? 0.5 : 0;
   p.duration = has(form.duration) && has(form.maximumAltitude) ? 1 : has(form.duration) || has(form.maximumAltitude) ? 0.5 : 0;
-  p.capacity = has(form.guestCapacity) && has(form.difficultyLevel) ? 1 : has(form.guestCapacity) || has(form.difficultyLevel) ? 0.5 : 0;
-  p.points = has(form.meetingPoint) && has(form.dropOffPoint) ? 1 : has(form.meetingPoint) || has(form.dropOffPoint) ? 0.5 : 0;
+  const practical = [form.guestCapacity, form.difficultyLevel, form.meetingPoint, form.dropOffPoint].filter(has).length;
+  p.capacity = practical === 4 ? 1 : practical > 0 ? 0.5 : 0;
   p.stay = form.accommodations.length && form.meals.length ? 1 : form.accommodations.length || form.meals.length ? 0.5 : 0;
   p.pricing = has(form.price) ? 1 : 0;
   p.extras = form.extraIds.length && form.languages.length ? 1 : form.extraIds.length || form.languages.length ? 0.5 : 0;
@@ -276,7 +270,6 @@ export function getStepProgress(form: TripForm): Record<string, number> {
 
 /** Sections of a PAGE trip, in page order. Keys match getStepProgress / step bodies. */
 export const PAGE_SECTIONS = [
-  { key: "summary", title: "Summary", description: "One or two sentences shown on trip cards and in search results." },
   { key: "content", title: "Page content", description: "Write everything travellers need to know, organised the way you like." },
   { key: "media", title: "Photos & video", description: "The first photo is used as the cover picture." },
   { key: "pricing", title: "Pricing", description: "Set the price for one traveller and any discounts for larger groups." },
@@ -290,7 +283,6 @@ export const PAGE_SECTIONS = [
 export function getPageProgress(form: TripForm): Record<string, number> {
   const step = getStepProgress(form);
   return {
-    summary: has(form.overview.replace(/<[^>]*>/g, "")) ? 1 : 0,
     content: hasHtml(form.content) ? 1 : has(form.content) ? 0.5 : 0,
     media: step.media,
     pricing: step.pricing,
@@ -303,7 +295,7 @@ export function getPageProgress(form: TripForm): Record<string, number> {
 }
 
 /** Sections that count towards a PAGE trip's completeness (the optional ones don't). */
-export const PAGE_REQUIRED = ["summary", "content", "media", "pricing", "categorization"];
+export const PAGE_REQUIRED = ["content", "media", "pricing", "categorization"];
 
 export function mealsToArray(value: unknown): string[] {
   if (Array.isArray(value)) return strArr(value);
@@ -430,12 +422,16 @@ export function toPayload(form: TripForm, status: "DRAFT" | "PUBLISHED"): Activi
     title: form.title.trim(),
     slug: form.slug.trim() || undefined,
     status,
-    overview: nullable(form.overview),
+    // Simple pages have no separate summary: cards and search results use the start of the page text.
+    overview:
+      form.layout === "PAGE" && !has(form.overview.replace(/<[^>]*>/g, ""))
+        ? nullable(
+            form.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 220),
+          )
+        : nullable(form.overview),
     content: nullable(form.content),
     tripCategoryId: form.tripCategoryId ? Number(form.tripCategoryId) : null,
-    countryId: form.countryId ? Number(form.countryId) : null,
-    cityId: form.cityId ? Number(form.cityId) : null,
-    regionId: form.regionId ? Number(form.regionId) : null,
+    locationIds: form.locationIds,
     featuredTagIds: form.featuredTagIds,
     highlights: nullable(form.highlights),
     itinerary: form.itinerary.map((v) => ({

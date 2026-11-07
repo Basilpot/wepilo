@@ -10,6 +10,7 @@ import { confirmDialog } from "@/components/confirm";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { money } from "@/lib/format";
 
 type Trip = {
   id: number;
@@ -46,9 +47,6 @@ const NOT_COPIED = new Set([
   "urlHistory",
   "isFeatured",
 ]);
-
-const money = (n: number) =>
-  new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
 function useDebounced<T>(value: T, ms = 250) {
   const [v, setV] = useState(value);
@@ -163,7 +161,7 @@ export function TripsPage() {
                   {trip.title || "Untitled trip"}
                 </Link>
                 {trip.isFeatured && (
-                  <Star aria-label="This trip is featured on your homepage" className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
+                  <Star aria-label="This trip is featured on your homepage" className="size-3.5 shrink-0 fill-primary text-primary" />
                 )}
               </div>
               <p className="flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground">
@@ -258,21 +256,6 @@ export function TripsPage() {
         }
       />
 
-      <Tabs
-        value={status}
-        onValueChange={(v) => {
-          setStatus(v);
-          setPage(1);
-        }}
-        className="mb-3"
-      >
-        <TabsList>
-          {tab("all", "All")}
-          {tab("PUBLISHED", "Live")}
-          {tab("DRAFT", "Drafts")}
-        </TabsList>
-      </Tabs>
-
       <DataTable
         columns={columns}
         rows={data?.data ?? []}
@@ -290,6 +273,23 @@ export function TripsPage() {
         }}
         searchPlaceholder="Search trips…"
         toolbar={
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={status}
+              onValueChange={(v) => {
+                setStatus(v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-44" aria-label="Filter by status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All trips{counts.data ? ` (${counts.data.all})` : ""}</SelectItem>
+                <SelectItem value="PUBLISHED">Live{counts.data ? ` (${counts.data.PUBLISHED})` : ""}</SelectItem>
+                <SelectItem value="DRAFT">Drafts{counts.data ? ` (${counts.data.DRAFT})` : ""}</SelectItem>
+              </SelectContent>
+            </Select>
           <Select
             value={layout}
             onValueChange={(v) => {
@@ -306,6 +306,7 @@ export function TripsPage() {
               <SelectItem value="PAGE">Simple page</SelectItem>
             </SelectContent>
           </Select>
+          </div>
         }
         emptyIcon={Footprints}
         emptyTitle={status === "DRAFT" ? "No drafts" : status === "PUBLISHED" ? "Nothing live yet" : "No trips yet"}

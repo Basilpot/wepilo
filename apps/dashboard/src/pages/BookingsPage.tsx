@@ -11,6 +11,9 @@ import { confirmDialog } from "@/components/confirm";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { money } from "@/lib/format";
+import { BookingPayments, PaymentBadge } from "@/pages/payments/BookingPayments";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Booking = {
   id: number;
@@ -23,10 +26,9 @@ type Booking = {
   createdAt: string | number;
   activity: { id: number; title: string | null; slug: string } | null;
   departure: { id: number; startDate: string; endDate: string | null; price: number } | null;
+  currency: string;
+  paidMinor: number;
 };
-
-const money = (n: number) =>
-  new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 
@@ -72,7 +74,10 @@ export function BookingsPage() {
     confirmDialog(
       {
         title: "Cancel booking?",
-        description: `${b.name} booked ${b.groupSize} seat${b.groupSize === 1 ? "" : "s"}. If you cancel, ${b.groupSize === 1 ? "that seat goes" : "those seats go"} back on sale on the departure date. The traveller is not notified automatically, so contact ${b.name} yourself to explain.`,
+        description:
+          b.status === "CONFIRMED"
+            ? `${b.name} booked ${b.groupSize} seat${b.groupSize === 1 ? "" : "s"}. If you cancel, ${b.groupSize === 1 ? "that seat goes" : "those seats go"} back on sale. The traveller is not notified automatically, so contact ${b.name} yourself to explain.`
+            : `${b.name} hasn't been confirmed yet, so no seats are held. The traveller is not notified automatically, so contact ${b.name} yourself to explain.`,
         confirmLabel: "Cancel booking",
         cancelLabel: "Keep booking",
       },
@@ -101,7 +106,12 @@ export function BookingsPage() {
       ),
     },
     { key: "group", header: "Guests", align: "right", className: "tabular-nums", cell: (b) => b.groupSize },
-    { key: "total", header: "Total", align: "right", className: "font-medium tabular-nums", cell: (b) => money(b.totalPrice) },
+    { key: "total", header: "Total", align: "right", className: "font-medium tabular-nums", cell: (b) => money(b.totalPrice, b.currency) },
+    {
+      key: "paid",
+      header: "Payment",
+      cell: (b) => (b.status === "CANCELLED" ? <span className="text-muted-foreground">—</span> : <PaymentBadge totalPrice={b.totalPrice} paidMinor={b.paidMinor} currency={b.currency} />),
+    },
     { key: "status", header: "Status", cell: (b) => <StatusBadge kind="booking" status={b.status} /> },
     {
       key: "actions",
@@ -118,7 +128,7 @@ export function BookingsPage() {
             {
               label: "Mark completed",
               icon: CircleCheckBig,
-              hidden: booking.status === "COMPLETED" || booking.status === "CANCELLED",
+              hidden: booking.status !== "CONFIRMED",
               onSelect: () => updateStatus.mutate({ id: booking.id, next: "COMPLETED" }),
             },
             {
@@ -139,27 +149,28 @@ export function BookingsPage() {
     <div>
       <PageHeader title="Bookings" description="Every seat a traveller has reserved on one of your departures. Click a booking to see the traveller's details, then confirm it, mark it completed after the trip, or cancel it." />
 
-      <Tabs
-        value={status}
-        onValueChange={(v) => {
-          setStatus(v);
-          setPage(1);
-        }}
-        className="mb-3"
-      >
-        <TabsList>
-          <TabsTrigger value="all" className="px-3">
-            All
-          </TabsTrigger>
-          {statusOptions("booking").map((o) => (
-            <TabsTrigger key={o.value} value={o.value} className="px-3">
-              {o.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-
       <DataTable
+        toolbar={
+          <Select
+            value={status}
+            onValueChange={(v) => {
+              setStatus(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-44" aria-label="Filter by status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {statusOptions("booking").map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        }
         columns={columns}
         rows={data?.data ?? []}
         getRowId={(b) => b.id}
@@ -249,8 +260,9 @@ export function BookingsPage() {
                 </section>
                 <section className="flex items-baseline justify-between border-t pt-6">
                   <span className="text-sm font-medium">Total</span>
-                  <span className="text-xl font-semibold tracking-tight tabular-nums">{money(open.totalPrice)}</span>
+                  <span className="text-xl font-semibold tracking-tight tabular-nums">{money(open.totalPrice, open.currency)}</span>
                 </section>
+                <BookingPayments bookingId={open.id} totalPrice={open.totalPrice} currency={open.currency} status={open.status} />
               </div>
               {(open.status === "PENDING" || open.status === "CONFIRMED") && (
                 <div className="flex justify-between gap-2 border-t bg-muted/30 px-6 py-3">

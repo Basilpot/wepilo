@@ -26,6 +26,9 @@ export const tenants = sqliteTable(
     address: text("address"),
     slug: text("slug").notNull().unique(),
     customDomain: text("custom_domain").unique(),
+    /** Value the agency publishes in DNS (TXT) to prove they own customDomain. */
+    customDomainToken: text("custom_domain_token"),
+    customDomainVerifiedAt: integer("custom_domain_verified_at", { mode: "timestamp_ms" }),
     status: text("status", { enum: ["PENDING", "ACTIVE", "SUSPENDED", "CANCELLED"] })
       .notNull()
       .default("PENDING"),
@@ -68,15 +71,20 @@ export const tenantStaff = sqliteTable(
     name: text("name").notNull(),
     email: text("email").notNull(),
     password: text("password").notNull(),
-    role: text("role", { enum: ["OWNER", "ADMIN", "MANAGER", "EDITOR"] })
+    role: text("role", { enum: ["OWNER", "ADMIN", "MANAGER", "EDITOR", "AUTHOR"] })
       .notNull()
       .default("EDITOR"),
     permissions: text("permissions", { mode: "json" }),
     isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    /** Public byline profile, shown with the posts this person writes. */
+    username: text("username"),
+    bio: text("bio"),
+    image: text("image"),
     ...timestamps,
   },
   (t) => [
     uniqueIndex("tenant_staff_email_uidx").on(t.tenantId, t.email),
+    uniqueIndex("tenant_staff_username_uidx").on(t.tenantId, t.username),
     index("tenant_staff_tenant_idx").on(t.tenantId),
   ],
 );
@@ -104,28 +112,6 @@ export const users = sqliteTable(
     uniqueIndex("users_email_uidx").on(t.tenantId, t.email),
     uniqueIndex("users_username_uidx").on(t.tenantId, t.username),
     index("users_tenant_idx").on(t.tenantId),
-  ],
-);
-
-export const authors = sqliteTable(
-  "authors",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    tenantId: integer("tenant_id")
-      .notNull()
-      .references(() => tenants.id, { onDelete: "cascade" }),
-    username: text("username").notNull(),
-    name: text("name"),
-    email: text("email").notNull(),
-    password: text("password").notNull(),
-    bio: text("bio"),
-    image: text("image"),
-    ...timestamps,
-  },
-  (t) => [
-    uniqueIndex("authors_username_uidx").on(t.tenantId, t.username),
-    uniqueIndex("authors_email_uidx").on(t.tenantId, t.email),
-    index("authors_tenant_idx").on(t.tenantId),
   ],
 );
 
@@ -337,6 +323,23 @@ export const activityToFeaturedTag = sqliteTable(
   ],
 );
 
+/** The places a trip visits. A trip can have many, of any category (country, city, landmark and so on). */
+export const activityLocations = sqliteTable(
+  "activity_locations",
+  {
+    activityId: integer("activity_id")
+      .notNull()
+      .references(() => activities.id, { onDelete: "cascade" }),
+    locationId: integer("location_id")
+      .notNull()
+      .references(() => locations.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    uniqueIndex("activity_location_uidx").on(t.activityId, t.locationId),
+    index("activity_location_location_idx").on(t.locationId),
+  ],
+);
+
 export const extras = sqliteTable(
   "extras",
   {
@@ -422,6 +425,10 @@ export const bookings = sqliteTable(
     email: text("email"),
     phone: text("phone"),
     extraIds: text("extra_ids", { mode: "json" }),
+    /** Currency totalPrice is in: the agency's currency when the booking was made. */
+    currency: text("currency").notNull().default("USD"),
+    /** Secret the website holds so the traveller can pay for this booking and nobody else can. */
+    publicToken: text("public_token"),
     ...timestamps,
   },
   (t) => [
@@ -495,21 +502,49 @@ export const reviews = sqliteTable(
     tenantId: integer("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    reviewerId: integer("reviewer_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+    /** A signed-in website user. Reviews collected through a review link have no account. */
+    reviewerId: integer("reviewer_id").references(() => users.id, { onDelete: "cascade" }),
+    reviewerName: text("reviewer_name"),
+    /** Never shown publicly. Lets the agency thank or follow up with the reviewer. */
+    reviewerEmail: text("reviewer_email"),
     activityId: integer("activity_id")
       .notNull()
       .references(() => activities.id, { onDelete: "cascade" }),
     rating: integer("rating").notNull(),
+    title: text("title"),
     text: text("text"),
+    images: text("images", { mode: "json" }),
+    /** Only PUBLISHED reviews are visible to the website and count towards a trip's rating. */
+    status: text("status", { enum: ["PENDING", "PUBLISHED", "HIDDEN"] }).notNull().default("PENDING"),
+    source: text("source", { enum: ["WEBSITE", "LINK"] }).notNull().default("WEBSITE"),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
     ...timestamps,
   },
   (t) => [
     uniqueIndex("reviews_user_activity_uidx").on(t.reviewerId, t.activityId),
     index("reviews_activity_idx").on(t.activityId),
     index("reviews_tenant_idx").on(t.tenantId),
+    index("reviews_tenant_status_idx").on(t.tenantId, t.status),
   ],
+);
+
+/** A time-limited link an agency shares (or turns into a QR code) so past travellers can write a review of one trip. */
+export const reviewLinks = sqliteTable(
+  "review_links",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tenantId: integer("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    activityId: integer("activity_id")
+      .notNull()
+      .references(() => activities.id, { onDelete: "cascade" }),
+    token: text("token").notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    createdById: integer("created_by_id").references(() => tenantStaff.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("review_links_token_uidx").on(t.token), index("review_links_tenant_idx").on(t.tenantId)],
 );
 
 export const wishlists = sqliteTable(
@@ -636,7 +671,7 @@ export const blogs = sqliteTable(
       .default("BLOG"),
     cityId: integer("city_id").references(() => locations.id, { onDelete: "set null" }),
     authorId: integer("author_id").references(() => tenantStaff.id, { onDelete: "set null" }),
-    writerId: integer("writer_id").references(() => authors.id, { onDelete: "set null" }),
+    writerId: integer("writer_id").references(() => tenantStaff.id, { onDelete: "set null" }),
     blogCategoryId: integer("blog_category_id").references(() => infoPageCategories.id, {
       onDelete: "set null",
     }),
@@ -835,7 +870,13 @@ export const activityRelations = relations(activities, ({ one, many }) => ({
   departures: many(departures),
   bookings: many(bookings),
   featuredTags: many(activityToFeaturedTag),
+  locations: many(activityLocations),
   extras: many(activityExtras),
+}));
+
+export const activityLocationsRelations = relations(activityLocations, ({ one }) => ({
+  activity: one(activities, { fields: [activityLocations.activityId], references: [activities.id] }),
+  location: one(locations, { fields: [activityLocations.locationId], references: [locations.id] }),
 }));
 
 export const activityToFeaturedTagRelations = relations(activityToFeaturedTag, ({ one }) => ({
@@ -859,7 +900,8 @@ export const departureRelations = relations(departures, ({ one }) => ({
   tenant: one(tenants, { fields: [departures.tenantId], references: [tenants.id] }),
 }));
 
-export const bookingRelations = relations(bookings, ({ one }) => ({
+export const bookingRelations = relations(bookings, ({ one, many }) => ({
+  payments: many(payments),
   activity: one(activities, { fields: [bookings.activityId], references: [activities.id] }),
   departure: one(departures, { fields: [bookings.departureId], references: [departures.id] }),
   tenant: one(tenants, { fields: [bookings.tenantId], references: [tenants.id] }),
@@ -868,7 +910,7 @@ export const bookingRelations = relations(bookings, ({ one }) => ({
 export const blogRelations = relations(blogs, ({ one }) => ({
   city: one(locations, { fields: [blogs.cityId], references: [locations.id], relationName: "blogCity" }),
   author: one(tenantStaff, { fields: [blogs.authorId], references: [tenantStaff.id] }),
-  writer: one(authors, { fields: [blogs.writerId], references: [authors.id] }),
+  writer: one(tenantStaff, { fields: [blogs.writerId], references: [tenantStaff.id], relationName: "blogWriter" }),
   blogCategory: one(infoPageCategories, {
     fields: [blogs.blogCategoryId],
     references: [infoPageCategories.id],
@@ -914,4 +956,181 @@ export const wishlistRelations = relations(wishlists, ({ one }) => ({
 
 export const platformAuditLogRelations = relations(platformAuditLog, ({ one }) => ({
   admin: one(platformAdmins, { fields: [platformAuditLog.adminId], references: [platformAdmins.id] }),
+}));
+
+// ─── Abuse protection ────────────────────────────────────────────────────────
+
+/** Fixed-window counters for rate limiting (see lib/rate-limit.ts). Old windows are swept hourly. */
+export const rateLimits = sqliteTable(
+  "rate_limits",
+  {
+    key: text("key").notNull(),
+    windowStart: integer("window_start").notNull(),
+    hits: integer("hits").notNull().default(0),
+  },
+  (t) => [
+    uniqueIndex("rate_limits_key_window_uidx").on(t.key, t.windowStart),
+    index("rate_limits_window_idx").on(t.windowStart),
+  ],
+);
+
+// ─── Agency email ────────────────────────────────────────────────────────────
+
+/** An agency's own Resend account: mail to travellers and alerts go out under their name. */
+export const tenantEmailConfig = sqliteTable("tenant_email_config", {
+  tenantId: integer("tenant_id")
+    .primaryKey()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  /** AES-GCM encrypted (lib/secrets.ts). Never returned by the API. Null while only alert recipients are set. */
+  resendApiKeyEnc: text("resend_api_key_enc"),
+  fromEmail: text("from_email"),
+  fromName: text("from_name"),
+  replyTo: text("reply_to"),
+  /** Where inquiry and booking alerts go. Empty = the owner's email. */
+  inquiryRecipients: text("inquiry_recipients", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+  /** Set when a real test email went through with this key. Mail only uses the key once verified. */
+  verifiedAt: integer("verified_at", { mode: "timestamp_ms" }),
+  lastError: text("last_error"),
+  ...timestamps,
+});
+
+export type TenantEmailConfig = typeof tenantEmailConfig.$inferSelect;
+
+// ─── Booking payments ────────────────────────────────────────────────────────
+
+/** How an agency gets paid for bookings. Stripe keys are the agency's own and stay encrypted. */
+export const tenantPaymentSettings = sqliteTable("tenant_payment_settings", {
+  tenantId: integer("tenant_id")
+    .primaryKey()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  /** ISO 4217 code every price (departures, extras, bookings) is in. */
+  currency: text("currency").notNull().default("USD"),
+  /** Lets the agency's website show prices converted to the visitor's currency. Travellers are still charged in `currency`. */
+  currencyTranslation: integer("currency_translation", { mode: "boolean" }).notNull().default(false),
+  stripeEnabled: integer("stripe_enabled", { mode: "boolean" }).notNull().default(false),
+  stripeSecretKeyEnc: text("stripe_secret_key_enc"),
+  stripeWebhookSecretEnc: text("stripe_webhook_secret_enc"),
+  stripeWebhookId: text("stripe_webhook_id"),
+  stripeAccountName: text("stripe_account_name"),
+  stripeLive: integer("stripe_live", { mode: "boolean" }).notNull().default(false),
+  stripeVerifiedAt: integer("stripe_verified_at", { mode: "timestamp_ms" }),
+  bankEnabled: integer("bank_enabled", { mode: "boolean" }).notNull().default(false),
+  bankInstructions: text("bank_instructions"),
+  /** Percent taken up front (1-99). Null = the traveller pays the full amount. */
+  depositPercent: integer("deposit_percent"),
+  /** Confirm a booking (and take its seats) as soon as its payment lands. */
+  autoConfirm: integer("auto_confirm", { mode: "boolean" }).notNull().default(false),
+  lastError: text("last_error"),
+  ...timestamps,
+});
+
+export const payments = sqliteTable(
+  "payments",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tenantId: integer("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    bookingId: integer("booking_id")
+      .notNull()
+      .references(() => bookings.id, { onDelete: "cascade" }),
+    provider: text("provider", { enum: ["STRIPE", "BANK_TRANSFER", "CASH", "OTHER"] }).notNull(),
+    kind: text("kind", { enum: ["DEPOSIT", "BALANCE", "FULL"] }).notNull().default("FULL"),
+    /** Smallest currency unit (cents), so sums never drift. */
+    amountMinor: integer("amount_minor").notNull(),
+    currency: text("currency").notNull(),
+    /**
+     * PENDING: waiting for money. PAID: received. REVIEW: money arrived but the booking could
+     * not be confirmed (sold out), so a person has to decide. EXPIRED/FAILED: never paid.
+     */
+    status: text("status", { enum: ["PENDING", "PAID", "REVIEW", "FAILED", "EXPIRED", "REFUNDED"] })
+      .notNull()
+      .default("PENDING"),
+    /** Stripe Checkout Session id. */
+    providerRef: text("provider_ref"),
+    /** Stripe PaymentIntent id, needed to refund. */
+    providerPaymentId: text("provider_payment_id"),
+    note: text("note"),
+    paidAt: integer("paid_at", { mode: "timestamp_ms" }),
+    ...timestamps,
+  },
+  (t) => [
+    index("payments_tenant_idx").on(t.tenantId, t.status),
+    index("payments_booking_idx").on(t.bookingId),
+    uniqueIndex("payments_provider_ref_uidx").on(t.providerRef),
+  ],
+);
+
+export type Payment = typeof payments.$inferSelect;
+export type TenantPaymentSettings = typeof tenantPaymentSettings.$inferSelect;
+
+export const paymentRelations = relations(payments, ({ one }) => ({
+  booking: one(bookings, { fields: [payments.bookingId], references: [bookings.id] }),
+}));
+
+// ─── Site content tools ──────────────────────────────────────────────────────
+
+/** A reusable block of trip content (for example an itinerary day) the team can drop into other trips. */
+export const savedSections = sqliteTable(
+  "saved_sections",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tenantId: integer("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: ["ITINERARY_DAY"] }).notNull().default("ITINERARY_DAY"),
+    name: text("name").notNull(),
+    data: text("data", { mode: "json" }).notNull(),
+    ...timestamps,
+  },
+  (t) => [index("saved_sections_tenant_idx").on(t.tenantId, t.kind)],
+);
+
+/** Reusable rich-text snippets for the blog, page and trip editors. */
+export const editorTemplates = sqliteTable(
+  "editor_templates",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tenantId: integer("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    content: text("content").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("editor_templates_tenant_idx").on(t.tenantId)],
+);
+
+export type SavedSection = typeof savedSections.$inferSelect;
+export type EditorTemplate = typeof editorTemplates.$inferSelect;
+
+// ─── Support attachments ─────────────────────────────────────────────────────
+
+/** Files on a support ticket. Stored privately in R2 and served only through the ticket's own routes. */
+export const supportAttachments = sqliteTable(
+  "support_attachments",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tenantId: integer("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    ticketId: integer("ticket_id")
+      .notNull()
+      .references(() => supportTickets.id, { onDelete: "cascade" }),
+    filename: text("filename").notNull(),
+    mimeType: text("mime_type").notNull(),
+    size: integer("size").notNull(),
+    r2Key: text("r2_key").notNull(),
+    uploadedByName: text("uploaded_by_name"),
+    ...timestamps,
+  },
+  (t) => [index("support_attachments_ticket_idx").on(t.ticketId)],
+);
+
+export type SupportAttachment = typeof supportAttachments.$inferSelect;
+
+export const reviewLinksRelations = relations(reviewLinks, ({ one }) => ({
+  activity: one(activities, { fields: [reviewLinks.activityId], references: [activities.id] }),
+  tenant: one(tenants, { fields: [reviewLinks.tenantId], references: [tenants.id] }),
 }));

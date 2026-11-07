@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wepilo-storefront",
+  "main": "src/index.tsx",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "vars": {
+    // Where the Wepilo API lives. The storefront only ever reads public content from it.
+    "API_BASE_URL": "http://localhost:8787",
+    // Set this to serve one agency from the site root (for example on its own domain). Leave it empty to
+    // serve any agency under /{slug}, which is how the dashboard's "Preview site" button works.
+    "TENANT_SLUG": ""
+  },
+  "env": {
+    "production": {
+      "vars": {
+        "API_BASE_URL": "https://wepiloapi.basilpot.com",
+        "TENANT_SLUG": ""
+      }
+    }
+  }
+}

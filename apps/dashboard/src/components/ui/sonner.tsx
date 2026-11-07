@@ -1,31 +1,32 @@
-import { useContext } from "react"
-import { ThemeContext } from "@/components/theme-provider"
+"use client"
+
+import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "@/components/icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { CheckmarkCircle02Icon, InformationCircleIcon, Alert02Icon, MultiplicationSignCircleIcon, Loading03Icon } from "@hugeicons/core-free-icons"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme } = useContext(ThemeContext)
+  const { theme = "system" } = useTheme()
 
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
-      toastOptions={{ classNames: { toast: "shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]! font-medium!", description: "text-muted-foreground! font-normal!" } }}
       icons={{
         success: (
-          <CircleCheckIcon className="size-[18px] animate-pop-in text-primary" />
+          <HugeiconsIcon icon={CheckmarkCircle02Icon} strokeWidth={2} className="size-4" />
         ),
         info: (
-          <InfoIcon className="size-[18px] text-muted-foreground" />
+          <HugeiconsIcon icon={InformationCircleIcon} strokeWidth={2} className="size-4" />
         ),
         warning: (
-          <TriangleAlertIcon className="size-[18px] animate-nudge text-attention" />
+          <HugeiconsIcon icon={Alert02Icon} strokeWidth={2} className="size-4" />
         ),
         error: (
-          <OctagonXIcon className="size-[18px] animate-nudge text-destructive" />
+          <HugeiconsIcon icon={MultiplicationSignCircleIcon} strokeWidth={2} className="size-4" />
         ),
         loading: (
-          <Loader2Icon className="size-4 animate-spin" />
+          <HugeiconsIcon icon={Loading03Icon} strokeWidth={2} className="size-4 animate-spin" />
         ),
       }}
       style={
@@ -33,9 +34,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--border-radius": "1rem",
+          "--border-radius": "var(--radius)",
         } as React.CSSProperties
       }
+      toastOptions={{
+        classNames: {
+          toast: "cn-toast",
+        },
+      }}
       {...props}
     />
   )

@@ -207,7 +207,7 @@ export function PostEditorPage() {
         subtitle={
           isNew ? "Not saved yet. Nothing is stored until you save." : `${wordCount.toLocaleString()} words · about ${Math.max(1, Math.round(wordCount / 220))} minute${Math.round(wordCount / 220) > 1 ? "s" : ""} to read`
         }
-        onBack={() => confirmLeave() && navigate("/posts")}
+        onBack={() => confirmLeave(() => navigate("/posts"))}
         actions={
           <PublishActions
             published={published}

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { eq, and, count, sql, desc } from "drizzle-orm";
 import * as schema from "@/db/schema";
 import type { AppEnv } from "@/types";
-import { ApiError, paginate, paginationSchema, getOffset } from "@/lib/http";
+import { ApiError, paginate, paginationSchema, getOffset, slugify } from "@/lib/http";
 import { requireStaff, tenantLimits } from "@/middleware/context";
 import { PLANS, SELF_SERVE_PLANS, TRIAL_DAYS, productIdFor, type SelfServePlan } from "@/lib/plans";
 import { hashPassword } from "@/lib/auth";
@@ -31,9 +31,27 @@ const staffCreateSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(["ADMIN", "MANAGER", "EDITOR"]).default("EDITOR"),
+  role: z.enum(["ADMIN", "MANAGER", "EDITOR", "AUTHOR"]).default("EDITOR"),
   permissions: z.array(z.string()).default([]),
+  /** Public byline profile. The username is made from the name when left out. */
+  username: z.string().trim().min(3).max(40).optional(),
+  bio: z.string().max(2000).optional(),
+  image: z.string().optional(),
 });
+
+/** A free public username for a staff member, made from what they typed: "Maya Sharma" becomes "maya-sharma", then "maya-sharma-2" if taken. */
+async function uniqueUsername(db: AppEnv["Variables"]["db"], tenantId: number, wanted: string, selfId?: number) {
+  const base = slugify(wanted).slice(0, 40) || "author";
+  for (let i = 1; i < 50; i++) {
+    const candidate = i === 1 ? base : `${base}-${i}`;
+    const clash = await db.query.tenantStaff.findFirst({
+      where: and(eq(schema.tenantStaff.tenantId, tenantId), eq(schema.tenantStaff.username, candidate)),
+      columns: { id: true },
+    });
+    if (!clash || clash.id === selfId) return candidate;
+  }
+  return `${base}-${Date.now()}`;
+}
 
 export const tenantRoutes = new Hono<AppEnv>()
   .patch("/me", requireStaff("OWNER", "ADMIN"), async (c) => {
@@ -61,6 +79,9 @@ export const tenantRoutes = new Hono<AppEnv>()
         role: s.role,
         permissions: s.permissions,
         isActive: s.isActive,
+        username: s.username,
+        bio: s.bio,
+        image: s.image,
         createdAt: s.createdAt,
       })),
     });
@@ -85,10 +106,14 @@ export const tenantRoutes = new Hono<AppEnv>()
       where: and(eq(schema.tenantStaff.tenantId, tenantId), eq(schema.tenantStaff.email, body.email.toLowerCase())),
     });
     if (existing) throw new ApiError(409, "Email already in use");
+    const username = await uniqueUsername(db, tenantId, body.username ?? body.name);
     const [staff] = await db
       .insert(schema.tenantStaff)
       .values({
         tenantId,
+        username,
+        bio: body.bio ?? null,
+        image: body.image ?? null,
         name: body.name,
         email: body.email.toLowerCase(),
         password: await hashPassword(body.password),
@@ -103,8 +128,11 @@ export const tenantRoutes = new Hono<AppEnv>()
     const body = z
       .object({
         name: z.string().min(1).optional(),
-        role: z.enum(["ADMIN", "MANAGER", "EDITOR"]).optional(),
+        role: z.enum(["ADMIN", "MANAGER", "EDITOR", "AUTHOR"]).optional(),
         permissions: z.array(z.string()).optional(),
+        username: z.string().trim().min(3).max(40).optional(),
+        bio: z.string().max(2000).nullable().optional(),
+        image: z.string().nullable().optional(),
         isActive: z.boolean().optional(),
         password: z.string().min(8).optional(),
       })
@@ -125,6 +153,9 @@ export const tenantRoutes = new Hono<AppEnv>()
         ...(body.role !== undefined ? { role: body.role } : {}),
         ...(body.permissions !== undefined ? { permissions: body.permissions } : {}),
         ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
+        ...(body.username !== undefined ? { username: await uniqueUsername(db, tenantId, body.username, id) } : {}),
+        ...(body.bio !== undefined ? { bio: body.bio } : {}),
+        ...(body.image !== undefined ? { image: body.image } : {}),
         ...(body.password ? { password: await hashPassword(body.password) } : {}),
         updatedAt: new Date(),
       })

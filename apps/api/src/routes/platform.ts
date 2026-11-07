@@ -1,12 +1,14 @@
 import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { getCookie } from "hono/cookie";
+import { isTrustedOrigin } from "@/lib/origin";
+import { enforce, clientIp, LIMITS } from "@/lib/rate-limit";
 import { z } from "zod";
-import { and, count, desc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, or, sql } from "drizzle-orm";
 import * as schema from "@/db/schema";
 import type { Db } from "@/db";
 import type { AppEnv } from "@/types";
-import { ApiError, getOffset, paginate, paginationSchema, slugify } from "@/lib/http";
+import { ApiError, getOffset, paginate, paginationSchema, slugify, contains } from "@/lib/http";
 import {
   clearPlatformAuthCookie,
   hashPassword,
@@ -28,7 +30,7 @@ const IMPERSONATION_SECONDS = 60 * 60;
 
 /** Loads the platform admin from its own cookie. Workspace sessions never grant access here. */
 const requirePlatformAdmin = createMiddleware<AppEnv>(async (c, next) => {
-  const token = getCookie(c, platformCookieName);
+  const token = isTrustedOrigin(c.env, c.req.header("origin")) ? getCookie(c, platformCookieName) : undefined;
   const payload = token ? await verifyToken<PlatformTokenPayload>(c.env, token) : null;
   if (payload?.kind !== "platform") return c.json({ error: "Authentication required" }, 401);
   const admin = await c.get("db").query.platformAdmins.findFirst({
@@ -158,6 +160,7 @@ const platformAuthRoutes = new Hono<AppEnv>()
   .post("/login", async (c) => {
     const body = z.object({ email: z.string().email(), password: z.string().min(1) }).parse(await c.req.json());
     const db = c.get("db");
+    await enforce(db, LIMITS.login, `platform:${clientIp(c)}:${body.email.toLowerCase()}`);
     const admin = await db.query.platformAdmins.findFirst({
       where: eq(schema.platformAdmins.email, body.email.toLowerCase()),
     });
@@ -182,9 +185,9 @@ const platformTenantRoutes = new Hono<AppEnv>()
     const db = c.get("db");
     const where = search
       ? or(
-          like(schema.tenants.companyName, `%${search}%`),
-          like(schema.tenants.slug, `%${search}%`),
-          like(schema.tenants.email, `%${search}%`),
+          contains(schema.tenants.companyName, search),
+          contains(schema.tenants.slug, search),
+          contains(schema.tenants.email, search),
         )
       : undefined;
     const [rows, [total]] = await Promise.all([

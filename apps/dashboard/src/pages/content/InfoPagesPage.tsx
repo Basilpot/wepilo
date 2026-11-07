@@ -7,8 +7,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { DataTable, RowActions, type Column } from "@/components/data-table";
 import { confirmDialog } from "@/components/confirm";
 import { Button } from "@/components/ui/button";
+import { Thumb } from "@/components/thumb";
 
 type InfoPage = {
+  coverImage?: string | null;
   id: number;
   title: string;
   slug: string;
@@ -40,9 +42,12 @@ export function InfoPagesPage() {
       key: "title",
       header: "Page",
       cell: (p) => (
-        <div className="min-w-0">
-          <p className="truncate font-medium">{p.title}</p>
-          <p className="truncate text-xs text-muted-foreground">/{p.slug}</p>
+        <div className="flex items-center gap-3">
+          <Thumb src={p.coverImage} name={p.title} />
+          <div className="min-w-0">
+            <p className="truncate font-medium">{p.title}</p>
+            <p className="truncate text-xs text-muted-foreground">/{p.slug}</p>
+          </div>
         </div>
       ),
     },

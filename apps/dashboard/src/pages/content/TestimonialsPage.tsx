@@ -9,8 +9,11 @@ import { DataTable, RowActions, type Column } from "@/components/data-table";
 import { confirmDialog } from "@/components/confirm";
 import { useErrorMessage } from "@/pages/shared";
 import { Button } from "@/components/ui/button";
+import { ImageField } from "@/components/image-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Thumb } from "@/components/thumb";
+import { Slider } from "@/components/ui/slider";
 
 type Testimonial = {
   id: number;
@@ -22,7 +25,7 @@ type Testimonial = {
 };
 
 type FormState = { content: string; author: string; rating: string; media: string };
-const empty: FormState = { content: "", author: "", rating: "", media: "" };
+const empty: FormState = { content: "", author: "", rating: "5", media: "" };
 
 export function TestimonialsPage() {
   const queryClient = useQueryClient();
@@ -72,7 +75,7 @@ export function TestimonialsPage() {
     setForm({
       content: item.content,
       author: item.author ?? "",
-      rating: item.rating != null ? String(item.rating) : "",
+      rating: String(item.rating ?? 5),
       media: item.media ?? "",
     });
     setError(null);
@@ -80,7 +83,13 @@ export function TestimonialsPage() {
   };
 
   const columns: Column<Testimonial>[] = [
-    { key: "author", header: "Author", cell: (t) => <span className="font-medium">{t.author ?? "Anonymous"}</span> },
+    { key: "author", header: "Author", cell: (t) => (
+        <div className="flex items-center gap-3">
+          <Thumb round src={t.media} name={t.author ?? "Anonymous"} />
+          <span className="font-medium">{t.author ?? "Anonymous"}</span>
+        </div>
+      ),
+    },
     {
       key: "rating",
       header: "Rating",
@@ -90,7 +99,7 @@ export function TestimonialsPage() {
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={i < t.rating! ? "h-3.5 w-3.5 fill-amber-400 text-amber-400" : "h-3.5 w-3.5 text-muted-foreground/40"}
+                className={i < t.rating! ? "h-3.5 w-3.5 fill-primary text-primary" : "h-3.5 w-3.5 text-muted-foreground/40"}
               />
             ))}
           </span>
@@ -173,17 +182,34 @@ export function TestimonialsPage() {
             <Input value={form.author} onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))} />
           </Field>
           <Field label="Rating (1–5)">
-            <Input
-              type="number"
-              min={1}
-              max={5}
-              value={form.rating}
-              onChange={(e) => setForm((f) => ({ ...f, rating: e.target.value }))}
-            />
+            <div className="flex h-9 items-center gap-4">
+              <Slider
+                min={1}
+                max={5}
+                step={1}
+                value={[Number(form.rating) || 5]}
+                onValueChange={([v]) => setForm((f) => ({ ...f, rating: String(v) }))}
+                aria-label="Rating"
+              />
+              <Input
+                type="number"
+                min={1}
+                max={5}
+                step={1}
+                value={form.rating}
+                className="w-20 shrink-0"
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  // Typing is free, but anything out of range snaps to 1–5.
+                  setForm((f) => ({ ...f, rating: e.target.value === "" ? "" : String(Math.min(5, Math.max(1, Math.round(n) || 1))) }));
+                }}
+                onBlur={() => setForm((f) => (f.rating === "" ? { ...f, rating: "5" } : f))}
+              />
+            </div>
           </Field>
         </div>
-        <Field label="Media URL (optional)" hint="Paste the full web address of a picture or video from this traveller’s trip.">
-          <Input value={form.media} onChange={(e) => setForm((f) => ({ ...f, media: e.target.value }))} />
+        <Field label="Photo (optional)" hint="A picture from this traveller’s trip.">
+          <ImageField label="Choose photo" value={form.media} onChange={(url) => setForm((f) => ({ ...f, media: url }))} />
         </Field>
       </FormDialog>
     </div>

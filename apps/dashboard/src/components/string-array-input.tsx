@@ -44,7 +44,7 @@ export function StringArrayInput({
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1.5 rounded-xl border bg-muted/40 p-2">
           {value.map((item) => (
-            <Badge key={item} variant="secondary" className="gap-1 font-normal">
+            <Badge key={item} variant="secondary" className="h-7 gap-1.5 px-3 text-sm font-normal">
               {item}
               <button
                 type="button"
@@ -52,7 +52,7 @@ export function StringArrayInput({
                 className="transition-colors hover:text-destructive"
                 onClick={() => onChange(value.filter((v) => v !== item))}
               >
-                <X className="h-3 w-3" />
+                <X className="size-3.5" />
               </button>
             </Badge>
           ))}

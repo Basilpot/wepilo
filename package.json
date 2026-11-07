@@ -9,7 +9,9 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "deploy:api": "pnpm --filter @wepilo/api deploy:prod",
-    "deploy:dashboard": "pnpm --filter @wepilo/dashboard deploy:prod"
+    "deploy:dashboard": "pnpm --filter @wepilo/dashboard deploy:prod",
+    "dev:storefront": "pnpm --filter @wepilo/storefront dev",
+    "deploy:storefront": "pnpm --filter @wepilo/storefront deploy:prod"
   },
   "devDependencies": {
     "typescript": "^5.9.2"

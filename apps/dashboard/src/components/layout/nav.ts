@@ -7,6 +7,7 @@ import {
   FileText,
   Footprints,
   GaugeCircle,
+  Globe,
   Image,
   Inbox,
   KeyRound,
@@ -51,7 +52,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Catalog",
     items: [
-      { title: "Destinations", url: "/locations", icon: MapPinHouse, keywords: "countries regions cities locations places" },
+      { title: "Locations", url: "/locations", icon: MapPinHouse, keywords: "destinations countries regions cities places" },
       { title: "Trip categories", url: "/trip-categories", icon: Layers2, keywords: "types treks tours" },
       { title: "Featured tags", url: "/featured-tags", icon: Tag, keywords: "themes collections homepage" },
       { title: "Featured trips", url: "/featured-trips", icon: MapPinCheck, keywords: "homepage highlight popular" },
@@ -60,19 +61,13 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Website",
     items: [
+      { title: "Homepage and menus", url: "/website", icon: Globe, keywords: "navigation footer social seo announcement sections layout" },
       { title: "Pages", url: "/info-pages", icon: NotebookPen },
       { title: "Posts", url: "/posts", icon: Newspaper, keywords: "blog articles" },
       { title: "Page categories", url: "/page-categories", icon: CopyX },
+      { title: "Team", url: "/team", icon: Contact2, keywords: "people guides staff departments about" },
       { title: "Media", url: "/media", icon: Image, keywords: "images uploads files" },
       { title: "Redirects", url: "/redirects", icon: Redo },
-    ],
-  },
-  {
-    label: "People",
-    items: [
-      { title: "Team", url: "/team", icon: Contact2 },
-      { title: "Departments", url: "/departments", icon: Building2 },
-      { title: "Authors", url: "/authors", icon: PenLine },
     ],
   },
   {
@@ -90,6 +85,8 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: "Business profile", url: "/settings", icon: Settings, keywords: "company workspace" },
       { title: "Staff logins", url: "/settings/staff", icon: Users2, keywords: "team users permissions" },
       { title: "API keys", url: "/settings/api-keys", icon: KeyRound, keywords: "developer integration" },
+      { title: "Payments", url: "/settings/payments", icon: Receipt, keywords: "stripe card bank transfer deposit currency" },
+      { title: "Email", url: "/settings/email", icon: Mail, keywords: "resend sender alerts inquiries recipients" },
       { title: "Billing", url: "/settings/billing", icon: CreditCard, keywords: "plan subscription invoice" },
       { title: "Support", url: "/support", icon: LifeBuoy, keywords: "help ticket" },
     ],

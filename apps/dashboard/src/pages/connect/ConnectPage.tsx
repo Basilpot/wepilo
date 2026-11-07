@@ -32,12 +32,12 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-muted/40 px-4 py-10">
       <div className="mb-6 flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-pill">
+        <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground ">
           <Mountain className="size-4" />
         </span>
         <span className="text-sm font-semibold tracking-tight">Wepilo</span>
       </div>
-      <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-[0_24px_48px_-24px_rgb(0_0_0/0.25)] sm:p-8">{children}</div>
+      <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-sm sm:p-8">{children}</div>
     </div>
   );
 }
@@ -115,7 +115,7 @@ export function ConnectPage() {
       <Shell>
         <div className="flex flex-col items-center text-center">
           <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            {done === "approved" ? <CheckCircle2 className="size-6 animate-pop-in" /> : <X className="size-6" />}
+            {done === "approved" ? <CheckCircle2 className="size-6" /> : <X className="size-6" />}
           </span>
           <h1 className="mt-4 text-lg font-semibold tracking-tight">
             {done === "approved" ? `Connected to ${r.client.name}` : "Connection declined"}
@@ -188,7 +188,7 @@ export function ConnectPage() {
         <Button variant="ghost" disabled={decide.isPending} onClick={() => decide.mutate("deny")}>
           Deny
         </Button>
-        <Button disabled={decide.isPending} onClick={() => decide.mutate("approve")} data-sound="success">
+        <Button disabled={decide.isPending} onClick={() => decide.mutate("approve")}>
           {decide.isPending && decide.variables === "approve" && <Loader2 className="animate-spin" />}
           Allow access
         </Button>

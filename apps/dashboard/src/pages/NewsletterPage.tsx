@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTableSearch } from "@/hooks/use-table-search";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MailCheck, MailX, Mail } from "@/components/icons";
 import { api, type Paginated } from "@/lib/api";
@@ -23,6 +24,7 @@ export function NewsletterPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const tableSearch = useTableSearch(() => setPage(1));
   const [sendOpen, setSendOpen] = useState(false);
   const [subject, setSubject] = useState("");
   const [html, setHtml] = useState("");
@@ -31,8 +33,8 @@ export function NewsletterPage() {
   const errorMessage = useErrorMessage();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["newsletter", page, limit],
-    queryFn: () => api<Paginated<Subscriber>>("/newsletter", { query: { page, limit } }),
+    queryKey: ["newsletter", page, limit, tableSearch.term],
+    queryFn: () => api<Paginated<Subscriber>>("/newsletter", { query: { page, limit, search: tableSearch.term } }),
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["newsletter"] });
@@ -107,6 +109,8 @@ export function NewsletterPage() {
       )}
 
       <DataTable
+        search={tableSearch.search}
+        searchPlaceholder="Search by email…"
         columns={columns}
         rows={data?.data ?? []}
         getRowId={(s) => s.id}
