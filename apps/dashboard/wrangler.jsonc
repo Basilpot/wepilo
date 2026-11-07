@@ -7,5 +7,6 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
+  "vars": { "STOREFRONT_URL": "https://wepilo-storefront-production.tejghartikshetri.workers.dev" },
   "routes": [{ "pattern": "wepilo.basilpot.com", "custom_domain": true }]
 }

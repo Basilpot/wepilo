@@ -139,6 +139,7 @@ function NavLinkItem({ item, badge }: { item: NavItem; badge?: number }) {
 
 function WorkspaceHeader({ session }: { session: Session }) {
   const { isMobile } = useSidebar();
+  const storefrontUrl = useStorefrontUrl();
   const tenant = session.tenant;
   const name = tenant?.companyName ?? tenant?.slug ?? "Workspace";
   const paid = session.access?.state === "ACTIVE" || session.access?.state === "PAST_DUE";
@@ -185,10 +186,10 @@ function WorkspaceHeader({ session }: { session: Session }) {
                   Dashboard
                 </Link>
               </DropdownMenuItem>
-              {tenant?.slug ? (
+              {tenant?.slug && storefrontUrl ? (
                 <DropdownMenuItem asChild>
                   {/* The storefront shows this workspace's content the way visitors would see it. */}
-                  <a href={`${STOREFRONT_URL}/${tenant.slug}`} target="_blank" rel="noopener noreferrer">
+                  <a href={`${storefrontUrl}/${tenant.slug}`} target="_blank" rel="noopener noreferrer">
                     <Eye />
                     Preview site
                   </a>
@@ -540,8 +541,23 @@ function SiteHeader({ session, onSearch }: { session: Session; onSearch: () => v
   );
 }
 
-/** Where the storefront runs. It renders any agency under /{slug}. */
-const STOREFRONT_URL = (import.meta.env.VITE_STOREFRONT_URL as string | undefined)?.replace(/\/$/, "") ?? "http://localhost:5176";
+/** Where the storefront runs: from the Worker's settings in production, local in development. */
+function useStorefrontUrl() {
+  const { data } = useQuery({
+    queryKey: ["app-config"],
+    staleTime: Infinity,
+    queryFn: async () => {
+      try {
+        const res = await fetch("/config.json");
+        if (res.ok) return ((await res.json()) as { storefrontUrl: string | null }).storefrontUrl?.replace(/\/$/, "") ?? null;
+      } catch {
+        /* no Worker in front of the dev server */
+      }
+      return import.meta.env.DEV ? "http://localhost:5176" : null;
+    },
+  });
+  return data ?? null;
+}
 
 export function AppShell({ session, children }: { session: Session; children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);

@@ -1,4 +1,4 @@
-type Env = { ASSETS: { fetch(request: Request): Promise<Response> } };
+type Env = { ASSETS: { fetch(request: Request): Promise<Response> }; STOREFRONT_URL?: string };
 
 const API_ORIGIN = "wepiloapi.basilpot.com";
 
@@ -15,6 +15,10 @@ export default {
       if (visitor) forwarded.headers.set("x-wepilo-client-ip", visitor);
       else forwarded.headers.delete("x-wepilo-client-ip");
       return fetch(forwarded);
+    }
+    // Deployment settings the browser needs, set in wrangler.jsonc rather than baked into the build.
+    if (url.pathname === "/config.json") {
+      return Response.json({ storefrontUrl: env.STOREFRONT_URL ?? null }, { headers: { "cache-control": "no-store" } });
     }
     return env.ASSETS.fetch(request);
   },
