@@ -41,7 +41,7 @@ const toForm = (data: EmailSettings): Form => ({
   fromName: data.config?.fromName ?? "",
   replyTo: data.config?.replyTo ?? "",
   recipients: data.config?.inquiryRecipients ?? [],
-  enabled: data.config?.enabled ?? true,
+  enabled: (data.config?.enabled ?? false) && Boolean(data.config?.verifiedAt),
 });
 
 export function EmailTab() {
@@ -133,7 +133,7 @@ export function EmailTab() {
                 : "Send a test email to switch it on."}
             </p>
           </div>
-          <Switch checked={form.enabled} onCheckedChange={(v) => set("enabled", v)} aria-label="Use my own email account" />
+          <Switch checked={verified && form.enabled} disabled={!verified} onCheckedChange={(v) => set("enabled", v)} aria-label="Use my own email account" />
         </div>
         {config?.lastError ? <p className="text-sm text-destructive">{config.lastError}</p> : null}
         <Field label="Resend API key" hint={config?.hasApiKey ? `Saved as ${config.apiKeyHint}. Type a new key to replace it.` : "Create one in Resend under API Keys. It is stored encrypted."}>
