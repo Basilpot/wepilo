@@ -181,8 +181,6 @@
   25% { transform: rotate(-12deg); }
   75% { transform: rotate(10deg); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .animate-pop-in, .animate-rise-in, .animate-seat-fill, }
 /* Rich text (TipTap) — mirrors how content reads on the site. */
 .rich-text .ProseMirror {
   min-height: inherit;
