@@ -75,6 +75,9 @@ export function Layout({
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{fullTitle}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet" />
         {desc ? <meta name="description" content={desc} /> : null}
         <meta property="og:title" content={fullTitle} />
         {desc ? <meta property="og:description" content={desc} /> : null}
@@ -84,6 +87,7 @@ export function Layout({
         <style>{raw(css)}</style>
       </head>
       <body>
+        <a class="skip" href="#main">Skip to content</a>
         {site.announcement ? (
           <div class="announce">
             {site.announcement.href ? <a href={link(base, site.announcement.href)}>{site.announcement.text}</a> : site.announcement.text}
@@ -114,7 +118,7 @@ export function Layout({
           </div>
         </header>
 
-        <main>{children}</main>
+        <main id="main">{children}</main>
 
         <footer class="site">
           <div class="wrap">

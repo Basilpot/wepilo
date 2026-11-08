@@ -2,7 +2,7 @@ import { raw } from "hono/html";
 import type { Section } from "@/lib/api";
 import { safeHtml } from "@/lib/format";
 import { Flash, Layout, link, type Ctx } from "@/ui/layout";
-import { PostCard, TripCard } from "@/ui/cards";
+import { PostFeature, PostRow, TripCard, TripFeature } from "@/ui/cards";
 
 const Head = ({ section, more }: { section: Section; more?: { label: string; href: string } }) => (
   <div class="head">
@@ -11,7 +11,7 @@ const Head = ({ section, more }: { section: Section; more?: { label: string; hre
       {section.subtitle ? <p>{section.subtitle}</p> : null}
     </div>
     {more ? (
-      <a class="link" href={more.href}>
+      <a class="more" href={more.href}>
         {more.label} →
       </a>
     ) : null}
@@ -24,21 +24,17 @@ function Render({ s, ctx, flash }: { s: Section; ctx: Ctx; flash: { subscribed?:
   switch (s.type) {
     case "HERO":
       return (
-        <section class="hero">
-          <div class="wrap">
+        <section class={s.image ? "hero has-image" : "hero"}>
+          {s.image ? <img class="hero-bg" src={s.image} alt="" /> : null}
+          <div class="wrap hero-inner">
             <h1>{s.title}</h1>
             {s.subtitle ? <p class="sub">{s.subtitle}</p> : null}
             {s.ctaLabel && s.ctaHref ? (
               <div class="actions">
-                <a class="btn" href={link(base, s.ctaHref)}>
+                <a class="btn light" href={link(base, s.ctaHref)}>
                   {s.ctaLabel}
                 </a>
               </div>
-            ) : null}
-            {s.image ? (
-              <figure>
-                <img src={s.image} alt="" />
-              </figure>
             ) : null}
           </div>
         </section>
@@ -48,11 +44,14 @@ function Render({ s, ctx, flash }: { s: Section; ctx: Ctx; flash: { subscribed?:
         <section class="block">
           <div class="wrap">
             <Head section={s} more={{ label: "All trips", href: `${base}/trips` }} />
-            <div class="grid">
-              {data.map((t) => (
-                <TripCard trip={t as any} base={base} currency={ctx.currency} />
-              ))}
-            </div>
+            <TripFeature trip={data[0] as any} base={base} currency={ctx.currency} />
+            {data.length > 1 ? (
+              <div class="grid trips" style="margin-top:clamp(40px,6vw,72px)">
+                {data.slice(1).map((t) => (
+                  <TripCard trip={t as any} base={base} currency={ctx.currency} />
+                ))}
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null;
@@ -61,11 +60,14 @@ function Render({ s, ctx, flash }: { s: Section; ctx: Ctx; flash: { subscribed?:
         <section class="block tint">
           <div class="wrap">
             <Head section={s} />
-            <div class="tiles">
+            <div class="mosaic">
               {data.map((d) => (
-                <a class={d.image ? "tile" : "tile plain"} href={`${base}/destinations/${d.handle}`} style={d.image ? "" : "background:#fff;border:1px solid var(--line)"}>
+                <a class={d.image ? "tile" : "tile plain"} href={`${base}/destinations/${d.handle}`}>
                   {d.image ? <img src={d.image} alt="" loading="lazy" /> : null}
-                  <span>{d.name}</span>
+                  <span class="label">
+                    <b>{d.name}</b>
+                    <small>Explore</small>
+                  </span>
                 </a>
               ))}
             </div>
@@ -77,10 +79,11 @@ function Render({ s, ctx, flash }: { s: Section; ctx: Ctx; flash: { subscribed?:
         <section class="block">
           <div class="wrap">
             <Head section={s} />
-            <div class="pills">
+            <div class="topics">
               {data.map((c) => (
-                <a class="pill" href={`${base}/trips/category/${c.handle}`}>
-                  {c.name}
+                <a class="topic" href={`${base}/trips/category/${c.handle}`}>
+                  <span>{c.name}</span>
+                  <small>Explore →</small>
                 </a>
               ))}
             </div>
@@ -89,12 +92,12 @@ function Render({ s, ctx, flash }: { s: Section; ctx: Ctx; flash: { subscribed?:
       ) : null;
     case "TESTIMONIALS":
       return data.length ? (
-        <section class="block tint">
+        <section class="block ink">
           <div class="wrap">
             <Head section={s} />
             <div class="quotes">
               {data.map((t) => (
-                <figure class="quote" style="margin:0">
+                <figure class="quote">
                   {t.rating ? <div class="stars" aria-label={`${t.rating} out of 5`}>{"★".repeat(t.rating)}</div> : null}
                   <p class="q" style={t.rating ? "margin-top:14px" : ""}>“{t.content}”</p>
                   <figcaption class="by">
@@ -112,17 +115,20 @@ function Render({ s, ctx, flash }: { s: Section; ctx: Ctx; flash: { subscribed?:
         <section class="block">
           <div class="wrap">
             <Head section={s} more={{ label: "All stories", href: `${base}/blog` }} />
-            <div class="grid">
-              {data.map((p) => (
-                <PostCard post={p} base={base} />
-              ))}
-            </div>
+            <PostFeature post={data[0]} base={base} />
+            {data.length > 1 ? (
+              <div class="post-list">
+                {data.slice(1).map((p) => (
+                  <PostRow post={p} base={base} />
+                ))}
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null;
     case "NEWSLETTER":
       return (
-        <section class="block" id="newsletter">
+        <section class="block newsletter" id="newsletter">
           <div class="wrap">
             <div class="panel">
               {s.title ? <h2>{s.title}</h2> : null}
@@ -153,8 +159,8 @@ function Render({ s, ctx, flash }: { s: Section; ctx: Ctx; flash: { subscribed?:
           <div class="wrap">
             <div class="two" style={s.image ? "" : "grid-template-columns:1fr"}>
               <div>
-                {s.title ? <h2 style="font-size:clamp(2.1rem,5vw,3.6rem);max-width:14ch;margin-bottom:24px">{s.title}</h2> : null}
-                {s.subtitle ? <p class="muted" style="font-size:1.2rem;margin-bottom:20px">{s.subtitle}</p> : null}
+                {s.title ? <h2 class="split-title">{s.title}</h2> : null}
+                {s.subtitle ? <p class="muted" style="font-size:1.15rem;margin-bottom:20px;max-width:48ch">{s.subtitle}</p> : null}
                 <div class="prose">{raw(safeHtml(s.body))}</div>
                 {s.ctaLabel && s.ctaHref ? (
                   <p style="margin-top:28px">
@@ -182,7 +188,7 @@ export function Home({ ctx, flash }: { ctx: Ctx; flash: { subscribed?: string; e
         sections.map((s) => <Render s={s} ctx={ctx} flash={flash} />)
       ) : (
         <section class="hero">
-          <div class="wrap">
+          <div class="wrap hero-inner">
             <h1>{ctx.site.company.name}</h1>
           </div>
         </section>

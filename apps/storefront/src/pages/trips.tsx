@@ -2,7 +2,7 @@ import { raw } from "hono/html";
 import type { Trip } from "@/lib/api";
 import { dateLong, images, list, money, plain, safeHtml, stars } from "@/lib/format";
 import { Flash, Layout, type Ctx } from "@/ui/layout";
-import { TripCard } from "@/ui/cards";
+import { TripCard, TripFeature } from "@/ui/cards";
 
 export function TripList({
   ctx,
@@ -26,25 +26,30 @@ export function TripList({
         <h1>{heading}</h1>
         {intro ? <p>{intro}</p> : null}
         {categories.length ? (
-          <div class="pills" style="margin-top:36px">
-            <a class={activeCategory ? "pill" : "pill on"} href={`${base}/trips`}>
+          <div class="filters">
+            <a class={activeCategory ? "filter" : "filter on"} href={`${base}/trips`}>
               All trips
             </a>
             {categories.map((c) => (
-              <a class={activeCategory === c.handle ? "pill on" : "pill"} href={`${base}/trips/category/${c.handle}`}>
+              <a class={activeCategory === c.handle ? "filter on" : "filter"} href={`${base}/trips/category/${c.handle}`}>
                 {c.name}
               </a>
             ))}
           </div>
         ) : null}
       </div>
-      <div class="wrap" style="padding-bottom:96px">
+      <div class="wrap" style="padding-bottom:clamp(64px,9vw,128px)">
         {trips.length ? (
-          <div class="grid">
-            {trips.map((t) => (
-              <TripCard trip={t} base={base} currency={ctx.currency} />
-            ))}
-          </div>
+          <>
+            <TripFeature trip={trips[0]} base={base} currency={ctx.currency} />
+            {trips.length > 1 ? (
+              <div class="grid trips">
+                {trips.slice(1).map((t) => (
+                  <TripCard trip={t} base={base} currency={ctx.currency} />
+                ))}
+              </div>
+            ) : null}
+          </>
         ) : (
           <div class="note">No trips to show here yet. Check back soon.</div>
         )}
@@ -70,7 +75,7 @@ const Accordion = ({ title, open, children }: { title: string; open?: boolean; c
   </details>
 );
 
-const Html = ({ html }: { html?: string | null }) => <div class="prose">{raw(safeHtml(html))}</div>;
+const Html = ({ html, lead }: { html?: string | null; lead?: boolean }) => <div class={lead ? "prose lead" : "prose"}>{raw(safeHtml(html))}</div>;
 const has = (html?: string | null) => plain(html, 5).length > 0;
 
 export function TripPage({
@@ -87,7 +92,7 @@ export function TripPage({
   flash: { sent?: string; error?: string };
 }) {
   const { base, currency } = ctx;
-  const gallery = images(trip.images).slice(0, 5);
+  const gallery = images(trip.images).slice(0, 3);
   const variants = variantsOf(trip.itinerary);
   const faq = list<{ title?: string; items?: { q: string; a: string }[] }>(trip.faq);
   const info = list<{ title: string; description: string }>(trip.additionalInfo);
@@ -105,11 +110,11 @@ export function TripPage({
 
   return (
     <Layout ctx={ctx} title={trip.tripSeo?.metaTitle || trip.title} description={trip.tripSeo?.metaDescription || plain(trip.overview, 160)} image={trip.tripSeo?.featuredMedia ?? gallery[0]}>
-      <div class="wrap" style="padding-top:48px">
+      <div class="wrap trip-head">
         <div class="crumbs">
           <a href={`${base}/trips`}>Trips</a> / {trip.title}
         </div>
-        <h1 style="font-size:clamp(2.4rem,6vw,4.6rem);letter-spacing:-0.05em;max-width:18ch">{trip.title}</h1>
+        <h1 class="trip-title">{trip.title}</h1>
         <div class="facts">
           {rating > 0 ? (
             <span class="fact">
@@ -120,20 +125,21 @@ export function TripPage({
             <span class="fact">{f}</span>
           ))}
         </div>
+      </div>
 
-        {gallery.length ? (
-          <div class={gallery.length === 1 ? "gallery one" : "gallery"}>
-            {gallery.map((src) => (
-              <img src={src} alt="" loading="lazy" />
-            ))}
-          </div>
-        ) : null}
+      {gallery.length ? (
+        <div class={gallery.length === 1 ? "gallery one" : gallery.length === 2 ? "gallery two" : "gallery"}>
+          {gallery.map((src) => (
+            <img src={src} alt="" loading="lazy" />
+          ))}
+        </div>
+      ) : null}
 
-        <div class="detail">
-          <div>
+      <div class="wrap detail">
+        <div>
             {has(trip.overview) ? (
               <section class="block2">
-                <Html html={trip.overview} />
+                <Html html={trip.overview} lead />
               </section>
             ) : null}
             {has(trip.highlights) ? (
@@ -333,19 +339,20 @@ export function TripPage({
           </aside>
         </div>
 
-        <section id="enquire" class="block2" style="margin-top:72px;margin-bottom:96px">
-          <div class="two" style="grid-template-columns:1fr 1fr;align-items:start">
-            <div>
-              <h2 style="font-size:clamp(2rem,4vw,3rem)">Interested in {trip.title}?</h2>
-              <p class="muted" style="margin-top:16px;max-width:40ch">Send a message and the team will reply with dates, availability and anything else you want to know.</p>
-            </div>
-            <div>
-              <Flash sent={flash.sent} error={flash.error} />
-              <EnquiryForm base={base} back={`${base}/trips/${trip.slug}#enquire`} trip={trip.title} />
+        <section id="enquire" class="enquiry">
+          <div class="wrap">
+            <div class="two">
+              <div>
+                <h2>Interested in {trip.title}?</h2>
+                <p>Send a message and the team will reply with dates, availability and anything else you want to know.</p>
+              </div>
+              <div>
+                <Flash sent={flash.sent} error={flash.error} />
+                <EnquiryForm base={base} back={`${base}/trips/${trip.slug}#enquire`} trip={trip.title} />
+              </div>
             </div>
           </div>
         </section>
-      </div>
     </Layout>
   );
 }
