@@ -404,10 +404,13 @@ await fetch("https://wepiloapi.basilpot.com/api/v1/inquiries", {
 ## 11. AI site builders and assistants
 
 - **Plain-text guide:** this document is served at `https://wepiloapi.basilpot.com/llms.txt` for AI coding tools and site builders that read docs from a URL.
-- **MCP connector:** builders that accept custom MCP servers (Lovable, Base44 and others) can connect to `https://wepiloapi.basilpot.com/mcp`. The agency signs in with its Wepilo login. The builder's AI then gets three read-only tools:
+- **MCP connector:** builders that accept custom MCP servers (Lovable, Base44 and others) can connect to `https://wepiloapi.basilpot.com/mcp`. The agency signs in with its Wepilo login and gets staff tools for reading and writing its workspace (plus read-only builder tools for website work):
   - `get_website_connection`: the API base URL, the agency slug and the header rules;
   - `get_api_guide`: the sections of this guide;
-  - `sample_public_data`: real records in the exact response shape.
+  - `sample_public_data`: real records in the exact response shape;
+  - and, for staff, tools such as `today_summary`, `list_trips`, `get_trip`, `create_trip_draft`, `update_trip`, `create_extra`, `list_inquiries`, `list_bookings`, `list_departures` and the booking management tools.
 
   The connection only informs the builder while it writes code. The published site still talks to this API directly, using `x-tenant-slug` in browser code and `x-api-key` only on the server.
+
+  The write tools cover everything except destructive actions (deletes stay in the Wepilo dashboard). `create_trip_draft` accepts the full trip record: text fields, itinerary with per-day duration/meals/accommodation, altitude chart, FAQs, additional info, group discounts, difficulty, category, group size, guest capacity, maximum altitude, best season, transportation, meals, accommodations, languages, meeting and drop-off points, and price fields. `update_trip` accepts an id plus the same optional fields, so a single field can be changed without rewriting the trip.
 
