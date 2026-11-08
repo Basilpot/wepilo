@@ -25,6 +25,7 @@ function oauthProvider(env: Env) {
     tokenEndpoint: "/oauth/token",
     clientRegistrationEndpoint: "/oauth/register",
     scopesSupported: ["wepilo"],
+    requiredScopes: ["wepilo"],
     resourceMetadata: { resource: `${env.API_BASE_URL}/mcp`, resource_name: "Wepilo" },
     accessTokenTTL: 60 * 60,
     refreshTokenTTL: 60 * 60 * 24 * 90,
