@@ -1,5 +1,5 @@
 ---
-import { tintBg } from "../../lib/tints";
+import { sceneStyle } from "../../lib/tints";
 import type { SketchName, Tint } from "../../data/features";
 import Sketch from "./Sketch.astro";
 
@@ -14,28 +14,35 @@ interface Props {
   tint?: Tint;
   /** Bigger type, for wide cards in a bento grid. */
   large?: boolean;
+  /** Frosted glass in white type, for the cobalt bands. */
+  dark?: boolean;
   class?: string;
 }
-const { href, sketch, name, summary, index, tint, large = false, class: cls } = Astro.props;
+const { href, sketch, name, summary, tint, large = false, dark = false, class: cls } = Astro.props;
 ---
 
-<a href={href} class:list={["spec-cell group relative flex flex-col border border-line bg-paper p-6 transition-colors duration-200 hover:border-ink hover:bg-mist md:p-7", cls]}>
-  <span class="spec-mark -left-px -top-px" aria-hidden="true"></span>
-  <span class="spec-mark -right-px -top-px" aria-hidden="true"></span>
-  {index && <span class="absolute right-6 top-6 z-10 font-mono text-[12px] text-ink-2 md:right-7 md:top-7">{index}</span>}
+<a
+  href={href}
+  class:list={[
+    "group relative flex flex-col overflow-hidden rounded-[8px] p-6 transition-colors duration-200 md:p-7",
+    dark ? "frost-dark text-white hover:bg-white/15" : "border border-line bg-paper hover:border-ink hover:bg-mist",
+    cls,
+  ]}
+>
   {
     sketch && (
       <div
-        class:list={["-mx-6 -mt-6 mb-8 border-b border-line px-6 pb-6 pt-12 transition-[filter] duration-300 group-hover:saturate-150 md:-mx-7 md:-mt-7 md:px-7", large && "md:px-14", tint && tintBg[tint]]}
+        class:list={["-mx-6 -mt-6 mb-8 flex items-center border-b border-line px-5 py-6 md:-mx-7 md:-mt-7 md:px-6", !large && "min-h-[236px]", large && "md:px-14", tint && "painted"]}
+        style={tint ? sceneStyle(tint) : undefined}
       >
-        <div class:list={[large && "mx-auto max-w-[480px]"]}><Sketch name={sketch} /></div>
+        <div class:list={["frost w-full p-3", large && "mx-auto max-w-[480px]"]}><Sketch name={sketch} /></div>
       </div>
     )
   }
-  <h3 class:list={["font-display tracking-[-0.01em]", large ? "text-[clamp(1.5rem,1.3rem+0.8vw,2rem)]" : "text-[21px]", !sketch && "mt-10"]}>{name}</h3>
-  <p class="mt-2 flex-1 text-[15.5px] leading-[1.55] text-muted">{summary}</p>
-  <p class="mt-7 flex items-center justify-between font-mono text-[13px] lowercase text-ink">
-    <span class="transition-colors group-hover:text-red">[ read more ]</span>
-    <span class="translate-x-0 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-red" aria-hidden="true">→</span>
+  <h3 class:list={["font-display tracking-[-0.035em]", large ? "text-[clamp(1.5rem,1.3rem+0.8vw,2rem)]" : "text-[21px]", !sketch && "mt-10"]}>{name}</h3>
+  <p class:list={["mt-2 flex-1 text-[15.5px] leading-[1.55]", dark ? "text-white/70" : "text-muted"]}>{summary}</p>
+  <p class:list={["mt-7 flex items-center justify-between text-[14px]", dark ? "text-white" : "text-ink"]}>
+    <span class:list={["transition-colors", !dark && "group-hover:text-red"]}>Read more</span>
+    <span class:list={["translate-x-0 transition-transform duration-200 group-hover:translate-x-1", !dark && "group-hover:text-red"]} aria-hidden="true">→</span>
   </p>
 </a>

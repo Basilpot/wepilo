@@ -2,6 +2,7 @@
 import Button from "../components/ui/Button.astro";
 import Site from "../layouts/Site.astro";
 import PageHero from "../components/site/PageHero.astro";
+import SplitHead from "../components/site/SplitHead.astro";
 import Faq from "../components/site/Faq.astro";
 import { CONTACT_EMAIL, SETUP_CALL_URL, SIGNUP_URL } from "../config";
 
@@ -70,12 +71,14 @@ const faqs = [
 ---
 
 <Site
+  overlayNav="light"
   title="Pricing · Wepilo"
   description="One flat price for agencies that keep their site current, a one-time build for those that don't, and a free open source core for developers."
 >
   <PageHero
     id="pricing-title"
     label="pricing"
+    tint="sky"
     lead="$50 a month or $499 a year covers your whole team. Try it for 7 days for $2.99. There are no per-seat or per-word charges."
   >
     Less than a <em>content agency.</em>
@@ -83,38 +86,33 @@ const faqs = [
       <Button href={SETUP_CALL_URL} variant="light">book a setup call</Button>
       <Button href={SIGNUP_URL} variant="dark">start now</Button>
     </Fragment>
-  </PageHero>
-
-  <!-- Plans: three cells on one hairline grid; the one most agencies need is inked. -->
-  <section class="wrap pt-20 md:pt-28" aria-label="Plans">
-    <div class="border-t border-line" aria-hidden="true"></div>
-    <div class="grid gap-px border-x border-b border-line bg-line lg:grid-cols-3">
+    <!-- Plans on the scene: the one most agencies need is set in the hero's cobalt. -->
+    <div slot="after" aria-label="Plans">
+    <div class="grid gap-3 lg:grid-cols-3">
       {
         plans.map((p) => (
           <article
             id={p.id}
-            class:list={["spec-cell group relative flex scroll-mt-28 flex-col p-8 md:p-10", p.featured ? "bg-ink text-white" : "bg-paper"]}
+            class:list={["group relative flex scroll-mt-28 flex-col p-8 md:p-10", p.featured ? "sky isolate overflow-hidden rounded-[8px] text-white" : "frost"]}
           >
-            <span class="spec-mark left-0 top-0" aria-hidden="true" />
-            <span class="spec-mark right-0 top-0" aria-hidden="true" />
+            {p.featured && <div class="grain pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />}
             <div class="flex items-center justify-between gap-4">
-              <h2 class:list={["font-mono text-[13px] lowercase", p.featured ? "text-white/70" : "text-muted"]}>[ {p.name} ]</h2>
-              {p.featured && <span class="bg-red px-2.5 py-1 font-mono text-[11px] lowercase text-white">recommended</span>}
+              <h2 class:list={["font-mono text-[13px] lowercase", p.featured ? "text-white/70" : "text-ink-2/70"]}>{p.name}</h2>
             </div>
             <p class="mt-12 flex items-baseline gap-2">
-              <span class="font-display text-[clamp(3rem,2.6rem+1.4vw,4rem)] leading-none tracking-[-0.03em]">{p.price}</span>
-              <span class:list={["font-mono text-[13px]", p.featured ? "text-white/60" : "text-muted"]}>{p.per}</span>
+              <span class="text-[clamp(3rem,2.6rem+1.4vw,4.25rem)] font-light leading-none tracking-[-0.05em]">{p.price}</span>
+              <span class:list={["font-mono text-[13px]", p.featured ? "text-white/60" : "text-ink-2/60"]}>{p.per}</span>
             </p>
             <p class:list={["mt-5 max-w-[30ch] text-[16px] leading-[1.55]", p.featured ? "text-white/80" : "text-ink-2"]}>{p.for}</p>
-            <ul class:list={["mt-8 flex-1 border-t pt-2 text-[15px]", p.featured ? "border-white/15" : "border-line"]}>
+            <ul class:list={["mt-8 flex-1 border-t pt-2 text-[15px]", p.featured ? "border-white/15" : "border-ink/10"]}>
               {p.items.map((i) => (
-                <li class:list={["flex items-baseline gap-3 border-b py-3", p.featured ? "border-white/10" : "border-line"]}>
-                  <span class="size-1.5 shrink-0 translate-y-[-2px] bg-red" aria-hidden="true" />
+                <li class:list={["flex items-baseline gap-3 border-b py-3", p.featured ? "border-white/10" : "border-ink/10"]}>
+                  <span class:list={["size-1.5 shrink-0 translate-y-[-2px]", p.featured ? "bg-white" : "bg-red"]} aria-hidden="true" />
                   {i}
                 </li>
               ))}
             </ul>
-            <p class:list={["mt-6 text-[13.5px] leading-[1.55]", p.featured ? "text-white/55" : "text-faint"]}>{p.note}</p>
+            <p class:list={["mt-6 text-[13.5px] leading-[1.55]", p.featured ? "text-white/55" : "text-ink-2/60"]}>{p.note}</p>
             <Button href={p.cta.href} variant={p.featured ? "light" : "dark"} class="mt-6 w-full">
               {p.cta.label.toLowerCase()}
             </Button>
@@ -122,22 +120,21 @@ const faqs = [
         ))
       }
     </div>
-  </section>
+    </div>
+  </PageHero>
+
 
   <!-- The sum. -->
-  <section class="wrap pt-36 text-center md:pt-48" aria-labelledby="math-title">
-    <h2 id="math-title" class="mx-auto max-w-[22ch] font-display text-[clamp(1.875rem,1.5rem+1.3vw,2.75rem)] leading-[1.12] tracking-[-0.015em]">
-      About a fifth of <em>what an agency charges.</em>
-    </h2>
-    <p class="mx-auto mt-6 max-w-[34rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">
-      Your team reviews every page either way. With Wepilo the change goes live the same day instead of next week.
-    </p>
-    <dl class="reveal mx-auto mt-16 grid max-w-[1000px] border-t border-ink text-left md:grid-cols-3">
+  <section class="px-5 pt-24 md:px-10 md:pt-32 xl:px-[72px]" aria-labelledby="math-title">
+    <SplitHead id="math-title" lead="Your team reviews every page either way. With Wepilo the change goes live the same day instead of next week.">
+      <Fragment slot="title">About a fifth of <em>what an agency charges.</em></Fragment>
+    </SplitHead>
+    <dl class="mt-16 grid border-t border-ink md:grid-cols-3">
       {
         sum.map((s, i) => (
           <div class:list={["border-b border-line py-8 md:border-b-0 md:py-10", i > 0 && "md:border-l md:pl-10", i < 2 && "md:pr-10"]}>
             <dt class="font-mono text-[12.5px] lowercase text-muted">{s.k}</dt>
-            <dd class:list={["mt-5 flex items-baseline gap-2 font-display text-[clamp(2.5rem,2.1rem+1.2vw,3.25rem)] leading-none tracking-[-0.02em]", i === 1 && "text-red"]}>
+            <dd class:list={["mt-5 flex items-baseline gap-2 text-[clamp(3rem,2.3rem+2.2vw,4.5rem)] font-light leading-none tracking-[-0.05em]", i === 1 && "text-red"]}>
               {s.v}
               <span class="font-mono text-[13px] tracking-normal text-muted">/mo</span>
             </dd>

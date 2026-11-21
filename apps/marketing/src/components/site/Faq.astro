@@ -41,24 +41,24 @@ const { items = defaults, line = ["Questions agencies", "ask first."], id = "faq
 const faqs = items;
 ---
 
-<section id={id} class="wrap scroll-mt-28 pt-40 md:pt-56" aria-labelledby={`${id}-title`}>
-  <div class="text-center">
-    <h2 id={`${id}-title`} class="mx-auto max-w-[22ch] font-display text-[clamp(1.875rem,1.5rem+1.3vw,2.75rem)] leading-[1.12] tracking-[-0.015em]">
+<section id={id} class="grid scroll-mt-28 gap-10 px-5 pt-24 md:grid-cols-[1fr_minmax(0,44rem)] md:gap-16 md:px-10 md:pt-32 xl:px-[72px]" aria-labelledby={`${id}-title`}>
+  <div>
+    <h2 id={`${id}-title`} class="max-w-[12em] text-[clamp(2.125rem,1.4rem+2.6vw,3.5rem)] font-light leading-[1.08] tracking-[-0.045em]">
       {line[0]} <em>{line[1]}</em>
     </h2>
-    <p class="mt-5 font-mono text-[14px] lowercase text-muted">
-      [ anything else? <a class="text-red hover:text-ink" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> ]
+    <p class="mt-6 text-[16px] text-ink-2">
+      Anything else? <a class="text-red underline decoration-current/30 underline-offset-[5px] hover:decoration-current" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
     </p>
   </div>
-  <div class="mx-auto mt-14 max-w-[800px]">
-    <div class="reveal border-t border-ink">
+  <div>
+    <div class="border-t border-ink">
       {
         faqs.map((f) => (
           <details class="group border-b border-line [&[open]>summary]:text-ink">
             <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-[19px] font-medium tracking-[-0.01em] [&::-webkit-details-marker]:hidden">
               {f.q}
               <span class="shrink-0 font-mono text-[15px] text-muted transition-colors group-hover:text-ink group-open:text-red" aria-hidden="true">
-                <span class="group-open:hidden">[ + ]</span><span class="hidden group-open:inline">[ – ]</span>
+                <span class="group-open:hidden">+</span><span class="hidden group-open:inline">–</span>
               </span>
             </summary>
             <p class="max-w-[60ch] border-l border-red pb-1 pl-5 mb-7 text-[16px] leading-[1.6] text-ink-2">{f.a}</p>

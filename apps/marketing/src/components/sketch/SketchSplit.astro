@@ -1,5 +1,5 @@
 ---
-import { tintBg } from "../../lib/tints";
+import { sceneStyle } from "../../lib/tints";
 import Button from "../ui/Button.astro";
 import type { Feature } from "../../data/features";
 import Sketch from "./Sketch.astro";
@@ -11,8 +11,8 @@ import Glyph from "./Glyph.astro";
  */
 interface Props {
   feature: Feature;
-  /** "02 / 04" style counter. */
-  count: string;
+  /** Unused; kept so older callers still type-check. */
+  count?: string;
   /** Put the drawing on the left. */
   flip?: boolean;
   id: string;
@@ -24,10 +24,7 @@ const { feature: f, count, flip = false, id, class: cls } = Astro.props;
 <section class:list={["wrap", cls]} aria-labelledby={id}>
   <div class="grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
     <div class:list={["reveal lg:col-span-5", flip && "lg:order-2"]}>
-      <p class="flex items-center gap-3 font-mono text-[12.5px] lowercase text-muted">
-        <span class="size-2 bg-red" aria-hidden="true"></span>{count} · {f.name}
-      </p>
-      <h2 id={id} class="mt-6 font-display text-[clamp(1.875rem,1.5rem+1.3vw,2.75rem)] leading-[1.12] tracking-[-0.015em]">
+      <h2 id={id} class="text-[clamp(2.125rem,1.4rem+2.6vw,3.5rem)] font-light leading-[1.08] tracking-[-0.045em]">
         {f.line[0]} <em>{f.line[1]}</em>
       </h2>
       <p class="mt-6 max-w-[34rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">{f.lead}</p>
@@ -36,7 +33,7 @@ const { feature: f, count, flip = false, id, class: cls } = Astro.props;
         {
           f.points.map((p) => (
             <li class="flex gap-4 border-b border-line py-5">
-              <span class="grid size-10 shrink-0 place-items-center border border-line-strong bg-white">
+              <span class="grid size-10 shrink-0 place-items-center rounded-[8px] border border-line-strong bg-white">
                 <Glyph name={p.icon} class="size-5" />
               </span>
               <span>
@@ -48,13 +45,14 @@ const { feature: f, count, flip = false, id, class: cls } = Astro.props;
         }
       </ul>
 
-      <Button href={`/features/${f.slug}`} variant="light" class="mt-8">more on {f.name.toLowerCase()}</Button>
+      <Button href={`/product/${f.slug}`} variant="light" class="mt-8">more on {f.name.toLowerCase()}</Button>
     </div>
 
     <div class:list={["lg:col-span-7", flip && "lg:order-1"]}>
-      <div class="border-t border-line" aria-hidden="true"></div>
-      <div class:list={["border-x border-b border-line p-4 sm:p-8 md:p-10", tintBg[f.tint]]}>
-        <Sketch name={f.sketch} />
+      <div class="painted overflow-hidden rounded-[8px] px-4 py-10 sm:px-10 md:px-12 md:py-16" style={sceneStyle(f.tint)}>
+        <div class="frost p-4 sm:p-6">
+          <Sketch name={f.sketch} />
+        </div>
       </div>
     </div>
   </div>

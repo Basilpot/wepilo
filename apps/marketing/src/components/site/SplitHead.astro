@@ -1,0 +1,31 @@
+---
+/**
+ * The hero's section opener: a big light headline on the left, the lead and any actions on the
+ * right. `dark` sets it in white for the cobalt bands. Slot "title" is the heading's inner text.
+ */
+interface Props {
+  id: string;
+  lead?: string;
+  dark?: boolean;
+  level?: "h1" | "h2";
+  class?: string;
+}
+const { id, lead, dark = false, level = "h2", class: cls } = Astro.props;
+const Heading = level;
+---
+
+<div class:list={["grid gap-8 md:grid-cols-[1fr_minmax(0,26rem)] md:items-end md:gap-16 lg:grid-cols-[1fr_30rem]", cls]}>
+  <Heading
+    id={id}
+    class:list={[
+      "max-w-[16em] text-[clamp(2.125rem,1.4rem+2.6vw,3.5rem)] font-light leading-[1.08] tracking-[-0.045em]",
+      dark ? "text-[#e6ecff] [&_em]:!text-white/55" : "text-ink",
+    ]}
+  >
+    <slot name="title" />
+  </Heading>
+  <div>
+    {lead && <p class:list={["text-[clamp(1.0625rem,0.98rem+0.35vw,1.3rem)] leading-[1.35]", dark ? "text-white/70" : "text-ink-2"]}>{lead}</p>}
+    <div class="mt-7 flex flex-wrap gap-3 empty:hidden"><slot /></div>
+  </div>
+</div>

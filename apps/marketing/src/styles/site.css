@@ -1,9 +1,7 @@
 @import "tailwindcss";
 @import "@fontsource-variable/mona-sans";
+@import "@fontsource-variable/geist-pixel";
 @import "@fontsource-variable/geist-mono";
-@import "@fontsource/instrument-serif/400.css";
-@import "@fontsource/instrument-serif/400-italic.css";
-@import "@fontsource/young-serif/400.css";
 
 /*
   Wepilo: white paper, near-black ink, and three colours from a trekking morning:
@@ -24,10 +22,14 @@
   --color-line: #d6d6d6;
   --color-line-strong: #bababa;
   --color-apricot: #e8475f;
-  --color-ember: #dc143c;
-  --color-red: #dc143c;
+  /* The hero sky. Kept under the old "red" names so every accent utility follows it. */
+  --color-cobalt: #2252d8;
+  --color-cobalt-deep: #1a43b5;
+  --color-cobalt-soft: #e9eefc;
+  --color-ember: #2252d8;
+  --color-red: #2252d8;
 
-  --color-red-hover: #b8102f;
+  --color-red-hover: #1a43b5;
 
   /* Feature tints: bg-sand, bg-sky, bg-lilac, bg-sage, bg-peach, bg-butter. */
   --color-sand: #ead6b2;
@@ -53,22 +55,24 @@
   --color-pine: #16865a;
 
   --font-sans: "Mona Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
-  --font-display: "Young Serif", ui-serif, Georgia, serif;
-  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Mona Sans for text and labels; Geist Pixel for h1/h2 (see --font-display). */
+  --font-serif: "Mona Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Headings: Geist Pixel (Google Fonts, self-hosted via fontsource). */
+  --font-display: "Geist Pixel Variable", "Mona Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Mona Sans Variable", ui-sans-serif, system-ui, sans-serif;
 
   /* Display 40–72px, section 32–52px, title 24–34px. Big enough to lead, small enough to read. */
   --text-display: clamp(2.5rem, 1.7rem + 2.6vw, 4.5rem);
   --text-display--line-height: 1.02;
-  --text-display--letter-spacing: -0.02em;
+  --text-display--letter-spacing: -0.045em;
 
   --text-section: clamp(2rem, 1.55rem + 1.5vw, 3.25rem);
   --text-section--line-height: 1.06;
-  --text-section--letter-spacing: -0.015em;
+  --text-section--letter-spacing: -0.035em;
 
   --text-title: clamp(1.5rem, 1.3rem + 0.7vw, 2.125rem);
   --text-title--line-height: 1.12;
-  --text-title--letter-spacing: -0.01em;
+  --text-title--letter-spacing: -0.025em;
 
   --text-lead: clamp(1.0625rem, 0.98rem + 0.35vw, 1.3125rem);
   --text-lead--line-height: 1.55;
@@ -122,14 +126,15 @@
     font-size: 1.0625rem;
     line-height: 1.55;
   }
-  /* Sharp corners everywhere except elements marked data-round (buttons). Beats utilities and inline styles. */
-  *:not([data-round]),
-  *:not([data-round])::before,
-  *:not([data-round])::after {
+  /* Illustrations keep their drafting-table square corners; the UI around them is rounded like the hero button. */
+  .sketch,
+  .sketch *,
+  .sketch *::before,
+  .sketch *::after {
     border-radius: 0 !important;
   }
   ::selection {
-    background: rgb(220 20 60 / 0.25);
+    background: rgb(34 82 216 / 0.22);
   }
   :focus-visible {
     outline: 2px solid var(--color-glacier);
@@ -141,11 +146,23 @@
   h3 {
     text-wrap: balance;
   }
-  /* Primary headings set in Redaction; accent spans switch to its italic. */
+  /* Headings: Mona Sans, light-to-regular and set tight, as in the hero. */
   h1,
   h2 {
     font-family: var(--font-display);
     font-weight: 400;
+    letter-spacing: -0.035em;
+  }
+  /* Geist Pixel has one weight and needs air between its pixels: these beat the tight
+     tracking and light weights the heading utilities set for Mona Sans. */
+  :is(h1, h2) {
+    font-weight: 400 !important;
+    letter-spacing: -0.01em !important;
+  }
+  /* Labels that used to be mono: same family, a touch smaller tracking-wise. */
+  .font-mono {
+    letter-spacing: 0;
+    font-feature-settings: "tnum";
   }
   p {
     text-wrap: pretty;
@@ -183,7 +200,7 @@
     font-family: var(--font-display);
     font-style: italic;
   }
-  /* Young Serif has no italic, so a heading's accent phrase is set upright in grey instead. */
+  /* A heading's accent phrase is set upright in grey. */
   :where(.font-display, h1, h2) em {
     font-style: normal;
     color: var(--color-muted);
@@ -201,7 +218,7 @@
     background: linear-gradient(90deg, rgb(12 12 10 / 0.55) 0%, rgb(12 12 10 / 0.25) 45%, rgb(12 12 10 / 0) 70%);
   }
 
-  /* Section labels: lowercase mono in square brackets. */
+  /* Section labels: small, quiet, lowercase. */
   .label {
     display: inline-flex;
     gap: 0.5em;
@@ -211,17 +228,11 @@
     text-transform: lowercase;
     color: var(--color-muted);
   }
-  .label::before {
-    content: "[";
-  }
-  .label::after {
-    content: "]";
-  }
   .label-light {
     color: rgb(255 255 255 / 0.78);
   }
 
-  /* Bracketed nav links; the current page is red. */
+  /* Nav links; the current page is cobalt. */
   .nav-link {
     display: inline-flex;
     gap: 0.35em;
@@ -230,12 +241,6 @@
     text-transform: lowercase;
     color: var(--color-ink);
     transition: color 160ms ease;
-  }
-  .nav-link::before {
-    content: "[";
-  }
-  .nav-link::after {
-    content: "]";
   }
   .nav-link:hover,
   .nav-link[aria-current="page"] {
@@ -250,33 +255,12 @@
   }
   /* Footer wordmark: ink at the top fading to grey, like antimattr's. */
   .wordmark-fill {
-    background-image: linear-gradient(0deg, #6a6a6a 0%, #0d0d0d 100%);
+    background-image: linear-gradient(0deg, rgb(255 255 255 / 0.15) 0%, rgb(230 236 255 / 0.95) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
-  /* Sketches plot in from the left when they enter the view, then the notes appear one by one. */
-  @media (prefers-reduced-motion: no-preference) {
-    .js .sk-anim {
-      opacity: 1;
-      transform: none;
-    }
-    .js .sk-anim .dr {
-      clip-path: inset(0 100% 0 0);
-      transition: clip-path 1100ms cubic-bezier(0.65, 0, 0.35, 1);
-    }
-    .js .sk-anim.is-in .dr {
-      clip-path: inset(0 0 0 0);
-    }
-    .js .sk-anim .co > g {
-      opacity: 0;
-      transition: opacity 500ms ease var(--d, 700ms);
-    }
-    .js .sk-anim.is-in .co > g {
-      opacity: 1;
-    }
-  }
 
   /* Drafting-paper dots behind the hero drawing, fading out at the edges. */
   .dots {
@@ -403,7 +387,7 @@
     position: relative;
     overflow: hidden;
     isolation: isolate;
-    border-radius: 28px;
+    border-radius: 8px;
     background: var(--color-ink);
   }
   .clip > video {
@@ -454,105 +438,67 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    height: 46px;
+    height: 48px;
     padding-inline: 22px;
+    border-radius: 8px;
     font-family: var(--font-sans);
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: -0.005em;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
     white-space: nowrap;
     transition:
-      transform 160ms cubic-bezier(0.2, 0.7, 0.2, 1),
-      box-shadow 160ms ease,
-      background 160ms ease,
-      filter 160ms ease;
-  }
-  .btn:hover {
-    transform: translateY(-1px);
-  }
-  .btn:active {
-    transform: translateY(1px);
-    transition-duration: 60ms;
+      background-color 160ms ease,
+      color 160ms ease,
+      box-shadow 160ms ease;
   }
   .btn-sm {
     height: 40px;
     padding-inline: 16px;
-    font-size: 14px;
+    font-size: 15px;
   }
 
-  /* Primary: near-black. */
+  /* Ink: for use on light tints. */
   .btn-dark {
     color: #fff;
-    background: linear-gradient(180deg, #2e2e2e 0%, #121212 100%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.18),
-      inset 0 -1px 0 rgb(0 0 0 / 0.5),
-      0 0 0 1px #0d0d0d,
-      0 2px 3px rgb(0 0 0 / 0.12),
-      0 8px 18px -8px rgb(0 0 0 / 0.45);
+    background: var(--color-ink);
   }
   .btn-dark:hover {
-    filter: brightness(1.12);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.2),
-      inset 0 -1px 0 rgb(0 0 0 / 0.5),
-      0 0 0 1px #0d0d0d,
-      0 4px 6px rgb(0 0 0 / 0.12),
-      0 14px 26px -10px rgb(0 0 0 / 0.5);
+    background: #2a2a2a;
   }
 
-  /* The one main action on a screen: red. */
+  /* The one main action on a white page: hero cobalt. */
   .btn-red {
     color: #fff;
-    background: linear-gradient(180deg, #ea3f5c 0%, #c8102e 100%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.32),
-      inset 0 -1px 0 rgb(90 0 20 / 0.35),
-      0 0 0 1px #a80d2a,
-      0 2px 3px rgb(150 10 40 / 0.18),
-      0 10px 22px -8px rgb(220 20 60 / 0.55);
+    background: var(--color-cobalt);
   }
   .btn-red:hover {
-    filter: brightness(1.06) saturate(1.05);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.36),
-      inset 0 -1px 0 rgb(90 0 20 / 0.35),
-      0 0 0 1px #a80d2a,
-      0 4px 6px rgb(150 10 40 / 0.18),
-      0 16px 30px -10px rgb(220 20 60 / 0.6);
+    background: var(--color-cobalt-deep);
   }
 
-  /* Secondary: a solid white key, readable on grey and on colour bands. */
+  /* White key with a hairline, the hero's button on any background. */
   .btn-line,
   .btn-light {
-    color: var(--color-ink);
-    background: linear-gradient(180deg, #ffffff 0%, #f1f1f1 100%);
-    box-shadow:
-      inset 0 1px 0 #fff,
-      inset 0 -1px 0 rgb(0 0 0 / 0.06),
-      0 0 0 1px rgb(13 13 13 / 0.16),
-      0 1px 2px rgb(0 0 0 / 0.06),
-      0 6px 14px -8px rgb(0 0 0 / 0.25);
+    color: #111;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px rgb(13 13 13 / 0.14);
   }
   .btn-line:hover,
   .btn-light:hover {
-    box-shadow:
-      inset 0 1px 0 #fff,
-      inset 0 -1px 0 rgb(0 0 0 / 0.06),
-      0 0 0 1px rgb(13 13 13 / 0.3),
-      0 3px 5px rgb(0 0 0 / 0.06),
-      0 12px 22px -10px rgb(0 0 0 / 0.3);
+    background: #eef1fb;
+    box-shadow: inset 0 0 0 1px rgb(34 82 216 / 0.35);
   }
-  .btn:active {
-    filter: brightness(0.97);
+  /* Glass key for cobalt or photo backgrounds. */
+  .btn-ghost {
+    color: #fff;
+    background: rgb(255 255 255 / 0.1);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
   }
-  /* A border drawn in the three morning colours, for the one "start" action in the header. */
+  .btn-ghost:hover {
+    background: rgb(255 255 255 / 0.18);
+  }
   .btn-glow {
-    background:
-      linear-gradient(#fff, #fff) padding-box,
-      linear-gradient(90deg, var(--color-coral), var(--color-saffron), var(--color-glacier)) border-box;
-    border: 2px solid transparent;
-    color: var(--color-ink);
+    color: #fff;
+    background: var(--color-cobalt);
   }
 
   /* Pill with a soft halo, for announcements. */
@@ -762,5 +708,118 @@
       transform: none;
       transition: none;
     }
+  }
+}
+
+/* Frosted pane for the nav when it sits over the hero sky. */
+@layer components {
+  .glass {
+    background: rgb(255 255 255 / 0.1);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* The hero sky, reusable: flat cobalt with a fine film grain on top. */
+@layer components {
+  .sky {
+    background-color: var(--color-cobalt);
+  }
+  .grain {
+    opacity: 0.22;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  /* Frosted pane over the snow, like the hero's strip. */
+  .footer-pane {
+    background: rgb(236 240 250 / 0.72);
+    backdrop-filter: blur(18px) saturate(1.1);
+    -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  }
+}
+
+/*
+  Scenery. Each feature tint has a painted landscape in the hero's hand (public/art/scenes);
+  drawings sit on frosted panes over it, the way the hero's strip sits over the snow.
+*/
+@layer components {
+  .painted {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--scene-tint, var(--color-mist));
+    background-image: var(--scene);
+    background-size: cover;
+    background-position: center 70%;
+  }
+  /* A soft wash at the top of a painted band, so the headline and lead read over any sky. */
+  .painted-head::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 420px;
+    z-index: -1;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.72) 0%, rgb(255 255 255 / 0.45) 55%, rgb(255 255 255 / 0) 100%);
+  }
+  /* Page-top bands run behind the nav, so the wash reaches further down. */
+  .painted-head.painted-top::before {
+    height: 640px;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.7) 0%, rgb(255 255 255 / 0.55) 60%, rgb(255 255 255 / 0) 100%);
+  }
+  .frost {
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.58);
+    backdrop-filter: blur(16px) saturate(1.15);
+    -webkit-backdrop-filter: blur(16px) saturate(1.15);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.7),
+      0 30px 60px -30px rgb(15 30 80 / 0.35);
+  }
+  /* Glass on the cobalt bands. */
+  .frost-dark {
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+  }
+
+  /* A ridge silhouette that rises out of the section above into a cobalt band and drifts
+     a little as it scrolls through the view. */
+  .ridge {
+    display: block;
+    width: 100%;
+    height: clamp(60px, 9vw, 140px);
+    margin-bottom: -1px;
+  }
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .ridge-back {
+        left: -3%;
+        width: 106%;
+        animation: ridge-drift linear both;
+        animation-timeline: view();
+        animation-range: entry 0% exit 40%;
+      }
+    }
+  }
+}
+
+@keyframes ridge-drift {
+  from {
+    transform: translate3d(-1.5%, 22%, 0);
+  }
+  to {
+    transform: translate3d(1.5%, 0, 0);
+  }
+}
+
+@layer components {
+  /* Pale glass for nav pills over painted scenes. */
+  .frost-pill {
+    background: rgb(255 255 255 / 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.7);
   }
 }

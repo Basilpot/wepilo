@@ -1,6 +1,8 @@
 ---
 import NavLink from "../../components/ui/NavLink.astro";
-import { tintBg } from "../../lib/tints";
+import { sceneStyle } from "../../lib/tints";
+import SplitHead from "../../components/site/SplitHead.astro";
+import Ridge from "../../components/site/Ridge.astro";
 import Button from "../../components/ui/Button.astro";
 import Site from "../../layouts/Site.astro";
 import SketchBlock from "../../components/sketch/SketchBlock.astro";
@@ -20,63 +22,53 @@ const pains = s.pains.map((p) => ({ ...p, f: featureBySlug(p.fix)! }));
 const others = solutions.filter((o) => o.slug !== s.slug);
 ---
 
-<Site title={`${s.name} · Wepilo`} description={s.lead}>
-  <nav aria-label="Breadcrumb" class="wrap pt-10 text-center font-mono text-[13px] lowercase text-muted">
-    <a href="/solutions" class="hover:text-red">solutions</a> <span class="text-line-strong">/</span> {s.name.toLowerCase()}
-  </nav>
-
-  <SketchBlock id="solution-title" level="h1" class="mt-8 md:mt-10" tint={s.tint} line={s.line} sketch={s.sketch} name={`Wepilo for ${s.name.toLowerCase()}`} sub={s.lead} tag="free setup call with every plan">
+<Site overlayNav="light" title={`${s.name} · Wepilo`} description={s.lead}>
+  <SketchBlock id="solution-title" level="h1" top tint={s.tint} line={s.line} sketch={s.sketch} name={`Wepilo for ${s.name.toLowerCase()}`} sub={s.lead}>
+    <nav slot="crumb" aria-label="Breadcrumb" class="text-[14px] text-ink-2/75">
+      <a href="/solutions" class="hover:text-red">Solutions</a> <span class="mx-1 opacity-50">/</span> {s.name}
+    </nav>
     <Button href="/pricing" variant="light">see pricing</Button>
     <Button href={SETUP_CALL_URL} variant="dark">book a setup call</Button>
-  </SketchBlock>
 
-  <!-- Sound familiar? -->
-  <section class="wrap pt-36 md:pt-48" aria-labelledby="pains-title">
-    <h2 id="pains-title" class="mx-auto max-w-[22ch] text-center font-display text-[clamp(1.75rem,1.45rem+1vw,2.375rem)] leading-[1.12] tracking-[-0.015em]">
-      Sound <em>familiar?</em>
-    </h2>
-    <ul class="reveal mx-auto mt-12 grid max-w-[1100px] border-t border-ink md:grid-cols-3">
-      {
-        pains.map((p, i) => (
-          <li class:list={["flex flex-col border-b border-line py-8 md:border-b-0 md:py-10", i > 0 && "md:border-l md:pl-10", i < 2 && "md:pr-10"]}>
-            <p class="flex items-center gap-3 font-mono text-[12px] text-faint">
-              <span class="size-2 bg-red" aria-hidden="true" />0{i + 1}
-            </p>
-            <p class="mt-6 flex-1 text-[17px] leading-[1.55] text-ink">{p.text}</p>
-            {(
-              <a href={`/features/${p.f.slug}`} class="group mt-8 flex items-center gap-2 border-t border-dashed border-line-strong pt-4 font-mono text-[12.5px] lowercase text-muted hover:text-red">
-                <span>fixed by</span>
-                <span class="text-ink group-hover:text-red">{p.f.name.toLowerCase()}</span>
+    <!-- Sound familiar? On the scene's foreground, under the drawing. -->
+    <section slot="after" aria-labelledby="pains-title">
+      <h2 id="pains-title" class="sr-only">Sound familiar?</h2>
+      <ul class="grid gap-3 md:grid-cols-3">
+        {
+          pains.map((p, i) => (
+            <li class="frost flex flex-col p-7 md:p-8">
+              <p class="flex-1 text-[clamp(1.125rem,1.05rem+0.3vw,1.3rem)] font-light leading-[1.4] tracking-[-0.015em] text-ink">{p.text}</p>
+              <a href={`/product/${p.f.slug}`} class="group mt-8 flex items-center gap-2 border-t border-ink/10 pt-4 text-[14px] text-ink-2 hover:text-red">
+                <span class="text-ink-2/60">Fixed by</span>
+                <span class="font-medium text-ink group-hover:text-red">{p.f.name}</span>
                 <span class="ml-auto transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
               </a>
-            )}
-          </li>
-        ))
-      }
-    </ul>
-  </section>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </SketchBlock>
 
-  <!-- How Wepilo helps: one row per feature, drawing beside the words. -->
-  <section class="wrap pt-36 md:pt-48" aria-labelledby="helps-title">
-    <h2 id="helps-title" class="mx-auto max-w-[22ch] text-center font-display text-[clamp(1.75rem,1.45rem+1vw,2.375rem)] leading-[1.12] tracking-[-0.015em]">
-      How Wepilo <em>helps.</em>
-    </h2>
-    <div class="mt-16 space-y-24 md:space-y-32">
+  <!-- How Wepilo helps: one row per feature, the drawing on its painted scene beside the words. -->
+  <section class="px-5 pt-24 md:px-10 md:pt-32 xl:px-[72px]" aria-labelledby="helps-title">
+    <SplitHead id="helps-title" lead={`The parts of Wepilo ${s.name.toLowerCase()} use most, and what each one takes off your plate.`}>
+      <Fragment slot="title">How Wepilo <em>helps.</em></Fragment>
+    </SplitHead>
+    <div class="mt-16 space-y-6 md:space-y-8">
       {
         helps.map((h, i) => (
-          <div class="reveal grid items-center gap-10 md:grid-cols-12 md:gap-14">
-            <div class:list={["md:col-span-7", i % 2 === 1 && "md:order-2"]}>
-              <div class="border-t border-line" aria-hidden="true"></div>
-              <div class:list={["border-x border-b border-line p-4 sm:p-8", tintBg[h.f.tint]]}>
+          <div class="grid items-stretch gap-6 rounded-[8px] bg-mist p-3 md:grid-cols-12 md:gap-10 md:p-4">
+            <div class:list={["painted flex items-center overflow-hidden rounded-[6px] px-4 py-8 sm:px-8 md:col-span-7 md:py-12", i % 2 === 1 && "md:order-2"]} style={sceneStyle(h.f.tint)}>
+              <div class="frost w-full p-4 sm:p-5">
                 <Sketch name={h.f.sketch} />
               </div>
             </div>
-            <div class:list={["md:col-span-5", i % 2 === 1 && "md:order-1"]}>
-              <p class="font-mono text-[13px] text-muted">0{i + 1}</p>
-              <h3 class="mt-5 font-display text-[clamp(1.5rem,1.35rem+0.6vw,1.875rem)] leading-[1.15] tracking-[-0.01em]">{h.title}</h3>
-              <p class="mt-3 max-w-[36ch] text-[16.5px] leading-[1.6] text-ink-2">{h.body}</p>
-              <NavLink href={`/features/${h.f.slug}`} red class="mt-6 text-[14px]">
-                {h.f.name.toLowerCase()}
+            <div class:list={["flex flex-col justify-center px-3 pb-5 md:col-span-5 md:px-4 md:pb-0", i % 2 === 1 && "md:order-1"]}>
+              <h3 class="text-[clamp(1.625rem,1.4rem+0.9vw,2.25rem)] font-light leading-[1.12] tracking-[-0.04em]">{h.title}</h3>
+              <p class="mt-4 max-w-[38ch] text-[16.5px] leading-[1.6] text-ink-2">{h.body}</p>
+              <NavLink href={`/product/${h.f.slug}`} red class="mt-6 self-start text-[15px]">
+                More on {h.f.name.toLowerCase()}
               </NavLink>
             </div>
           </div>
@@ -85,11 +77,17 @@ const others = solutions.filter((o) => o.slug !== s.slug);
     </div>
   </section>
 
-  <section class="wrap pt-36 md:pt-48" aria-labelledby="other-title">
-    <h2 id="other-title" class="font-mono text-[14px] lowercase text-muted">[ also built for ]</h2>
-    <div class="mt-6 grid gap-4 md:grid-cols-3">
-      {others.map((o) => <SketchCard href={`/solutions/${o.slug}`} name={o.name} summary={o.summary} />)}
-      <SketchCard href="/developers" name="Web developers" summary="Build a client's site once and let the agency run it." />
+  <section class="pt-24 md:pt-32" aria-labelledby="other-title">
+    <Ridge seed={s.name.length * 7} />
+    <div class="sky relative isolate px-5 pb-24 pt-14 text-white md:px-10 md:pb-28 md:pt-16 xl:px-[72px]">
+      <div class="grain pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
+      <SplitHead id="other-title" dark lead="Same editor, same calendar, set up around how each kind of agency sells.">
+        <Fragment slot="title">Also built <em>for.</em></Fragment>
+      </SplitHead>
+      <div class="mt-14 grid gap-3 md:grid-cols-3">
+        {others.map((o) => <SketchCard dark href={`/solutions/${o.slug}`} name={o.name} summary={o.summary} />)}
+        <SketchCard dark href="/developers" name="Web developers" summary="Build a client's site once and let the agency run it." />
+      </div>
     </div>
   </section>
 </Site>

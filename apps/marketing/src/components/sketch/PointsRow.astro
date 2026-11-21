@@ -2,29 +2,33 @@
 import Glyph from "./Glyph.astro";
 import type { GlyphName } from "./util";
 
-/** Numbered benefits under an ink rule: an icon in a square, a counter, a serif title and a line. */
+/**
+ * Numbered benefits as frosted cards. On a painted band (`scene`) they sit on the landscape's
+ * foreground; on white they get a quiet mist fill.
+ */
 interface Props {
   items: Array<{ icon: GlyphName; title: string; body: string }>;
   label?: string;
+  /** Sitting on a painted scene: frosted glass, no outer gutter (the band supplies it). */
+  scene?: boolean;
 }
-const { items, label } = Astro.props;
+const { items, label, scene = false } = Astro.props;
 const n = items.length;
 const cols = n === 4 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3";
 ---
 
-<section class="wrap" aria-label={label}>
-  <ol class:list={["reveal grid gap-px border-t border-ink bg-line", cols]}>
+<section class:list={[!scene && "px-5 md:px-10 xl:px-[72px]"]} aria-label={label}>
+  <ol class:list={["grid gap-3", cols]}>
     {
-      items.map((p, i) => (
-        <li class="bg-paper py-10 md:px-8 md:py-12">
-          <div class="flex items-center gap-4">
-            <span class="grid size-12 place-items-center border border-ink bg-white">
-              <Glyph name={p.icon} class="size-6" />
+      items.map((p) => (
+        <li class:list={["flex flex-col rounded-[8px] p-7 md:p-8", scene ? "frost" : "bg-mist"]}>
+          <div>
+            <span class="grid size-11 place-items-center rounded-[8px] bg-white text-red shadow-[inset_0_0_0_1px_rgb(13_13_13/0.08)]">
+              <Glyph name={p.icon} class="size-[22px]" />
             </span>
-            <span class="font-mono text-[12px] text-faint">0{i + 1} / 0{n}</span>
           </div>
-          <h3 class="mt-8 font-display text-[clamp(1.5rem,1.35rem+0.6vw,1.875rem)] leading-[1.15] tracking-[-0.01em]">{p.title}</h3>
-          <p class="mt-3 max-w-[34ch] text-[16px] leading-[1.6] text-ink-2">{p.body}</p>
+          <h3 class="mt-10 text-[clamp(1.375rem,1.25rem+0.5vw,1.75rem)] font-light leading-[1.15] tracking-[-0.035em]">{p.title}</h3>
+          <p class="mt-3 max-w-[36ch] text-[16px] leading-[1.55] text-ink-2">{p.body}</p>
         </li>
       ))
     }

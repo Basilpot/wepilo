@@ -1,0 +1,41 @@
+---
+/**
+ * Two layers of peaks that rise out of the section above into a cobalt band. The outlines are
+ * midpoint-displacement ridgelines from a fixed seed, so they look hand-drawn but never change
+ * between builds. The back layer drifts a little on scroll (see `.ridge-back`).
+ */
+interface Props {
+  seed?: number;
+  class?: string;
+}
+const { seed = 7, class: cls } = Astro.props;
+
+function ridge(s: number, rough: number, base: number, amp: number) {
+  let x = s;
+  const rand = () => ((x = (x * 16807) % 2147483647) - 1) / 2147483646;
+  // A handful of anchor peaks and saddles, then roughen between them.
+  let pts = Array.from({ length: 9 }, (_, i) => base - (i % 2 ? rand() * 0.35 : 0.55 + rand() * 0.45) * amp);
+  let spread = amp * 0.7;
+  for (let i = 0; i < 5; i++) {
+    const next: number[] = [];
+    for (let j = 0; j < pts.length - 1; j++) next.push(pts[j], (pts[j] + pts[j + 1]) / 2 + (rand() - 0.5) * spread);
+    next.push(pts[pts.length - 1]);
+    pts = next;
+    spread *= rough;
+  }
+  const step = 1600 / (pts.length - 1);
+  const top = pts.map((y, i) => `${(i * step - 80).toFixed(1)} ${Math.max(4, Math.min(160, y)).toFixed(1)}`).join(" L");
+  return `M-80 160 L${top} L1520 160z`;
+}
+const back = ridge(seed * 31 + 3, 0.55, 140, 130);
+const front = ridge(seed, 0.5, 158, 105);
+---
+
+<div class:list={["pointer-events-none relative overflow-hidden", cls]} aria-hidden="true">
+  <svg class="ridge ridge-back absolute inset-0" viewBox="0 0 1440 160" preserveAspectRatio="none">
+    <path fill="var(--color-cobalt)" opacity="0.32" d={back}></path>
+  </svg>
+  <svg class="ridge relative" viewBox="0 0 1440 160" preserveAspectRatio="none">
+    <path fill="var(--color-cobalt)" d={front}></path>
+  </svg>
+</div>

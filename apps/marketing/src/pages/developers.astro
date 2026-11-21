@@ -2,6 +2,7 @@
 import Button from "../components/ui/Button.astro";
 import Site from "../layouts/Site.astro";
 import SketchBlock from "../components/sketch/SketchBlock.astro";
+import SplitHead from "../components/site/SplitHead.astro";
 import PointsRow from "../components/sketch/PointsRow.astro";
 import SpecSheet from "../components/sketch/SpecSheet.astro";
 import type { GlyphName } from "../components/sketch/util";
@@ -28,41 +29,36 @@ const endpoints: Array<{ icon: GlyphName; title: string; note: string; where: st
 ---
 
 <Site
+  overlayNav="light"
   title="For developers · Wepilo"
   description="Wepilo's core is going open source under AGPL-3.0: a travel content schema, a website API and an MCP connector. Build any frontend on it, or use the hosted version for clients."
 >
   <SketchBlock
     id="dev-title"
     level="h1"
-    class="pt-16 md:pt-24"
+    top
+    tint="sky"
     line={["Build the site once", "and hand it over."]}
     sketch="api"
     name="Wepilo for developers"
     sub="After launch the agency updates its own content, so you aren't the bottleneck. The core is AGPL-3.0, and we're publishing it soon."
-    tag="open source · agpl-3.0"
   >
     <Button href="/pricing" variant="light">see pricing</Button>
     <Button href={devMail} variant="dark">get early access</Button>
+    <PointsRow slot="after" scene items={points} label="What you get" />
   </SketchBlock>
 
-  <div class="pt-36 md:pt-48">
-    <PointsRow items={points} label="What you get" />
-  </div>
-
-  <div class="pt-36 md:pt-48">
+  <div>
     <SpecSheet name="the website API" title="What's in the website API" items={endpoints} />
   </div>
 
-  <section class="wrap pt-36 text-center md:pt-48" aria-labelledby="repo-title">
-    <h2 id="repo-title" class="mx-auto max-w-[22ch] font-display text-[clamp(1.75rem,1.45rem+1vw,2.375rem)] leading-[1.12] tracking-[-0.015em]">
-      The repository opens <em>with the first release.</em>
-    </h2>
-    <p class="mx-auto mt-5 max-w-[34rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">
-      Want early access, or a site built for a client? Write and tell us what you're building.
-    </p>
-    <p class="mt-5 font-mono text-[14px] lowercase text-muted">[ {CONTACT_EMAIL} ]</p>
-    <div class="mt-8 flex justify-center">
-      <Button href={devMail} variant="dark">write to us</Button>
+  <section class="px-5 pt-24 md:px-10 md:pt-32 xl:px-[72px]" aria-labelledby="repo-title">
+    <div class="rounded-[8px] bg-mist px-6 py-12 md:px-12 md:py-16">
+      <SplitHead id="repo-title" lead="Want early access, or a site built for a client? Write and tell us what you're building.">
+        <Fragment slot="title">The repository opens <em>with the first release.</em></Fragment>
+        <Button href={devMail} variant="red">Write to us</Button>
+        <a href={devMail} class="self-center text-[15px] text-ink-2 hover:text-red">{CONTACT_EMAIL}</a>
+      </SplitHead>
     </div>
   </section>
 </Site>

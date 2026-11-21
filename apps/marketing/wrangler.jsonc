@@ -7,7 +7,9 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    // Old /features addresses go to the Worker first so it can 301 them to /product.
+    "run_worker_first": ["/features", "/features/*"]
   },
   "routes": [{ "pattern": "aboutwepilo.basilpot.com", "custom_domain": true }],
   "vars": {

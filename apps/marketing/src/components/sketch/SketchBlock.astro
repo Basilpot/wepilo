@@ -1,10 +1,12 @@
 ---
-import { tintBg } from "../../lib/tints";
+import { sceneStyle } from "../../lib/tints";
 import type { SketchName, Tint } from "../../data/features";
+import SplitHead from "../site/SplitHead.astro";
 import Sketch from "./Sketch.astro";
 
 /**
- * A centred section: the headline, its description and the buttons, then the annotated drawing.
+ * A full-width painted band: the hero-style split head (headline left, lead and buttons right),
+ * then the annotated drawing on a frosted pane over the landscape.
  */
 interface Props {
   line: [string, string];
@@ -12,31 +14,29 @@ interface Props {
   /** Kept for callers; the headline is the visible heading. */
   name?: string;
   sub: string;
-  /** A small mono note shown under the description, e.g. "included in every plan". */
-  tag?: string;
   /** "h1" on a feature or solution page, "h2" when repeated down the homepage. */
   level?: "h1" | "h2";
   id: string;
-  /** Sets the section on a full-width band of this colour. */
+  /** Sets the section on this tint's painted landscape. */
   tint?: Tint;
+  /** First thing on the page: the scene runs up behind the floating nav. Slot "crumb" sits above the head. */
+  top?: boolean;
   class?: string;
 }
-const { line, sketch, sub, tag, level = "h2", id, tint, class: cls } = Astro.props;
-const Heading = level;
+const { line, sketch, sub, level = "h2", id, tint, top = false, class: cls } = Astro.props;
 ---
 
-<section class:list={[cls, tint && ["py-20 md:py-28", tintBg[tint]]]} aria-labelledby={id}>
-  <div class="wrap text-center">
-    <Heading id={id} class="mx-auto max-w-[24ch] font-display text-[clamp(1.875rem,1.5rem+1.3vw,2.75rem)] font-normal leading-[1.12] tracking-[-0.015em]">
-      {`${line[0]} `}<em>{line[1]}</em>
-    </Heading>
-    <p class="mx-auto mt-5 max-w-[38rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">{sub}</p>
-    {tag && <p class="mt-4 font-mono text-[13.5px] lowercase text-muted">[ {tag} ]</p>}
-    <div class="mt-7 flex flex-wrap justify-center gap-3 empty:hidden"><slot /></div>
+<section class:list={[cls, tint && "painted painted-head pb-10 md:pb-16", tint && (top ? "painted-top pt-36 md:pt-44" : "pt-20 md:pt-28")]} style={tint ? sceneStyle(tint) : undefined} aria-labelledby={id}>
+  <div class="px-5 md:px-10 xl:px-[72px]">
+    <div class="mb-10 empty:hidden md:mb-14"><slot name="crumb" /></div>
+    <SplitHead id={id} level={level} lead={sub}>
+      <Fragment slot="title">{`${line[0]} `}<em>{line[1]}</em></Fragment>
+      <slot />
+    </SplitHead>
 
-    <div class="mx-auto mt-10 max-w-[1200px] md:mt-6">
+    <div class="frost mx-auto mt-12 max-w-[1240px] px-4 py-6 sm:px-8 md:mt-16 md:px-12 md:py-10">
       <Sketch name={sketch} annotated />
     </div>
-
+    <div class="mx-auto mt-3 max-w-[1240px] empty:hidden"><slot name="after" /></div>
   </div>
 </section>

@@ -7,9 +7,11 @@ import { SITE_URL } from "../config";
 interface Props {
   title: string;
   description: string;
+  /** Lay the nav over the first section (glass variant) instead of above it. */
+  overlayNav?: boolean | "light";
 }
 
-const { title, description } = Astro.props;
+const { title, description, overlayNav = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, SITE_URL).toString();
 ---
 
@@ -36,7 +38,7 @@ const canonical = new URL(Astro.url.pathname, SITE_URL).toString();
       class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-white"
       >Skip to content</a
     >
-    <SiteNav />
+    <SiteNav overlay={overlayNav} />
     <main id="main">
       <slot />
     </main>

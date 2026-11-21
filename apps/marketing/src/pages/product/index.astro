@@ -1,0 +1,37 @@
+---
+import Site from "../../layouts/Site.astro";
+import SketchCard from "../../components/sketch/SketchCard.astro";
+import PageHero from "../../components/site/PageHero.astro";
+import { features } from "../../data/features";
+
+const pad = (i: number) => String(i + 1).padStart(2, "0");
+/** Bento: wide, narrow, narrow / narrow, narrow, wide / wide, narrow, narrow. Columns on a 4-wide grid. */
+const span = [2, 1, 1, 1, 1, 2, 2, 1, 1];
+---
+
+<Site
+  overlayNav="light"
+  title="Product · Wepilo"
+  description="Trip pages, departures, a content calendar, an AI assistant, languages, roles, SEO, enquiries by email and hosting: everything a travel agency website needs."
+>
+  <PageHero id="features-title" label="product" tint="sand" lead="Eight parts, one dashboard, included in every plan. Pick one to see how it works.">
+    Everything a travel site needs, <em>in one place to edit.</em>
+    <div slot="after" aria-label="Everything in the product">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        features.map((f, i) => (
+          <SketchCard
+            href={`/product/${f.slug}`}
+            sketch={f.sketch}
+            tint={f.tint}
+            name={f.name}
+            summary={f.summary}
+            large={span[i] === 2}
+            class={span[i] === 2 ? "sm:col-span-2" : ""}
+          />
+        ))
+      }
+    </div>
+    </div>
+  </PageHero>
+</Site>

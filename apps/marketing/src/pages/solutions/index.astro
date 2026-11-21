@@ -1,28 +1,22 @@
 ---
 import Site from "../../layouts/Site.astro";
 import SketchCard from "../../components/sketch/SketchCard.astro";
+import PageHero from "../../components/site/PageHero.astro";
 import { solutions } from "../../data/solutions";
 ---
 
 <Site
+  overlayNav="light"
   title="Solutions · Wepilo"
   description="Wepilo for tour operators, trekking and adventure agencies, inbound agencies and DMCs, and the developers who build their sites."
 >
-  <section class="wrap pt-16 text-center md:pt-24" aria-labelledby="solutions-title">
-    <p class="font-mono text-[14px] font-medium lowercase text-muted">[ solutions ]</p>
-    <h1 id="solutions-title" class="mx-auto mt-6 max-w-[22ch] font-display text-[clamp(2rem,1.55rem+1.5vw,2.875rem)] leading-[1.12] tracking-[-0.015em]">
-      Different trips, <em>the same problem.</em>
-    </h1>
-    <p class="mx-auto mt-6 max-w-[36rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">
-      Whatever you sell, the website falls behind when every change needs someone else. Pick the one closest to your
-      agency.
-    </p>
-  </section>
-
-  <section class="wrap pt-16 md:pt-20" aria-label="All solutions">
+  <PageHero id="solutions-title" label="solutions" tint="sage" lead="Whatever you sell, the website falls behind when every change needs someone else. Pick the one closest to your agency.">
+    Different trips, <em>the same problem.</em>
+    <div slot="after" aria-label="All solutions">
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {solutions.map((s, i) => <SketchCard href={`/solutions/${s.slug}`} sketch={s.sketch} tint={s.tint} name={s.name} summary={s.summary} index={String(i + 1).padStart(2, "0")} />)}
-      <SketchCard href="/developers" sketch="api" tint="butter" name="Web developers" summary="Build a client's site once and let the agency run it." index="04" />
+      {solutions.map((s, i) => <SketchCard href={`/solutions/${s.slug}`} sketch={s.sketch} tint={s.tint} name={s.name} summary={s.summary} />)}
+      <SketchCard href="/developers" sketch="api" tint="butter" name="Web developers" summary="Build a client's site once and let the agency run it." />
     </div>
-  </section>
+    </div>
+  </PageHero>
 </Site>

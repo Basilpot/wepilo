@@ -1,13 +1,21 @@
 type Env = { ASSETS: { fetch(request: Request): Promise<Response> } };
 
 /**
- * The marketing site is static. This Worker only adds the headers a marketing site needs:
- * long caching for fingerprinted assets, and short caching for the HTML.
+ * The marketing site is static. This Worker redirects the old /features addresses to /product
+ * and adds the headers a marketing site needs: long caching for fingerprinted assets, and short
+ * caching for the HTML.
  */
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const response = await env.ASSETS.fetch(request);
     const url = new URL(request.url);
+
+    // The product pages moved from /features to /product; keep old links and search results working.
+    if (url.pathname === "/features" || url.pathname.startsWith("/features/")) {
+      url.pathname = "/product" + url.pathname.slice("/features".length);
+      return Response.redirect(url.toString(), 301);
+    }
+
+    const response = await env.ASSETS.fetch(request);
     const isAsset = url.pathname.startsWith("/_astro/") || /\.(svg|png|jpg|jpeg|webp|avif|ico|woff2?)$/.test(url.pathname);
 
     const headers = new Headers(response.headers);

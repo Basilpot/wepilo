@@ -1,22 +1,37 @@
 ---
+import type { Tint } from "../../data/features";
+import { sceneStyle } from "../../lib/tints";
+
 /**
- * Inner-page opening in the homepage's style: a mono label, a centred serif headline,
- * one line of lead and the buttons. `clip` is accepted for older callers and ignored.
+ * Inner-page opening in the hero's split: a small label, the big light headline on the left,
+ * the lead and buttons on the right. With `tint` it becomes a painted band that runs up behind
+ * the floating nav (pair with `overlayNav="light"`), and slot "after" sits on the scene below.
+ * `clip` is accepted for older callers and ignored.
  */
 interface Props {
   id: string;
   label: string;
   clip?: string;
   lead: string;
+  tint?: Tint;
 }
-const { id, label, lead } = Astro.props;
+const { id, label, lead, tint } = Astro.props;
 ---
 
-<section class="wrap pt-16 text-center md:pt-24" aria-labelledby={id}>
-  <p class="font-mono text-[14px] font-medium lowercase text-muted">[ {label} ]</p>
-  <h1 id={id} class="mx-auto mt-6 max-w-[22ch] font-display text-[clamp(2rem,1.55rem+1.5vw,2.875rem)] leading-[1.12] tracking-[-0.015em]">
-    <slot />
-  </h1>
-  <p class="mx-auto mt-6 max-w-[36rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">{lead}</p>
-  <div class="mt-8 flex flex-wrap justify-center gap-3"><slot name="actions" /></div>
+<section
+  class:list={["px-5 md:px-10 xl:px-[72px]", tint ? "painted painted-head painted-top pb-12 pt-36 md:pb-20 md:pt-44" : "pt-14 md:pt-24"]}
+  style={tint ? sceneStyle(tint) : undefined}
+  aria-labelledby={id}
+>
+  <p class="text-[15px] text-ink-2/75">{label[0].toUpperCase() + label.slice(1)}</p>
+  <div class="mt-6 grid gap-8 md:grid-cols-[1fr_minmax(0,26rem)] md:items-end md:gap-16 lg:grid-cols-[1fr_30rem]">
+    <h1 id={id} class="max-w-[16em] text-[clamp(2.5rem,1.5rem+3.2vw,4rem)] font-light leading-[1.08] tracking-[-0.045em]">
+      <slot />
+    </h1>
+    <div>
+      <p class="text-[clamp(1.0625rem,0.98rem+0.35vw,1.3rem)] leading-[1.35] text-ink-2">{lead}</p>
+      <div class="mt-7 flex flex-wrap gap-3 empty:hidden"><slot name="actions" /></div>
+    </div>
+  </div>
+  <div class="mt-14 empty:hidden md:mt-20"><slot name="after" /></div>
 </section>

@@ -1,5 +1,7 @@
 ---
 import Video from "../site/Video.astro";
+import Ridge from "../site/Ridge.astro";
+import SplitHead from "../site/SplitHead.astro";
 
 /**
  * Four looping clips of the kinds of trips agencies sell, each with the trip card Wepilo would publish.
@@ -13,32 +15,25 @@ const reel = [
 ];
 ---
 
-<section class="wrap" aria-labelledby="reel-title">
-  <h2 id="reel-title" class="mx-auto max-w-[22ch] text-center font-display text-[clamp(1.875rem,1.5rem+1.3vw,2.75rem)] leading-[1.12] tracking-[-0.015em]">
-    Whatever you sell, <em>one way to publish it.</em>
-  </h2>
-  <p class="mx-auto mt-6 max-w-[34rem] text-center text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">
-    Treks, island hops, summits and multi-country tours all use the same trip page, so your team learns it once.
-  </p>
+<section aria-labelledby="reel-title">
+  <Ridge />
+  <div class="sky relative isolate px-5 pb-24 pt-16 text-white md:px-10 md:pb-32 md:pt-20 xl:px-[72px]">
+    <div class="grain pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
+    <SplitHead id="reel-title" dark lead="Treks, island hops, summits and multi-country tours all use the same trip page, so your team learns it once.">
+      <Fragment slot="title">Whatever you sell, <em>one way to publish it.</em></Fragment>
+    </SplitHead>
 
-  <div class="border-t border-line mt-14" aria-hidden="true"></div>
-  <ul class="reveal grid gap-px border-x border-b border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+  <ul class="reveal mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     {
       reel.map((r, i) => (
-        <li class="group relative flex aspect-[3/4] flex-col justify-between overflow-hidden bg-ink p-4 text-white">
+        <li class="group relative flex aspect-[3/4] flex-col justify-between overflow-hidden rounded-[8px] bg-[#0f2a78] p-4 text-white">
           <div class="absolute inset-0 -z-0 transition-transform duration-700 group-hover:scale-[1.03]">
             <Video name={r.clip} />
           </div>
           <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/10" aria-hidden="true" />
-          <p class="relative flex items-center justify-between font-mono text-[12.5px] lowercase text-white/85">
-            <span>[ {r.kind} ]</span>
-            <span>0{i + 1}</span>
-          </p>
-          <div class="relative border border-line bg-paper p-4 text-ink">
-            <p class="flex items-center gap-2 font-mono text-[11px] lowercase text-muted">
-              <span class="size-1.5 bg-red" aria-hidden="true" />live on site
-            </p>
-            <p class="mt-2 font-display text-[19px] leading-[1.15]">{r.name}</p>
+          <span aria-hidden="true"></span>
+          <div class="footer-pane relative rounded-[6px] p-4 text-ink">
+            <p class="text-[19px] leading-[1.15] tracking-[-0.025em]">{r.name}</p>
             <p class="mt-2 flex items-baseline justify-between font-mono text-[11.5px] text-muted">
               <span>{r.facts.join(" · ")}</span>
               <span class="text-ink">from {r.price}</span>
@@ -48,4 +43,5 @@ const reel = [
       ))
     }
   </ul>
+  </div>
 </section>

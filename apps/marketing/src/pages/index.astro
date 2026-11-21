@@ -10,6 +10,8 @@ import SketchCard from "../components/sketch/SketchCard.astro";
 import SketchSplit from "../components/sketch/SketchSplit.astro";
 import TripReel from "../components/sketch/TripReel.astro";
 import Video from "../components/site/Video.astro";
+import Ridge from "../components/site/Ridge.astro";
+import SplitHead from "../components/site/SplitHead.astro";
 import { features, featureBySlug } from "../data/features";
 import { solutions } from "../data/solutions";
 
@@ -19,6 +21,7 @@ const rest = features.filter((f) => !showcase.includes(f));
 ---
 
 <Site
+  overlayNav
   title="Wepilo: website software for travel agencies"
   description="Wepilo lets travel and tour agencies update trips, dates and translations themselves. Drafts are written for you, and your team publishes them or schedules them for later."
 >
@@ -36,44 +39,45 @@ const rest = features.filter((f) => !showcase.includes(f));
     showcase.map((f, i) =>
       i % 2 === 0 ? (
         <SketchBlock id={`home-${f.slug}`} class="mt-32 md:mt-48" tint={f.tint} line={f.line} sketch={f.sketch} name={f.name} sub={f.lead}>
-          <Button href={`/features/${f.slug}`} variant="light">
+          <Button href={`/product/${f.slug}`} variant="light">
             more on {f.name.toLowerCase()}
           </Button>
         </SketchBlock>
       ) : (
-        <SketchSplit id={`home-${f.slug}`} class="pt-32 md:pt-48" feature={f} count={`0${i + 1} / 0${showcase.length}`} flip={i === 3} />
+        <SketchSplit id={`home-${f.slug}`} class="pt-32 md:pt-48" feature={f} flip={i === 3} />
       ),
     )
   }
 
-  <section class="wrap pt-40 md:pt-56" aria-labelledby="rest-title">
-    <h2 id="rest-title" class="mx-auto max-w-[22ch] text-center font-display text-[clamp(1.875rem,1.5rem+1.3vw,2.75rem)] leading-[1.12] tracking-[-0.015em]">
-      And the parts <em>you'd expect.</em>
-    </h2>
-    <div class="reveal mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {rest.map((f) => <SketchCard href={`/features/${f.slug}`} sketch={f.sketch} tint={f.tint} name={f.name} summary={f.summary} />)}
+  <section class="px-5 pt-40 md:px-10 md:pt-56 xl:px-[72px]" aria-labelledby="rest-title">
+    <SplitHead id="rest-title" lead="Departures, publishing roles, SEO, enquiries and hosting, all in the same place as your trips.">
+      <Fragment slot="title">And the parts <em>you'd expect.</em></Fragment>
+      <NavLink href="/product">See the whole product</NavLink>
+    </SplitHead>
+    <div class="reveal mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      {rest.map((f) => <SketchCard href={`/product/${f.slug}`} sketch={f.sketch} tint={f.tint} name={f.name} summary={f.summary} />)}
     </div>
-    <p class="mt-10 text-center">
-      <NavLink href="/features">all features</NavLink>
-    </p>
   </section>
 
-  <section class="wrap pt-40 md:pt-56" aria-labelledby="for-title">
-    <h2 id="for-title" class="mx-auto max-w-[22ch] text-center font-display text-[clamp(1.875rem,1.5rem+1.3vw,2.75rem)] leading-[1.12] tracking-[-0.015em]">
-      Built for agencies <em>like yours.</em>
-    </h2>
-    <div class="reveal mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {solutions.map((s) => <SketchCard href={`/solutions/${s.slug}`} name={s.name} summary={s.summary} />)}
-      <SketchCard href="/developers" name="Web developers" summary="Build a client's site once and let the agency run it." />
+  <section class="pt-40 md:pt-56" aria-labelledby="for-title">
+    <Ridge seed={19} />
+    <div class="sky relative isolate px-5 pb-24 pt-16 text-white md:px-10 md:pb-32 md:pt-20 xl:px-[72px]">
+      <div class="grain pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
+      <SplitHead id="for-title" dark lead="Tour operators, trekking outfits and DMCs each get the same editor, set up around how they sell.">
+        <Fragment slot="title">Built for agencies <em>like yours.</em></Fragment>
+      </SplitHead>
+      <div class="reveal mt-14 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        {solutions.map((s) => <SketchCard dark href={`/solutions/${s.slug}`} name={s.name} summary={s.summary} />)}
+        <SketchCard dark href="/developers" name="Web developers" summary="Build a client's site once and let the agency run it." />
+      </div>
     </div>
   </section>
 
   <!-- A quiet media moment before the questions. -->
   <section class="wrap pt-40 md:pt-56" aria-label="A season of trips">
-    <div class="border-t border-line" aria-hidden="true"></div>
-    <div class="clip clip-scrim relative flex aspect-[4/5] items-end border-x border-b border-line p-6 sm:aspect-[21/9] md:p-12" style="border-radius:0">
+    <div class="clip clip-scrim relative flex aspect-[4/5] items-end p-6 sm:aspect-[21/9] md:p-12">
       <Video name="cloud-sea" />
-      <p class="relative max-w-[18ch] font-display text-[clamp(1.75rem,1.4rem+1.4vw,2.75rem)] leading-[1.12] tracking-[-0.015em] text-white">
+      <p class="relative max-w-[18ch] font-display text-[clamp(1.75rem,1.4rem+1.4vw,2.75rem)] leading-[1.12] tracking-[-0.035em] text-white">
         Next season, <em class="!text-white/70">published on time.</em>
       </p>
     </div>

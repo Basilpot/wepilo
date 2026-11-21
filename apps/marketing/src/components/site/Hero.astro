@@ -1,33 +1,80 @@
 ---
-import Button from "../ui/Button.astro";
-import { SETUP_CALL_URL } from "../../config";
-import HeroSketch from "../sketch/HeroSketch.astro";
+import { SIGNUP_URL } from "../../config";
 
 /**
- * antimattr-style opening: a short centred serif line, the annotated product drawing,
- * then the name, one line on what it is, a mono tag and two buttons.
+ * Full-height cobalt sky: backing line and headline on the left, lead and one white button on
+ * the right, a painted range across the bottom, and a frosted strip of trip types under it.
+ * The nav sits on top of this in its glass variant (see SiteNav `overlay`).
  */
+const strip = ["Treks", "Tours", "Expeditions", "Safaris", "Day trips", "Retreats", "Cruises"];
 ---
 
-<section class="wrap pt-16 text-center md:pt-24" aria-labelledby="hero-title">
-  <p class="mx-auto max-w-[24ch] font-display text-[clamp(2rem,1.55rem+1.5vw,2.875rem)] leading-[1.12] tracking-[-0.015em]">
-    A travel website your team <em>can keep current.</em>
-  </p>
+<section class="sky relative isolate flex min-h-[640px] flex-col overflow-hidden text-white md:h-svh md:max-h-[1000px] md:min-h-[760px]" aria-labelledby="hero-title">
+  <div class="grain pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
 
-  <div class="relative mx-auto mt-12 max-w-[1200px] md:mt-8">
-    <div class="dots pointer-events-none absolute inset-x-[8%] -inset-y-6" aria-hidden="true"></div>
-    <div class="relative"><HeroSketch /></div>
-  </div>
+  <img
+    src="/art/hero-mountains.webp"
+    alt=""
+    width="2400"
+    height="1100"
+    class="pointer-events-none absolute left-1/2 top-[52%] -z-10 h-auto w-full min-w-[1100px] max-w-none -translate-x-1/2 select-none md:top-[41%]"
+    fetchpriority="high"
+  />
 
-  <div class="mx-auto mt-10 max-w-[40rem] md:mt-4">
-    <h1 id="hero-title" class="font-sans text-[clamp(2rem,1.6rem+1.4vw,2.75rem)] font-medium leading-[1.1] tracking-[-0.03em]">wepilo</h1>
-    <p class="mt-3 text-[clamp(1.0625rem,1rem+0.3vw,1.25rem)] text-ink-2">
-      Website software for travel and tour agencies
-    </p>
-    <p class="mt-4 font-mono text-[14px] font-medium lowercase text-muted">[ free setup call with every plan ]</p>
-    <div class="mt-8 flex flex-wrap justify-center gap-3">
-      <Button href="/features" variant="light">see the features</Button>
-      <Button href={SETUP_CALL_URL} variant="red">book a setup call</Button>
+  <div class="wrap-hero relative grid flex-1 content-start gap-10 pt-36 md:grid-cols-[1fr_minmax(0,29rem)] md:gap-16 md:pt-[clamp(150px,25svh,232px)] lg:grid-cols-[1fr_29rem] xl:grid-cols-[1fr_32rem]">
+    <div>
+      <h1 id="hero-title" class="max-w-[15em] text-[clamp(2.5rem,1.5rem+3.2vw,4rem)] font-light leading-[1.1] tracking-[-0.045em] text-[#e6ecff]">
+        Keep every trip page current, yourself.
+      </h1>
+    </div>
+
+    <div class="md:pt-4">
+      <p class="text-[clamp(1.0625rem,0.95rem+0.45vw,1.4rem)] leading-[1.3] text-white/70">
+        Trips, dates and translations in one place. Drafts are written for you, and your team publishes when ready.
+      </p>
+      <a
+        href={SIGNUP_URL}
+        data-round
+        class="mt-9 inline-flex h-[50px] items-center rounded-[8px] bg-white px-6 text-[17px] font-medium tracking-[-0.01em] text-[#111] transition-colors hover:bg-[#eef1fb] md:text-[19px]"
+      >
+        Start free trial
+      </a>
     </div>
   </div>
+
+  <ul class="hero-strip relative z-10 mt-auto grid h-20 grid-cols-3 sm:grid-cols-4 lg:grid-cols-7" aria-label="Trip types Wepilo is built for">
+    {
+      strip.map((s, i) => (
+        <li class:list={["hero-strip-cell grid place-items-center", i >= 3 && "max-sm:hidden", i >= 4 && "max-lg:hidden"]}>
+          <span class="text-[19px] font-semibold tracking-[-0.03em] text-[#5b6170]/80">{s}</span>
+        </li>
+      ))
+    }
+  </ul>
 </section>
+
+<style>
+  .wrap-hero {
+    width: 100%;
+    padding-inline: 20px;
+  }
+  @media (min-width: 768px) {
+    .wrap-hero {
+      padding-inline: 40px;
+    }
+  }
+  @media (min-width: 1280px) {
+    .wrap-hero {
+      padding-inline: 72px;
+    }
+  }
+  /* Frosted panes: each cell blurs the snow behind it, divided by thin light seams. */
+  .hero-strip-cell {
+    background: rgb(236 240 250 / 0.72);
+    backdrop-filter: blur(18px) saturate(1.1);
+    -webkit-backdrop-filter: blur(18px) saturate(1.1);
+    box-shadow:
+      inset 1px 0 0 rgb(255 255 255 / 0.7),
+      inset -1px 0 0 rgb(150 160 185 / 0.25);
+  }
+</style>

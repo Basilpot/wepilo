@@ -21,7 +21,7 @@ const LINE = 22;
 const drawing = await Astro.slots.render("default");
 ---
 
-<figure class:list={["sketch reveal sk-anim", cls]}>
+<figure class:list={["sketch", cls]}>
   {
     annotated && (
       <svg viewBox={CROP} role="img" aria-label={title} class="sk block h-auto w-full md:hidden">

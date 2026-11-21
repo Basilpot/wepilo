@@ -1,0 +1,45 @@
+---
+import NavLink from "../../components/ui/NavLink.astro";
+import Button from "../../components/ui/Button.astro";
+import Site from "../../layouts/Site.astro";
+import SketchBlock from "../../components/sketch/SketchBlock.astro";
+import SketchCard from "../../components/sketch/SketchCard.astro";
+import SpecSheet from "../../components/sketch/SpecSheet.astro";
+import PointsRow from "../../components/sketch/PointsRow.astro";
+import SplitHead from "../../components/site/SplitHead.astro";
+import { features, type Feature } from "../../data/features";
+import { solutions } from "../../data/solutions";
+import { SETUP_CALL_URL } from "../../config";
+
+export function getStaticPaths() {
+  return features.map((f) => ({ params: { slug: f.slug }, props: { f } }));
+}
+
+const { f } = Astro.props as { f: Feature };
+const others = features.filter((o) => o.slug !== f.slug).slice(0, 3);
+const usedBy = solutions.filter((s) => s.helps.some((h) => h.feature === f.slug));
+---
+
+<Site overlayNav="light" title={`${f.name} · Wepilo`} description={f.lead}>
+  <SketchBlock id="feature-title" level="h1" top tint={f.tint} line={f.line} sketch={f.sketch} name={f.name} sub={f.lead}>
+    <nav slot="crumb" aria-label="Breadcrumb" class="text-[14px] text-ink-2/75">
+      <a href="/product" class="hover:text-red">Product</a> <span class="mx-1 opacity-50">/</span> {f.name}
+    </nav>
+    <Button href="/pricing" variant="light">see pricing</Button>
+    <Button href={SETUP_CALL_URL} variant="dark">book a setup call</Button>
+    <PointsRow slot="after" scene items={f.points} label={`What ${f.name.toLowerCase()} does`} />
+  </SketchBlock>
+
+  <SpecSheet name={f.name} items={f.details} />
+
+  <section class="px-5 pt-24 md:px-10 md:pt-32 xl:px-[72px]" aria-labelledby="more-title">
+    <SplitHead id="more-title" lead={usedBy.length > 0 ? `Agencies that lean on it most: ${usedBy.map((u) => u.name.toLowerCase()).join(", ")}.` : "Every part works with the others, in the same dashboard."}>
+      <Fragment slot="title">More of <em>the product.</em></Fragment>
+      {usedBy.map((u) => <NavLink href={`/solutions/${u.slug}`}>{u.name}</NavLink>)}
+      <NavLink href="/product">See the whole product</NavLink>
+    </SplitHead>
+    <div class="mt-12 grid gap-4 md:grid-cols-3">
+      {others.map((o) => <SketchCard href={`/product/${o.slug}`} sketch={o.sketch} tint={o.tint} name={o.name} summary={o.summary} />)}
+    </div>
+  </section>
+</Site>

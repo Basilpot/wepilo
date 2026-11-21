@@ -1,9 +1,9 @@
 ---
-/** A lowercase mono link in square brackets. The current page, and hover, go red. */
+/** A plain text link with a thin underline that firms up on hover. The current page, and hover, go cobalt. */
 interface Props {
   href: string;
   current?: boolean;
-  /** Red at rest (footer style), ink on hover. */
+  /** Cobalt at rest (footer style), ink on hover. */
   red?: boolean;
   class?: string;
 }
@@ -14,7 +14,7 @@ const { href, current = false, red = false, class: cls } = Astro.props;
   href={href}
   aria-current={current ? "page" : undefined}
   class:list={[
-    "inline-flex gap-[0.35em] font-mono text-[15px] lowercase transition-colors duration-150 before:content-['['] after:content-[']']",
+    "inline-block text-[15px] underline decoration-current/30 decoration-1 underline-offset-[5px] transition-colors duration-150 first-letter:uppercase hover:decoration-current",
     red ? "text-red hover:text-ink" : "text-ink hover:text-red aria-[current=page]:text-red",
     cls,
   ]}><slot /></a
