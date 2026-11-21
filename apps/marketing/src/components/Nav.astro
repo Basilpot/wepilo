@@ -1,0 +1,132 @@
+---
+interface Props {
+  dashboard: string;
+}
+
+const { dashboard } = Astro.props;
+
+type Item = { label: string; href: string; description?: string };
+type Group = { label: string; items: Item[] };
+
+const groups: Group[] = [
+  {
+    label: "Product",
+    items: [
+      { label: "Trips & departures", href: "/#desk", description: "Itineraries, dates, seats and prices" },
+      { label: "Bookings & enquiries", href: "/#desk", description: "Every request in one inbox" },
+      { label: "Your website", href: "/#developers", description: "One API for the whole catalogue" },
+      { label: "Wepilo for AI", href: "/#assistant", description: "Work from Claude, ChatGPT or Cursor" },
+    ],
+  },
+  {
+    label: "Who it's for",
+    items: [
+      { label: "Trekking agencies", href: "/#by-trip", description: "Departures, permits and teahouse stops" },
+      { label: "Tour operators", href: "/#by-trip", description: "The same trips across several sites" },
+      { label: "Developers", href: "/developers", description: "Build the site, Wepilo keeps it stocked" },
+    ],
+  },
+];
+
+const links = [
+  { label: "Pricing", href: "/pricing" },
+  { label: "Developers", href: "/developers" },
+];
+---
+
+<header
+  data-header
+  class="sticky top-0 z-40 transition-colors duration-200 [&.is-scrolled]:border-b [&.is-scrolled]:border-line [&.is-scrolled]:bg-paper/90 [&.is-scrolled]:backdrop-blur-xl"
+>
+  <div class="shell">
+    <nav class="flex h-[4.25rem] items-center gap-10" aria-label="Main">
+      <a href="/" class="flex items-center gap-2.5" aria-label="Wepilo home">
+        <span class="flex size-7 items-center justify-center rounded-[7px] bg-ink text-white">
+          <svg viewBox="0 0 24 24" class="size-4" fill="none" aria-hidden="true">
+            <path d="M2 19h20L14.7 5.9a1 1 0 0 0-1.74 0L8.4 12.3 6.9 9.9a1 1 0 0 0-1.68.06L2 19Z" fill="currentColor"></path>
+          </svg>
+        </span>
+        <span class="text-[18px] font-medium tracking-[-0.025em]">Wepilo</span>
+      </a>
+
+      <div class="hidden items-center gap-7 lg:flex">
+        {
+          groups.map((group) => (
+            <div class="group relative">
+              <button
+                type="button"
+                class="flex items-center gap-1.5 py-2 text-[15px] text-ink-2 transition-colors hover:text-ink"
+                aria-haspopup="true"
+              >
+                {group.label}
+                <svg viewBox="0 0 12 12" class="size-3 text-faint transition-transform duration-200 group-hover:rotate-180" fill="none" aria-hidden="true">
+                  <path d="M2.5 4.5 6 8l3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="invisible absolute -left-4 top-full z-50 w-[21rem] translate-y-1 pt-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                <div class="border border-line bg-card p-2 shadow-[0_24px_48px_-24px_rgb(23_22_15/0.25)]">
+                  {group.items.map((item) => (
+                    <a href={item.href} class="block px-3 py-2.5 transition-colors hover:bg-paper-2">
+                      <span class="block text-[14px] font-medium">{item.label}</span>
+                      {item.description && <span class="mt-0.5 block text-[13px] leading-5 text-muted">{item.description}</span>}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))
+        }
+        {
+          links.map((link) => (
+            <a href={link.href} class="py-2 text-[15px] text-ink-2 transition-colors hover:text-ink">
+              {link.label}
+            </a>
+          ))
+        }
+      </div>
+
+      <div class="ml-auto hidden items-center gap-2 lg:flex">
+        <a href={`${dashboard}/login`} class="btn btn-sm text-ink-2 hover:text-ink">Log in</a>
+        <a href={`${dashboard}/signup`} class="btn btn-dark btn-sm">Try it for $1</a>
+      </div>
+
+      <button
+        type="button"
+        data-mobile-toggle
+        aria-expanded="false"
+        aria-label="Open menu"
+        class="ml-auto flex size-10 items-center justify-center rounded-[7px] border border-line bg-card lg:hidden"
+      >
+        <svg viewBox="0 0 20 20" class="size-4" fill="none" aria-hidden="true">
+          <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </button>
+    </nav>
+  </div>
+
+  <div data-mobile-menu class="hidden border-t border-line bg-paper lg:hidden">
+    <div class="shell py-6">
+      {
+        groups.map((group) => (
+          <div class="mb-6">
+            <p class="mb-2 font-mono text-[11px] uppercase tracking-[0.1em] text-faint">{group.label}</p>
+            <div class="grid">
+              {group.items.map((item) => (
+                <a href={item.href} class="px-1 py-2.5 text-[15px]">
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+      <div class="grid border-t border-line pt-4">
+        {links.map((link) => <a href={link.href} class="px-1 py-2.5 text-[15px]">{link.label}</a>)}
+      </div>
+      <div class="mt-6 grid grid-cols-2 gap-2">
+        <a href={`${dashboard}/login`} class="btn btn-light">Log in</a>
+        <a href={`${dashboard}/signup`} class="btn btn-dark">Try it for $1</a>
+      </div>
+    </div>
+  </div>
+</header>

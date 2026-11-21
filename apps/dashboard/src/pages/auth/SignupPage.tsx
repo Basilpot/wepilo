@@ -49,7 +49,7 @@ export function SignupPage() {
   return (
     <AuthCard
       title="Create your workspace"
-      description="First, create your workspace here. Next, you start a 3-day trial for a one-time payment of $1. It is not a subscription, and nothing renews automatically."
+      description="First, create your workspace here. Next, you start a 7-day trial for a one-time payment of $2.99. It is not a subscription, and nothing renews automatically."
       footer={
         <>
           Already have an account?{" "}

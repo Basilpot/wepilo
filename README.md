@@ -7,6 +7,7 @@ apps/
   api/        Hono API on Cloudflare Workers · D1 (SQLite) via Drizzle · R2 for media
   dashboard/  React + Vite + shadcn/ui admin app, served by a Worker that proxies /api
   storefront/ Hono + JSX Worker that renders an agency's public site from the API (preview and starting point)
+  marketing/  Astro marketing site for Wepilo itself
 ```
 
 - API integration guide for website developers: [docs/API.md](docs/API.md)
@@ -32,9 +33,10 @@ pnpm --filter @wepilo/api db:migrate:local
 pnpm dev:api        # http://localhost:8787
 pnpm dev:dashboard  # http://localhost:5173  (proxies /api and /media/file to :8787)
 pnpm dev:storefront # http://localhost:5176/{workspace-slug}  (reads the API at :8787)
+pnpm dev:marketing  # http://localhost:5175  (the marketing site)
 ```
 
-Open http://localhost:5173/signup to create a workspace. A new workspace is locked behind the paywall until it pays the $1 trial. See [Billing](#billing-dodo-payments) for testing that locally.
+Open http://localhost:5173/signup to create a workspace. A new workspace is locked behind the paywall until it pays the $1 trial. See [Billing](#billing-dodo-payments) for testing that locally. Already have an account? Sign in and use **New workspace** in the sidebar to add another one.
 
 ### Useful scripts
 
@@ -59,7 +61,7 @@ Secrets live in `apps/api/.dev.vars` locally and in Wrangler secrets in producti
 | `PLATFORM_EMAIL_FROM`, `PLATFORM_SUPPORT_EMAIL` | Sender address and support inbox |
 | `DODO_API_KEY`, `DODO_WEBHOOK_SECRET` | Dodo Payments API key and webhook signing secret (`whsec_…`) |
 | `DODO_TRIAL_PRODUCT_ID` | One-time $1 product that unlocks the 3-day trial |
-| `DODO_{STARTER,GROWTH,SCALE}_{MONTHLY,ANNUAL}_PRODUCT_ID` | Subscription product per plan and interval (leave out intervals you don't sell) |
+| `DODO_PRO_{MONTHLY,ANNUAL}_PRODUCT_ID` | Subscription product for the Pro plan, per interval (leave out one you don't sell). Older `DODO_{STARTER,GROWTH,SCALE}_*` ids are still read so existing subscriptions resolve |
 
 Plain variables (`ENVIRONMENT`, `DODO_ENVIRONMENT` (`test_mode` locally, `live_mode` in production), `COOKIE_DOMAIN`, `API_BASE_URL`, `DASHBOARD_URL`, `SITE_URL`) are in `apps/api/wrangler.jsonc`, with production overrides under `env.production`.
 
@@ -75,11 +77,21 @@ Plain variables (`ENVIRONMENT`, `DODO_ENVIRONMENT` (`test_mode` locally, `live_m
 - **Settings it follows:** homepage sections, menus, announcement, social links and currency all come from the dashboard.
 - Deploy with `pnpm deploy:storefront`. Set `VITE_STOREFRONT_URL` for the dashboard build so the Preview button points at it.
 
+## Marketing site
+
+`apps/marketing` is the public site for Wepilo itself: an Astro build, served as static assets by the Worker in `apps/marketing/src/worker.ts`.
+
+- **Pages:** home, `/pricing` and `/developers`, plus a 404.
+- **Prices:** read from `GET /api/v1/plans` at build time. The plan limits come straight from `apps/api/src/lib/plans.ts`, so the page and the dashboard can never disagree. If the API cannot be reached, the page still lists every plan and its limits, and the price reads "Price at checkout".
+- **Point it at another API** with `PUBLIC_API_URL` when building.
+- Deploy with `pnpm deploy:marketing`.
+
 ## Deploying
 
 ```bash
 pnpm deploy:api        # applies remote D1 migrations, then deploys Worker "wepilo-api-production"
 pnpm deploy:dashboard  # builds the SPA, then deploys Worker "wepilo-dashboard"
+pnpm deploy:marketing  # builds the static site, then deploys Worker "wepilo-marketing"
 pnpm --filter @wepilo/api admin:create -- --email you@x.com --name "You" --remote   # first platform admin
 ```
 
@@ -89,6 +101,7 @@ Use these scripts rather than `pnpm deploy`. That is a built-in pnpm command, no
 | --- | --- | --- |
 | API | `wepilo-api-production` (`--env production`) | `wepiloapi.basilpot.com` |
 | Dashboard | `wepilo-dashboard` | `wepilo.basilpot.com` |
+| Marketing | `wepilo-marketing` | a domain of its own |
 
 The D1 database (`narfu-db`) and R2 bucket (`narfu-media`) keep their original names, because they hold data and can't be renamed.
 
@@ -129,6 +142,17 @@ Limits are defined once in `apps/api/src/lib/plans.ts` (`PLANS`). The Billing pa
 
 Going over a limit returns `402` with `code: "PLAN_LIMIT"`, and the dashboard shows a toast with a "See plans" link.
 
+## Accounts and workspaces
+
+An **account** is a person: one email and one password. A **workspace** is one agency's dashboard, with its own trips, bookings, website and plan. One account can hold several workspaces.
+
+- **One sign-in opens every workspace.** The password belongs to the person, not to a workspace. A password reset changes it everywhere they can sign in.
+- **Switch from the sidebar.** The menu at the top of the sidebar lists your workspaces, and **New workspace** adds another one. You stay signed in as the owner of the new one.
+- **A role per workspace.** The same person can own one agency and be an editor in another. Each workspace has its own role, limits and plan.
+- **Staff keep their own password.** When you invite someone who already signs in to Wepilo, they keep their password and you don't set one. A workspace can only set a password for someone whose login lives nowhere else.
+- **The free trial is one per person.** A second workspace skips the $1 trial and goes straight to a plan.
+- **One billing customer per person.** Dodo sees one customer for all your workspaces, so the portal shows every plan you buy.
+
 ## Billing (Dodo Payments)
 
 **Lifecycle**
@@ -159,6 +183,7 @@ Going over a limit returns `402` with `code: "PLAN_LIMIT"`, and the dashboard sh
 Wepilo's own team works at `/admin` on the dashboard domain. It has its own login and cookie, separate from any agency workspace.
 
 - **Create a workspace** for an enterprise deal: company, slug, owner name and email, plan (any plan, Enterprise included) and an end date (Enterprise can have none). These workspaces are **managed** (`billing_mode = MANUAL`): no $1 trial or checkout, and the dashboard and website API stay on until the end date. Afterwards the usual expiry email and 15-day API grace period apply.
+  - The same owner email may hold several workspaces. An owner who already signs in to Wepilo keeps their password; a new customer gets a setup link to choose one.
 - **Hand it over** with a one-time setup link (valid 7 days). The admin can email it from Wepilo or copy it and send it themselves. Issuing a new link cancels the old one. When the client uses it, they choose a password and sign in as the owner.
 - **Open as owner** signs the admin's browser into the workspace as its owner for one hour, for example to load trips before the handover. A banner shows while this is active.
 - **Change** the plan, end date, owner email or internal notes, or **suspend** the workspace (everyone is signed out and the website API stops).
@@ -171,7 +196,7 @@ Create the first admin with `admin:create` (see [Useful scripts](#useful-scripts
 ## Known limitations (by design for now)
 
 - Travellers can't pay online. `POST /bookings` creates a **pending** booking that staff confirm by hand.
-- Few transactional emails. Booking, inquiry and support notifications aren't sent yet.
+- Few transactional emails. Staff are emailed about new bookings and inquiries; travellers are never emailed automatically.
 - Seats are only taken when staff **confirm** a booking, so pending bookings can add up to more than a departure's capacity.
 
 ---
@@ -193,6 +218,8 @@ A typical setup for a new agency:
    - **Admin**: everything except billing and API keys.
    - **Manager**: trips, departures, bookings and content.
    - **Editor**: posts, pages and media only.
+   - Everyone signs in with their own email and password, in every workspace they belong to. If they already sign in to Wepilo, leave the temporary password empty: they keep their own.
 10. **API key** (Settings → API keys, any paid plan). Generate a key for your website developer and give them [docs/API.md](docs/API.md).
+11. **Another workspace** (the menu at the top of the sidebar → **New workspace**). Add a second agency to the same account, with your own plan for it.
 
 Press <kbd>⌘K</kbd> / <kbd>Ctrl K</kbd> anywhere to jump to a page.

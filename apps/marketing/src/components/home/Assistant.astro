@@ -1,0 +1,106 @@
+---
+const points = [
+  {
+    title: "Drafts, never surprises",
+    body: "Trips and posts it creates stay hidden until you review them and press publish.",
+  },
+  {
+    title: "Today, in one answer",
+    body: "Ask what needs attention and get the new bookings, open enquiries and the next departures.",
+  },
+  {
+    title: "Replies you send yourself",
+    body: "It drafts the answer to a traveller. Wepilo never emails anyone on its own.",
+  },
+];
+---
+
+<section id="assistant" class="rule">
+  <div class="shell py-28 sm:py-36">
+    <div class="grid grid-cols-1 items-end gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div class="reveal">
+        <p class="eyebrow eyebrow-sky">Wepilo for AI</p>
+        <h2 class="mt-6 max-w-[14ch] text-section">Your assistant, <span class="serif">now on staff.</span></h2>
+        <p class="mt-6 max-w-[34rem] text-lead text-ink-2">
+          Connect Claude, ChatGPT or Cursor to your workspace in about a minute. Ask for a new trip, a summary of today
+          or a reply to a traveller. It works with your permissions, and nothing it makes goes live until you say so.
+        </p>
+      </div>
+      <img
+        src="/art/ridge.png"
+        alt=""
+        width="800"
+        height="800"
+        loading="lazy"
+        class="reveal mx-auto hidden w-[19rem] mix-blend-multiply [mask-image:linear-gradient(to_bottom,black_55%,transparent)] lg:block"
+      />
+    </div>
+
+    <div class="reveal mt-16 grid grid-cols-1 border border-line sm:mt-20 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+      <!-- A conversation, drawn in HTML so it stays sharp. -->
+      <div class="bg-paper-2 px-4 py-12 sm:px-12 sm:py-16">
+        <div class="mx-auto max-w-[30rem] overflow-hidden rounded-[14px] bg-card shadow-[0_30px_60px_-36px_rgb(23_22_15/0.4)] ring-1 ring-line">
+          <div class="flex items-center justify-between border-b border-line px-5 py-3.5">
+            <span class="flex items-center gap-2.5 text-[14px] font-medium">
+              <span class="flex size-6 items-center justify-center rounded-[6px] bg-ink text-white">
+                <svg viewBox="0 0 16 16" class="size-3.5" fill="none" aria-hidden="true">
+                  <path d="M8 1.5 9.4 6.6 14.5 8 9.4 9.4 8 14.5 6.6 9.4 1.5 8l5.1-1.4L8 1.5Z" fill="currentColor" />
+                </svg>
+              </span>
+              Your assistant
+            </span>
+            <span class="flex items-center gap-1.5 rounded-[6px] bg-paper-2 px-2 py-1 font-mono text-[11px] text-muted">
+              <span class="size-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
+              Wepilo connected
+            </span>
+          </div>
+
+          <div class="space-y-4 p-5">
+            <p class="ml-auto max-w-[85%] rounded-[12px] rounded-br-[4px] bg-[#2f4f86] px-4 py-3 text-[14px] leading-6 text-white">
+              Add a 12-day Annapurna Circuit trek for March, $1,450 a person, 12 seats.
+            </p>
+
+            <div class="rounded-[12px] bg-paper p-3 ring-1 ring-line">
+              <p class="px-1 font-mono text-[11px] text-faint">Used Wepilo · create_trip_draft</p>
+              <div class="mt-2.5 rounded-[9px] bg-card p-3.5 text-[14px] leading-8 ring-1 ring-line">
+                <span class="chip">Annapurna Circuit</span> for <span class="chip">12 days</span> at
+                <span class="chip">$1,450</span>
+              </div>
+              <p class="mt-3 px-1 font-mono text-[11px] text-faint">Used Wepilo · create_departure</p>
+              <div class="mt-2.5 rounded-[9px] bg-card p-3.5 text-[14px] leading-8 ring-1 ring-line">
+                Starts <span class="chip">8 March 2027</span> with <span class="chip">12 seats</span>
+              </div>
+            </div>
+
+            <p class="max-w-[92%] text-[14px] leading-6 text-ink-2">
+              Done. The trip and its March departure are saved as drafts. Open the trip in Wepilo to add photos, then
+              publish it when you're happy.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <ul class="divide-y divide-line border-t border-line bg-card lg:border-l lg:border-t-0">
+        {
+          points.map((point) => (
+            <li class="px-7 py-9 sm:px-10">
+              <p class="flex items-center gap-3 text-[1.0625rem] tracking-[-0.015em]">
+                <span class="size-[7px] bg-sky" aria-hidden="true" />
+                {point.title}
+              </p>
+              <p class="mt-2.5 pl-[19px] text-[14px] leading-[1.6] text-muted">{point.body}</p>
+            </li>
+          ))
+        }
+        <li class="px-7 py-7 sm:px-10">
+          <a href="/developers#connector" class="arrow-link pl-[19px]">
+            Connect your assistant
+            <svg viewBox="0 0 16 16" class="size-3.5" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>

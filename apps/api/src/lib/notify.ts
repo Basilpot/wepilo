@@ -15,11 +15,11 @@ export type OwnerAlert = {
   heading: string;
   fields: Array<[string, string | null | undefined]>;
   replyTo?: string;
-  /** Dashboard path the "Open" link goes to. */
-  path: string;
+  /** Dashboard path the "Open" link goes to. Leave out when there's nothing to open. */
+  path?: string;
 };
 
-/** Emails the agency's alert recipients. Never throws: a mail failure must not undo the booking or payment. */
+/** Emails the agency's alert recipients. Never throws: a failed email must not fail the request. */
 export async function sendOwnerAlert(env: Env, db: Db, tenantId: number, opts: OwnerAlert) {
   try {
     const to = await alertRecipients(db, tenantId);
@@ -31,7 +31,7 @@ export async function sendOwnerAlert(env: Env, db: Db, tenantId: number, opts: O
       html: layout(
         escapeHtml(opts.heading),
         `<table style="border-collapse:collapse;font-size:14px">${opts.fields.map(([l, v]) => row(l, v)).join("")}</table>
-         <p style="margin-top:20px"><a href="${env.DASHBOARD_URL}${opts.path}">Open in your dashboard</a></p>`,
+         ${opts.path ? `<p style="margin-top:20px"><a href="${env.DASHBOARD_URL}${opts.path}">Open in your dashboard</a></p>` : opts.replyTo ? `<p style="margin-top:20px;color:#64748b">Reply to this email to answer them directly.</p>` : ""}`,
       ),
     });
   } catch (err) {

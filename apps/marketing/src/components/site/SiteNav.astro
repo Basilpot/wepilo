@@ -1,0 +1,227 @@
+---
+import { LOGIN_URL, SETUP_CALL_URL, SIGNUP_URL } from "../../config";
+import Button from "../ui/Button.astro";
+import NavLink from "../ui/NavLink.astro";
+import Glyph from "../sketch/Glyph.astro";
+import type { GlyphName } from "../sketch/util";
+import { features, featureBySlug } from "../../data/features";
+import { solutions } from "../../data/solutions";
+import { tintBg } from "../../lib/tints";
+
+/**
+ * The bar: wordmark, two mega menus (features, solutions), two plain links, then log in and the
+ * two actions. Panels open on hover or click and close on Escape, outside click or focus leaving.
+ */
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+const isCurrent = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+
+const featureGroups = [
+  { label: "build", items: ["trip-pages", "departures", "languages"] },
+  { label: "run", items: ["calendar", "roles-and-approvals", "ai-assistant", "enquiries"] },
+  { label: "grow", items: ["seo", "website"] },
+].map((g) => ({ ...g, items: g.items.map((s) => featureBySlug(s)!) }));
+
+const solutionIcons: Record<string, GlyphName> = {
+  "tour-operators": "calendar",
+  "trekking-and-adventure": "route",
+  "inbound-and-dmc": "globe",
+};
+const agencyTypes = [
+  ...solutions.map((s) => ({ href: `/solutions/${s.slug}`, name: s.name, summary: s.summary, icon: solutionIcons[s.slug], tint: tintBg[s.tint] })),
+  { href: "/developers", name: "Web developers", summary: "Build a client's site once and hand it over.", icon: "code" as GlyphName, tint: "bg-butter" },
+];
+const startHere: Array<{ href: string; name: string; summary: string; icon: GlyphName }> = [
+  { href: "/pricing", name: "Pricing", summary: "One flat price for the whole agency.", icon: "price" },
+  { href: SETUP_CALL_URL, name: "Book a setup call", summary: "Free with every paid plan.", icon: "calendar" },
+  { href: "/#faq", name: "Common questions", summary: "Claude, enquiries, languages and more.", icon: "question" },
+];
+
+const trigger =
+  "group inline-flex h-10 items-center gap-2 rounded-[9px] px-3 font-mono text-[15px] lowercase text-ink transition-colors hover:text-red aria-expanded:bg-white aria-expanded:text-ink aria-expanded:shadow-btn-light";
+const panel = "absolute inset-x-0 top-full z-50 pt-2 motion-safe:animate-mega-in";
+const card = "bg-white p-8 shadow-panel";
+const colHead = "font-mono text-[12.5px] lowercase text-muted";
+const item = "group/item -m-3 flex gap-4 p-3 transition-colors hover:bg-mist";
+const tile = "grid size-11 shrink-0 place-items-center border border-ink/15 transition-transform group-hover/item:-translate-y-0.5";
+const itemName = "block text-[15.5px] font-medium tracking-[-0.01em] text-ink group-hover/item:text-red";
+const itemNote = "mt-0.5 block text-[14px] leading-[1.45] text-muted";
+---
+
+<header class="relative z-40 bg-paper">
+  <nav aria-label="Main" class="wrap flex h-[72px] items-center gap-6">
+    <a href="/" class="flex shrink-0 items-baseline gap-2.5" aria-label="Wepilo, home">
+      <span class="text-[24px] font-medium tracking-[-0.04em] text-ink">wepilo</span>
+      <span class="hidden text-[15px] text-muted sm:inline">for travel agencies</span>
+    </a>
+
+    <ul class="ml-auto hidden items-center gap-1 lg:flex">
+      <li data-mega>
+        <button type="button" data-round class={trigger} aria-expanded="false" aria-controls="mega-features" data-mega-trigger>
+          <span class:list={[isCurrent("/features") && "text-red"]}>[ features ]</span>
+          <svg viewBox="0 0 12 12" class="size-3 transition-transform group-aria-expanded:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5l3 3 3-3"></path></svg>
+        </button>
+        <div id="mega-features" class={panel} hidden data-mega-panel>
+          <div class="wrap">
+            <div class={card}>
+              <div class="grid grid-cols-12 gap-8">
+                {
+                  featureGroups.map((g) => (
+                    <div class="col-span-3">
+                      <p class={colHead}>[ {g.label} ]</p>
+                      <ul class="mt-6 space-y-6">
+                        {g.items.map((f) => (
+                          <li>
+                            <a href={`/features/${f.slug}`} class={item}>
+                              <span class:list={[tile, tintBg[f.tint]]}>
+                                <Glyph name={f.icon} class="size-5" />
+                              </span>
+                              <span>
+                                <span class={itemName}>{f.name}</span>
+                                <span class={itemNote}>{f.summary}</span>
+                              </span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))
+                }
+                <a href="/features/ai-assistant" class="group/promo relative col-span-3 flex min-h-[260px] flex-col justify-end overflow-hidden bg-ink p-6 text-white">
+                  <img src="/video/cloud-sea.jpg" alt="" class="absolute inset-0 size-full object-cover opacity-80 transition-transform duration-500 group-hover/promo:scale-105" loading="lazy" />
+                  <span class="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" aria-hidden="true"></span>
+                  <span class="relative font-mono text-[12px] lowercase text-white/75">[ ai assistant ]</span>
+                  <span class="relative mt-3 font-display text-[22px] leading-[1.15]">Ask for next season's dates. Get a draft back.</span>
+                  <span class="relative mt-4 font-mono text-[13px] lowercase text-white/85 transition-colors group-hover/promo:text-white">see how it works →</span>
+                </a>
+              </div>
+              <div class="mt-8 flex items-center justify-between border-t border-line pt-5">
+                <NavLink href="/features" class="text-[14px]">all {features.length} features</NavLink>
+                <p class="font-mono text-[13px] lowercase text-muted">every part is included in every plan</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li data-mega>
+        <button type="button" data-round class={trigger} aria-expanded="false" aria-controls="mega-solutions" data-mega-trigger>
+          <span class:list={[isCurrent("/solutions") && "text-red"]}>[ solutions ]</span>
+          <svg viewBox="0 0 12 12" class="size-3 transition-transform group-aria-expanded:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5l3 3 3-3"></path></svg>
+        </button>
+        <div id="mega-solutions" class={panel} hidden data-mega-panel>
+          <div class="wrap">
+            <div class={card}>
+              <div class="grid grid-cols-12 gap-8">
+                <div class="col-span-6">
+                  <p class={colHead}>[ by agency ]</p>
+                  <ul class="mt-6 grid grid-cols-2 gap-x-8 gap-y-6">
+                    {agencyTypes.map((a) => (
+                      <li>
+                        <a href={a.href} class={item}>
+                          <span class:list={[tile, a.tint]}>
+                            <Glyph name={a.icon} class="size-5" />
+                          </span>
+                          <span>
+                            <span class={itemName}>{a.name}</span>
+                            <span class={itemNote}>{a.summary}</span>
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div class="col-span-3">
+                  <p class={colHead}>[ start here ]</p>
+                  <ul class="mt-6 space-y-6">
+                    {startHere.map((a) => (
+                      <li>
+                        <a href={a.href} class={item}>
+                          <span class:list={[tile, "bg-white"]}>
+                            <Glyph name={a.icon} class="size-5" />
+                          </span>
+                          <span>
+                            <span class={itemName}>{a.name}</span>
+                            <span class={itemNote}>{a.summary}</span>
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <a href="/solutions" class="group/promo relative col-span-3 flex min-h-[260px] flex-col justify-end overflow-hidden bg-ink p-6 text-white">
+                  <img src="/video/island.jpg" alt="" class="absolute inset-0 size-full object-cover opacity-85 transition-transform duration-500 group-hover/promo:scale-105" loading="lazy" />
+                  <span class="absolute inset-0 bg-linear-to-t from-black/80 via-black/25 to-transparent" aria-hidden="true"></span>
+                  <span class="relative font-mono text-[12px] lowercase text-white/75">[ solutions ]</span>
+                  <span class="relative mt-3 font-display text-[22px] leading-[1.15]">Treks, islands or tours: one way to publish.</span>
+                  <span class="relative mt-4 font-mono text-[13px] lowercase text-white/85 transition-colors group-hover/promo:text-white">find yours →</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li><NavLink href="/pricing" current={isCurrent("/pricing")} class="px-3">pricing</NavLink></li>
+      <li><NavLink href="/developers" current={isCurrent("/developers")} class="px-3">developers</NavLink></li>
+    </ul>
+
+    <div class="ml-auto hidden items-center gap-3 md:flex lg:ml-4">
+      <NavLink href={LOGIN_URL} class="mr-2">log in</NavLink>
+      <Button href={SETUP_CALL_URL} variant="light" size="sm">book a call</Button>
+      <Button href={SIGNUP_URL} variant="red" size="sm">start now</Button>
+    </div>
+
+    <button
+      type="button"
+      class="-mr-1 ml-auto inline-flex gap-[0.35em] font-mono text-[15px] lowercase text-ink before:content-['['] after:content-[']'] hover:text-red md:ml-2 lg:hidden"
+      aria-expanded="false"
+      aria-controls="site-menu"
+      data-menu-toggle
+    >
+      menu
+    </button>
+  </nav>
+
+  <!-- Phones and tablets: the same groups, stacked. -->
+  <div id="site-menu" data-menu hidden class="absolute inset-x-0 top-full max-h-[calc(100svh-72px)] overflow-y-auto border-y border-line bg-paper px-5 pb-6 pt-4 lg:hidden">
+    <p class={colHead}>[ features ]</p>
+    <ul class="mt-3 grid gap-1 sm:grid-cols-2">
+      {
+        features.map((f) => (
+          <li>
+            <a href={`/features/${f.slug}`} class="flex items-center gap-3 py-2">
+              <span class:list={["grid size-9 shrink-0 place-items-center border border-ink/15", tintBg[f.tint]]}>
+                <Glyph name={f.icon} class="size-[18px]" />
+              </span>
+              <span class="text-[16px] font-medium">{f.name}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class:list={[colHead, "mt-6"]}>[ solutions ]</p>
+    <ul class="mt-3 grid gap-1 sm:grid-cols-2">
+      {
+        agencyTypes.map((a) => (
+          <li>
+            <a href={a.href} class="flex items-center gap-3 py-2">
+              <span class:list={["grid size-9 shrink-0 place-items-center border border-ink/15", a.tint]}>
+                <Glyph name={a.icon} class="size-[18px]" />
+              </span>
+              <span class="text-[16px] font-medium">{a.name}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <div class="mt-6 flex gap-6 border-t border-line pt-5">
+      <NavLink href="/pricing">pricing</NavLink>
+      <NavLink href="/developers">developers</NavLink>
+      <NavLink href={LOGIN_URL}>log in</NavLink>
+    </div>
+    <div class="mt-6 grid gap-2 md:hidden">
+      <Button href={SIGNUP_URL} variant="red" class="w-full">start now</Button>
+      <Button href={SETUP_CALL_URL} variant="light" class="w-full">book a call</Button>
+    </div>
+  </div>
+</header>

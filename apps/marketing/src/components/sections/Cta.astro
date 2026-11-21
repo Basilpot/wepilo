@@ -1,0 +1,22 @@
+---
+interface Props {
+  dashboard: string;
+}
+
+const { dashboard } = Astro.props;
+---
+
+<section class="rule">
+  <div class="shell py-16 sm:py-24">
+    <div class="mesh rounded-[28px] px-6 py-20 text-center sm:py-28">
+      <h2 class="mx-auto max-w-[18ch] text-display text-[#1c2238]">Stop juggling five tools</h2>
+      <p class="mx-auto mt-5 max-w-[34rem] text-lead text-[#1c2238]/70">
+        One dashboard for the sales desk, one API for the website. Start with a trip and the rest follows.
+      </p>
+      <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
+        <a href={`${dashboard}/signup`} class="btn btn-dark btn-lg">Try it for $1</a>
+        <a href="/pricing" class="btn btn-light btn-lg">See pricing</a>
+      </div>
+    </div>
+  </div>
+</section>

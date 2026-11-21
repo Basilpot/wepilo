@@ -1,0 +1,26 @@
+---
+interface Props {
+  dashboard: string;
+}
+
+const { dashboard } = Astro.props;
+---
+
+<section id="talk" class="rule">
+  <div class="shell py-16 sm:py-24">
+    <div class="art art-dusk rounded-[14px] pb-[clamp(14rem,28vw,23rem)] ring-1 ring-black/5">
+      <div class="relative z-10 px-6 pt-14 sm:px-14 sm:pt-20">
+        <h2 class="max-w-[14ch] text-display text-[#2a1722]">
+          Spend the season on the trail, <span class="serif">not in spreadsheets.</span>
+        </h2>
+        <p class="mt-6 max-w-[30rem] text-lead text-[#2a1722]/80">
+          Try Wepilo with your own trips for three days, or let us show you around on a call.
+        </p>
+        <div class="mt-9 flex flex-wrap gap-3">
+          <a href={`${dashboard}/signup`} class="btn btn-dark">Try it for $1</a>
+          <a href="mailto:hello@wepilo.com?subject=Wepilo%20demo" class="btn btn-light">Book a demo</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

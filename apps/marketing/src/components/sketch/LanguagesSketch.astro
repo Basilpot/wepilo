@@ -1,0 +1,50 @@
+---
+import SketchFrame from "./SketchFrame.astro";
+import { ridge, cap, type Callout } from "./util";
+
+/** Languages: one trip page fanned out into the versions it's published in. */
+interface Props {
+  annotated?: boolean;
+}
+const { annotated = false } = Astro.props;
+
+const back = [
+  { code: "ja", x: 620, y: 60, title: "インカ・トレイル" },
+  { code: "fr", x: 580, y: 90, title: "Le chemin de l'Inca" },
+  { code: "de", x: 540, y: 120, title: "Inka-Trail nach Machu Picchu" },
+  { code: "es", x: 500, y: 150, title: "Camino Inca a Machu Picchu" },
+];
+const F = { x: 440, y: 180 };
+
+const callouts: Callout[] = [
+  { at: [920, 82], to: [960, 82], side: "right", lines: ["one page per", "language"] },
+  { at: [440, 396], to: [262, 400], side: "left", lines: ["each version gets", "its own address"] },
+  { at: [740, 472], to: [960, 480], side: "right", lines: ["checked by someone", "who speaks it"] },
+];
+---
+
+<SketchFrame title="One trip page shown in English, Spanish, German, French and Japanese." callouts={callouts} annotated={annotated}>
+  {
+    back.map((c) => (
+      <g>
+        <rect x={c.x} y={c.y} width="300" height="330" class="w" />
+        <rect x={c.x + 12} y={c.y + 12} width="34" height="20" />
+        <text x={c.x + 29} y={c.y + 26} text-anchor="middle" class="m">{c.code}</text>
+        <text x={c.x + 56} y={c.y + 27} style="font-size:12px" lang={c.code}>{c.title}</text>
+      </g>
+    ))
+  }
+
+  <rect x={F.x} y={F.y} width="300" height="330" class="w" />
+  <rect x={F.x + 12} y={F.y + 12} width="34" height="20" class="k" />
+  <text x={F.x + 29} y={F.y + 26} text-anchor="middle" class="m" style="fill:#fff">en</text>
+  <text x={F.x + 56} y={F.y + 27} class="m">original</text>
+  <image href="/video/viewpoint.jpg" x={F.x + 16} y={F.y + 46} width="268" height="110" preserveAspectRatio="xMidYMid slice" />
+  <rect x={F.x + 16} y={F.y + 46} width="268" height="110" />
+  <text x={F.x + 16} y={F.y + 190} class="s" style="font-size:19px">Inca Trail to Machu Picchu</text>
+  <text x={F.x + 16} y={F.y + 216} class="m">/tours/inca-trail-machu-picchu</text>
+  <rect x={F.x + 16} y={F.y + 236} width="220" height="6" class="bar" />
+  <rect x={F.x + 16} y={F.y + 252} width="180" height="6" class="bar" />
+  {[0, 1, 2, 3].map((i) => <rect x={F.x + 16 + i * 14} y={F.y + 286} width="9" height="9" class="r" />)}
+  <text x={F.x + 76} y={F.y + 295} class="m">4 translations live</text>
+</SketchFrame>

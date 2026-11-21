@@ -1,6 +1,7 @@
 import {
   Building2,
   CalendarCheck,
+  CalendarDays,
   Contact2,
   CopyX,
   CreditCard,
@@ -9,7 +10,7 @@ import {
   GaugeCircle,
   Globe,
   Image,
-  Inbox,
+  Languages,
   KeyRound,
   Layers2,
   LifeBuoy,
@@ -36,8 +37,7 @@ export type NavGroup = { label: string; items: NavItem[] };
 // Labels match each page's own title so the menu, header and ⌘K agree.
 export const QUICK_LINKS: NavItem[] = [
   { title: "Dashboard", url: "/", icon: GaugeCircle, keywords: "home overview analytics" },
-  { title: "Inquiries", url: "/inquiries", icon: Inbox, keywords: "leads messages contact" },
-  { title: "Bookings", url: "/bookings", icon: Receipt, keywords: "orders sales" },
+  { title: "Calendar", url: "/calendar", icon: CalendarDays, keywords: "schedule publish plan dates departures content" },
 ];
 
 export const NAV_GROUPS: NavGroup[] = [
@@ -85,13 +85,81 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: "Business profile", url: "/settings", icon: Settings, keywords: "company workspace" },
       { title: "Staff logins", url: "/settings/staff", icon: Users2, keywords: "team users permissions" },
       { title: "API keys", url: "/settings/api-keys", icon: KeyRound, keywords: "developer integration" },
-      { title: "Payments", url: "/settings/payments", icon: Receipt, keywords: "stripe card bank transfer deposit currency" },
-      { title: "Email", url: "/settings/email", icon: Mail, keywords: "resend sender alerts inquiries recipients" },
+      { title: "Languages", url: "/settings/languages", icon: Languages, keywords: "translations translate multilingual locale" },
+      { title: "Currency", url: "/settings/currency", icon: Receipt, keywords: "prices money conversion" },
+      { title: "Email", url: "/settings/email", icon: Mail, keywords: "resend sender alerts enquiries recipients" },
       { title: "Billing", url: "/settings/billing", icon: CreditCard, keywords: "plan subscription invoice" },
       { title: "Support", url: "/support", icon: LifeBuoy, keywords: "help ticket" },
     ],
   },
 ];
+
+/**
+ * The sidebar stays short: a few hubs, each one a strip of tabs over the pages inside it.
+ * Every page is still a normal route and stays searchable in ⌘K (NAV_GROUPS above).
+ */
+export type NavHub = NavItem & { tabs: NavItem[]; more: NavItem[]; moreLabel: string };
+
+const byUrl = (url: string): NavItem => {
+  const item = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.url === url);
+  if (!item) throw new Error(`nav: unknown url ${url}`);
+  return item;
+};
+
+export const HUBS: NavHub[] = [
+  {
+    title: "Trips",
+    url: "/trips",
+    icon: Footprints,
+    keywords: "tours packages departures extras locations categories",
+    tabs: ["/trips", "/departures", "/extras"].map(byUrl),
+    moreLabel: "Organise",
+    more: ["/locations", "/trip-categories", "/featured-tags", "/featured-trips"].map(byUrl),
+  },
+  {
+    title: "Website",
+    url: "/website",
+    icon: Globe,
+    keywords: "homepage pages posts blog team redirects documents",
+    tabs: ["/website", "/info-pages", "/posts"].map(byUrl),
+    moreLabel: "More",
+    more: ["/page-categories", "/team", "/redirects", "/documents"].map(byUrl),
+  },
+  {
+    title: "Audience",
+    url: "/reviews",
+    icon: Star,
+    keywords: "reviews testimonials newsletter subscribers",
+    tabs: ["/reviews", "/testimonials", "/newsletter"].map(byUrl),
+    moreLabel: "More",
+    more: [],
+  },
+];
+
+export const SETTINGS_ITEM: NavItem = { title: "Settings", url: "/settings", icon: Settings, keywords: "business profile staff api keys email billing" };
+
+/** What the sidebar shows, top to bottom. */
+export const SIDEBAR_ITEMS: NavItem[] = [
+  ...QUICK_LINKS,
+  HUBS[0],
+  // Photos are used everywhere (trips, pages, posts), so Media gets its own entry.
+  byUrl("/media"),
+  ...HUBS.slice(1),
+  SETTINGS_ITEM,
+];
+
+/** The hub whose tab strip should show on this page. Editors (/trips/12) get no strip. */
+export function hubFor(pathname: string): NavHub | undefined {
+  return HUBS.find((h) => [...h.tabs, ...h.more].some((t) => t.url === pathname));
+}
+
+/** A hub is "current" for any page inside it, editors included. */
+export function isHubActive(pathname: string, item: NavItem) {
+  const hub = HUBS.find((h) => h.url === item.url);
+  if (hub) return [...hub.tabs, ...hub.more].some((t) => isActive(pathname, t.url));
+  if (item.url === SETTINGS_ITEM.url) return pathname.startsWith("/settings") || pathname.startsWith("/support");
+  return isActive(pathname, item.url);
+}
 
 const ALL_ITEMS = [...QUICK_LINKS, ...NAV_GROUPS.flatMap((g) => g.items)];
 

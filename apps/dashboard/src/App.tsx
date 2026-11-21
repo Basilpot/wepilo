@@ -16,8 +16,7 @@ const HomePage = lazy(() => import("@/pages/HomePage").then((m) => ({ default: m
 const TripsPage = lazy(() => import("@/pages/trips/TripsPage").then((m) => ({ default: m.TripsPage })));
 const TripEditorPage = lazy(() => import("@/pages/trips/TripEditorPage").then((m) => ({ default: m.TripEditorPage })));
 const DeparturesPage = lazy(() => import("@/pages/DeparturesPage").then((m) => ({ default: m.DeparturesPage })));
-const BookingsPage = lazy(() => import("@/pages/BookingsPage").then((m) => ({ default: m.BookingsPage })));
-const InquiriesPage = lazy(() => import("@/pages/InquiriesPage").then((m) => ({ default: m.InquiriesPage })));
+const CalendarPage = lazy(() => import("@/pages/calendar/CalendarPage").then((m) => ({ default: m.CalendarPage })));
 const PostsPage = lazy(() => import("@/pages/content/PostsPage").then((m) => ({ default: m.PostsPage })));
 const PostEditorPage = lazy(() => import("@/pages/content/PostEditorPage").then((m) => ({ default: m.PostEditorPage })));
 const InfoPagesPage = lazy(() => import("@/pages/content/InfoPagesPage").then((m) => ({ default: m.InfoPagesPage })));
@@ -46,6 +45,19 @@ const PublicReviewPage = lazy(() => import("@/pages/reviews/PublicReviewPage").t
 const AdminApp = lazy(() => import("@/pages/admin/AdminApp").then((m) => ({ default: m.AdminApp })));
 const ConnectPage = lazy(() => import("@/pages/connect/ConnectPage").then((m) => ({ default: m.ConnectPage })));
 
+/** A workspace the signed-in person can open. */
+export type Workspace = {
+  id: number;
+  companyName: string | null;
+  slug: string;
+  /** The person's role in this workspace. */
+  role: string;
+  status: string;
+  plan: string;
+  access: string;
+  locked: boolean;
+};
+
 export type Session = {
   staff: { id: number; name: string; email: string; role: string };
   /** Platform admin id when a Wepilo admin opened this workspace as its owner. */
@@ -67,6 +79,8 @@ export type Session = {
     currencyTranslation?: boolean;
   } | null;
   access: Access | null;
+  /** Every workspace this person can open. */
+  workspaces: Workspace[];
 };
 
 export async function fetchSession(): Promise<Session | null> {
@@ -158,8 +172,10 @@ export default function App() {
         <Route path="/trips/new" element={<TripEditorPage mode="create" />} />
         <Route path="/trips/:id" element={<TripEditorPage mode="edit" />} />
         <Route path="/departures" element={<DeparturesPage />} />
-        <Route path="/bookings" element={<BookingsPage />} />
-        <Route path="/inquiries" element={<InquiriesPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
+        {/* Bookings and the enquiry inbox were removed; old links in alert emails land on the home page. */}
+        <Route path="/bookings" element={<Navigate to="/" replace />} />
+        <Route path="/inquiries" element={<Navigate to="/" replace />} />
         <Route path="/posts" element={<PostsPage />} />
         <Route path="/posts/:id" element={<PostEditorPage />} />
         <Route path="/info-pages" element={<InfoPagesPage />} />
@@ -180,6 +196,7 @@ export default function App() {
         <Route path="/extras" element={<ExtrasPage />} />
         <Route path="/newsletter" element={<NewsletterPage />} />
         <Route path="/website" element={<WebsitePage />} />
+        <Route path="/settings/payments" element={<Navigate to="/settings/currency" replace />} />
         <Route path="/settings/*" element={<SettingsPage />} />
         <Route path="/support" element={<SupportPage />} />
         <Route path="/support/:id" element={<SupportTicketPage />} />

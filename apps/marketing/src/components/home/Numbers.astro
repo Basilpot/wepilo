@@ -1,0 +1,30 @@
+---
+/** Facts about the product, not claims about customers. Every one of these is true today. */
+const facts = [
+  { value: "$1", label: "for a three-day trial, and nothing renews by itself" },
+  { value: "1 API", label: "for every trip, date, page and post on your site" },
+  { value: "0", label: "deploys to change a price on your website" },
+  { value: "15 days", label: "your website keeps working if a payment lapses" },
+  { value: "Unlimited", label: "trips and posts on the Pro plan" },
+  { value: "5", label: "staff roles, from owner to author" },
+];
+---
+
+<section class="rule">
+  <div class="shell py-28 sm:py-36">
+    <p class="reveal max-w-[44rem] text-statement">
+      Software an agency can start on a Monday. <span class="text-muted">Simple enough to learn quickly, firm enough to run
+      the season on.</span>
+    </p>
+    <dl class="reveal mt-14 grid grid-cols-1 overflow-hidden rounded-[10px] border border-line bg-card sm:grid-cols-2 lg:grid-cols-3">
+      {
+        facts.map((f) => (
+          <div class="border-line px-7 pb-10 pt-9 [box-shadow:inset_-1px_-1px_0_var(--color-line)] sm:px-10">
+            <dt class="text-[clamp(2.5rem,1.8rem+2vw,3.5rem)] leading-none tracking-[-0.04em]">{f.value}</dt>
+            <dd class="mt-4 max-w-[17rem] font-mono text-[12.5px] leading-[1.6] text-muted">{f.label}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>

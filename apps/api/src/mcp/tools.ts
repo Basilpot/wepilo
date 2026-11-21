@@ -3,31 +3,10 @@ import { z } from "zod4";
 import type { Env } from "@/env";
 import { callApi, WepiloApiError } from "./internal";
 import type { ConnectionProps } from "./props";
+import { TRANSLATABLE, mergeTranslation } from "@/lib/i18n";
 
 type Paged<T> = { data: T[]; pagination: { page: number; limit: number; total: number; totalPages: number } };
 
-type Inquiry = {
-  id: number;
-  name: string;
-  email: string;
-  phone: string | null;
-  trip: string | null;
-  message: string;
-  status: string;
-  createdAt: string;
-};
-type Booking = {
-  id: number;
-  name: string;
-  email: string;
-  phone: string | null;
-  groupSize: number;
-  totalPrice: number;
-  status: string;
-  createdAt: string;
-  activity: { id: number; title: string | null } | null;
-  departure: { id: number; startDate: string; endDate: string | null } | null;
-};
 type Departure = {
   id: number;
   startDate: string;
@@ -52,11 +31,10 @@ type Trip = {
 };
 type Analytics = {
   trips: { total: number; published: number; drafts: number };
-  bookings: { confirmed: number; pending: number };
-  revenue: number;
-  inquiriesNew: number;
+  scheduled: number;
   upcomingDepartures: Array<{ id: number; startDate: string; availableSpots: number; capacity: number; activity: { title: string | null } }>;
 };
+type CalendarItem = { kind: "trip" | "post" | "page" | "departure"; id: number; title: string | null; at: string; state: string };
 type Named = { id: number; name?: string | null; handle?: string; price?: number | null; type?: string };
 
 const money = (n: number | null | undefined) =>
@@ -125,11 +103,29 @@ const tripFields = z.object({
   languages: z.array(z.string()).optional(),
   difficultyLevel: z.enum(["EASY", "MODERATE", "HARD", "EXTREME"]).nullable().optional(),
   isFeatured: z.boolean().optional(),
-  status: z.enum(["DRAFT", "PUBLISHED"]).optional(),
+  status: z
+    .enum(["DRAFT", "PUBLISHED"])
+    .optional()
+    .describe("PUBLISHED puts it live now. Only do this when the user asks; it works only if their role may publish."),
+  publishAt: z
+    .string()
+    .datetime({ offset: true })
+    .nullable()
+    .optional()
+    .describe("Schedule the draft to go live at this time (ISO 8601 with offset, e.g. 2027-01-12T09:00:00+01:00). null clears the schedule."),
 });
 
 const tripCreateInput = z.object({ title: z.string().min(3), ...tripFields.shape });
-const tripUpdateInput = z.object({ id: z.number().int(), title: z.string().min(3).optional(), ...tripFields.shape });
+const tripUpdateInput = z.object({
+  id: z.number().int(),
+  language: z
+    .string()
+    .regex(/^[a-z]{2,3}(-[A-Za-z0-9]{2,4})?$/)
+    .optional()
+    .describe("Write a translation instead of the original: a language code such as de or es. Only the translatable text fields are saved, into that language."),
+  title: z.string().min(3).optional(),
+  ...tripFields.shape,
+});
 
 const pageArgs = {
   page: z.number().int().min(1).optional().describe("Page number, starting at 1."),
@@ -159,149 +155,33 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
     {
       title: "What needs me today",
       description:
-        "Start here. Summarises what needs action in this Wepilo workspace right now: new inquiries waiting for a reply, bookings waiting for confirmation and the next departures with seats left, plus headline numbers.",
+        "Start here. Summarises this Wepilo workspace: what's scheduled to go live in the next two weeks, the next departures with seats left, and how many trips are published or still drafts.",
       inputSchema: z.object({}),
       annotations: READ,
     },
     run(async () => {
-      const [stats, inquiries, pending] = await Promise.all([
+      const now = new Date();
+      const in14 = new Date(now.getTime() + 14 * 86_400_000);
+      const [stats, cal] = await Promise.all([
         api<Analytics>("/tenant/analytics"),
-        api<Paged<Inquiry>>("/inquiries", { query: { status: "NEW", limit: 5 } }),
-        api<Paged<Booking>>("/bookings", { query: { status: "PENDING", limit: 5 } }),
+        api<{ items: CalendarItem[] }>("/calendar", { query: { from: now.toISOString().slice(0, 10), to: in14.toISOString().slice(0, 10) } }),
       ]);
       const lines = [`Wepilo workspace: ${props.companyName} (signed in as ${props.staffName}, ${props.role.toLowerCase()}).`, ""];
-      lines.push(`New inquiries waiting for a reply: ${inquiries.pagination.total}`);
-      for (const i of inquiries.data) lines.push(`- #${i.id} ${i.name} about ${i.trip ?? "a general question"}, ${day(i.createdAt)}: "${clip(i.message, 140)}"`);
-      lines.push("", `Bookings waiting for confirmation: ${pending.pagination.total}`);
-      for (const b of pending.data)
-        lines.push(`- #${b.id} ${b.name}, ${b.groupSize} seat(s) on ${b.activity?.title ?? "a removed trip"} (${day(b.departure?.startDate)}), ${money(b.totalPrice)}`);
+      const scheduled = cal.items.filter((i) => i.state === "scheduled");
+      lines.push(`Scheduled to go live in the next 14 days: ${scheduled.length}`);
+      for (const i of scheduled) lines.push(`- ${i.kind} #${i.id} ${i.title ?? "Untitled"}, ${day(i.at)}`);
       lines.push("", "Next departures:");
-      if (!stats.upcomingDepartures.length) lines.push("- None scheduled. Travellers can't book online until a trip has a departure.");
+      if (!stats.upcomingDepartures.length) lines.push("- None scheduled.");
       for (const d of stats.upcomingDepartures)
-        lines.push(`- ${d.activity.title ?? "Untitled trip"} on ${day(d.startDate)}: ${d.capacity - d.availableSpots} of ${d.capacity} seats booked`);
+        lines.push(`- ${d.activity.title ?? "Untitled trip"} on ${day(d.startDate)}: ${d.availableSpots} of ${d.capacity} seats left`);
       lines.push(
         "",
-        `Trips: ${stats.trips.published} published, ${stats.trips.drafts} draft. Confirmed bookings: ${stats.bookings.confirmed}. Confirmed value: ${money(stats.revenue)}.`,
-        `Dashboard: ${dash("/")}`,
+        `Trips: ${stats.trips.published} published, ${stats.trips.drafts} draft. Scheduled in total: ${stats.scheduled}.`,
+        "Enquiries aren't kept in Wepilo: they're emailed straight to the agency.",
+        `Calendar: ${dash("/calendar")}`,
       );
       return lines.join("\n");
     }),
-  );
-
-  // ── Inquiries ───────────────────────────────────────────────────────────────
-
-  server.registerTool(
-    "list_inquiries",
-    {
-      title: "List inquiries",
-      description:
-        "Lists questions travellers sent through the agency's website forms, newest first, with the full message and contact details so you can help draft a reply.",
-      inputSchema: z.object({
-        status: z.enum(["NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"]).optional().describe("Only inquiries with this status."),
-        ...pageArgs,
-      }),
-      annotations: READ,
-    },
-    run(async ({ status, page, limit }) => {
-      const res = await api<Paged<Inquiry>>("/inquiries", { query: { status, page, limit } });
-      const lines = [pageLine(res.pagination, "inquiries")];
-      for (const i of res.data) {
-        lines.push(
-          "",
-          `#${i.id} · ${i.status} · ${day(i.createdAt)}`,
-          `From: ${i.name} <${i.email}>${i.phone ? `, ${i.phone}` : ""}`,
-          `About: ${i.trip ?? "general question"}`,
-          `Message: ${clip(i.message, 1200)}`,
-        );
-      }
-      lines.push("", `Open in Wepilo: ${dash("/inquiries")}`);
-      return lines.join("\n");
-    }),
-  );
-
-  server.registerTool(
-    "set_inquiry_status",
-    {
-      title: "Update an inquiry's status",
-      description:
-        "Moves an inquiry to a new status: IN_PROGRESS once someone is handling it, RESOLVED when the traveller has been helped, CLOSED when no action is needed. This does not send anything to the traveller.",
-      inputSchema: z.object({
-        inquiryId: z.number().int().describe("The inquiry number, e.g. 12 for #12."),
-        status: z.enum(["NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"]),
-      }),
-      annotations: { ...WRITE, idempotentHint: true },
-    },
-    run(async ({ inquiryId, status }) => {
-      const res = await api<{ inquiry: Inquiry }>(`/inquiries/${inquiryId}/status`, { method: "PATCH", body: { status } });
-      return `Inquiry #${res.inquiry.id} from ${res.inquiry.name} is now ${status}. Nothing was sent to the traveller.\nOpen in Wepilo: ${dash("/inquiries")}`;
-    }),
-  );
-
-  // ── Bookings ────────────────────────────────────────────────────────────────
-
-  server.registerTool(
-    "list_bookings",
-    {
-      title: "List bookings",
-      description: "Lists seat reservations travellers made on the agency's departures, newest first. Filter by status or search by traveller name or email.",
-      inputSchema: z.object({
-        status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"]).optional(),
-        search: z.string().optional().describe("Part of the traveller's name or email."),
-        ...pageArgs,
-      }),
-      annotations: READ,
-    },
-    run(async ({ status, search, page, limit }) => {
-      const res = await api<Paged<Booking>>("/bookings", { query: { status, search, page, limit } });
-      const lines = [pageLine(res.pagination, "bookings")];
-      for (const b of res.data) {
-        lines.push(
-          `- #${b.id} · ${b.status} · ${b.name} <${b.email}> · ${b.groupSize} seat(s) on ${b.activity?.title ?? "a removed trip"}, departs ${day(b.departure?.startDate)} · ${money(b.totalPrice)}`,
-        );
-      }
-      lines.push("", `Open in Wepilo: ${dash("/bookings")}`);
-      return lines.join("\n");
-    }),
-  );
-
-  const bookingStatus = (status: "CONFIRMED" | "CANCELLED" | "COMPLETED", verb: string, extra: string) =>
-    run(async ({ bookingId }: { bookingId: number }) => {
-      const res = await api<{ booking: Booking }>(`/bookings/${bookingId}/status`, { method: "PATCH", body: { status } });
-      return `Booking #${res.booking.id} for ${res.booking.name} (${res.booking.groupSize} seat(s)) is now ${verb}. ${extra}\nOpen in Wepilo: ${dash("/bookings")}`;
-    });
-
-  server.registerTool(
-    "confirm_booking",
-    {
-      title: "Confirm a booking",
-      description: "Confirms a pending booking so the traveller's seats are secured. The traveller is not emailed automatically.",
-      inputSchema: z.object({ bookingId: z.number().int() }),
-      annotations: { ...WRITE, idempotentHint: true },
-    },
-    bookingStatus("CONFIRMED", "confirmed", "Let the traveller know yourself; Wepilo doesn't email them for this."),
-  );
-
-  server.registerTool(
-    "complete_booking",
-    {
-      title: "Mark a booking completed",
-      description: "Marks a booking as completed after the trip has taken place.",
-      inputSchema: z.object({ bookingId: z.number().int() }),
-      annotations: { ...WRITE, idempotentHint: true },
-    },
-    bookingStatus("COMPLETED", "marked completed", ""),
-  );
-
-  server.registerTool(
-    "cancel_booking",
-    {
-      title: "Cancel a booking",
-      description:
-        "Cancels a booking and puts its seats back on sale. Always confirm with the user before calling this. The traveller is not notified automatically.",
-      inputSchema: z.object({ bookingId: z.number().int() }),
-      annotations: { ...WRITE, idempotentHint: true },
-    },
-    bookingStatus("CANCELLED", "cancelled and its seats are back on sale", "Contact the traveller yourself to explain."),
   );
 
   // ── Departures ──────────────────────────────────────────────────────────────
@@ -310,7 +190,7 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
     "list_departures",
     {
       title: "List departures",
-      description: "Lists departure dates in date order with seats booked, seats left, price and status. Optionally for one trip.",
+      description: "Lists departure dates in date order with seats, seats left, price and status. Optionally for one trip.",
       inputSchema: z.object({
         tripId: z.number().int().optional().describe("Only departures of this trip."),
         status: z.enum(["OPEN", "FULL", "DELAYED"]).optional(),
@@ -323,7 +203,7 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
       const lines = [pageLine(res.pagination, "departures")];
       for (const d of res.data) {
         lines.push(
-          `- #${d.id} · ${d.activity.title ?? "Untitled trip"} (trip #${d.activity.id}) · ${day(d.startDate)}${d.endDate ? ` to ${day(d.endDate)}` : ""} · ${d.capacity - d.availableSpots} of ${d.capacity} booked, ${d.availableSpots} left · ${money(d.price)} per person · ${d.status}`,
+          `- #${d.id} · ${d.activity.title ?? "Untitled trip"} (trip #${d.activity.id}) · ${day(d.startDate)}${d.endDate ? ` to ${day(d.endDate)}` : ""} · ${d.availableSpots} of ${d.capacity} seats left · ${money(d.price)} per person · ${d.status}`,
         );
       }
       lines.push("", `Open in Wepilo: ${dash("/departures")}`);
@@ -337,7 +217,7 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
     "create_departure",
     {
       title: "Add a departure date",
-      description: "Adds a departure date to a trip, with the number of seats and the price per person in USD. Travellers can book it on the website straight away.",
+      description: "Adds a departure date to a trip, with the number of seats and the price per person in USD. It shows on the trip page straight away; travellers ask about it through the enquiry form, which emails the agency.",
       inputSchema: z.object({
         tripId: z.number().int(),
         startDate: dateString.describe("First day, YYYY-MM-DD."),
@@ -352,7 +232,7 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
         method: "POST",
         body: { activityId: tripId, startDate, endDate: endDate ?? null, capacity: seats, price: pricePerPerson },
       });
-      return `Added departure #${res.departure.id} on ${day(startDate)}${endDate ? ` to ${day(endDate)}` : ""} with ${seats} seats at ${money(pricePerPerson)} per person. It is open for booking now.\nReview in Wepilo: ${dash("/departures")}`;
+      return `Added departure #${res.departure.id} on ${day(startDate)}${endDate ? ` to ${day(endDate)}` : ""} with ${seats} seats at ${money(pricePerPerson)} per person. It shows on the trip page now.\nReview in Wepilo: ${dash("/departures")}`;
     }),
   );
 
@@ -360,28 +240,30 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
     "update_departure",
     {
       title: "Edit a departure",
-      description: "Changes a departure's dates, seats, price or status. Only the fields you pass are changed.",
+      description: "Changes a departure's dates, total seats, seats left, price or status. Wepilo doesn't take bookings, so the agency keeps seats left up to date. Only the fields you pass are changed.",
       inputSchema: z.object({
         departureId: z.number().int(),
         startDate: dateString.optional(),
         endDate: dateString.optional(),
-        seats: z.number().int().min(0).optional(),
+        seats: z.number().int().min(0).optional().describe("Total seats on the departure."),
+        seatsLeft: z.number().int().min(0).optional().describe("Seats still free. Set to 0 to mark it full."),
         pricePerPerson: z.number().nonnegative().optional(),
         status: z.enum(["OPEN", "FULL", "DELAYED"]).optional(),
       }),
       annotations: { ...WRITE, idempotentHint: true },
     },
-    run(async ({ departureId, startDate, endDate, seats, pricePerPerson, status }) => {
+    run(async ({ departureId, startDate, endDate, seats, seatsLeft, pricePerPerson, status }) => {
       const body: Record<string, unknown> = {};
       if (startDate) body.startDate = startDate;
       if (endDate) body.endDate = endDate;
       if (seats !== undefined) body.capacity = seats;
+      if (seatsLeft !== undefined) body.seatsLeft = seatsLeft;
       if (pricePerPerson !== undefined) body.price = pricePerPerson;
       if (status) body.status = status;
       if (!Object.keys(body).length) return "Nothing to change: pass at least one field.";
       const res = await api<{ departure: Departure }>(`/departures/${departureId}`, { method: "PATCH", body });
       const d = res.departure;
-      return `Departure #${d.id} updated: ${day(d.startDate)}${d.endDate ? ` to ${day(d.endDate)}` : ""}, ${d.capacity} seats, ${money(d.price)} per person, ${d.status}.\nReview in Wepilo: ${dash("/departures")}`;
+      return `Departure #${d.id} updated: ${day(d.startDate)}${d.endDate ? ` to ${day(d.endDate)}` : ""}, ${d.availableSpots} of ${d.capacity} seats left, ${money(d.price)} per person, ${d.status}.\nReview in Wepilo: ${dash("/departures")}`;
     }),
   );
 
@@ -455,11 +337,11 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
     {
       title: "Draft a new trip",
       description:
-        "Creates a new trip as a hidden draft (never published). Use simple HTML (<p>, <ul><li>) for the text fields. Pass days for an ITINERARY trip. Every other field is optional and maps to the full Wepilo trip record.",
+        "Creates a new trip, as a hidden draft unless the user asks you to publish or schedule it. Use simple HTML (<p>, <ul><li>) for the text fields. Pass days for an ITINERARY trip. Every other field is optional and maps to the full Wepilo trip record.",
       inputSchema: tripCreateInput,
       annotations: WRITE,
     },
-    run(async ({ title, format, layout, status, overview, content, highlights, inclusions, exclusions, itinerary, additionalInfo, faq, price, maxPrice, groupDiscount, showGroupDiscount, duration, groupSize, guestCapacity, maximumAltitude, altitudeChart, transportation, meals, bestSeason, meetingPoint, dropOffPoint, videoUrl, routeMap, mapDescription, images, accommodations, languages, difficultyLevel, isFeatured, days }) => {
+    run(async ({ title, format, layout, status, overview, content, highlights, inclusions, exclusions, itinerary, additionalInfo, faq, price, maxPrice, groupDiscount, showGroupDiscount, duration, groupSize, guestCapacity, maximumAltitude, altitudeChart, transportation, meals, bestSeason, meetingPoint, dropOffPoint, videoUrl, routeMap, mapDescription, images, accommodations, languages, difficultyLevel, isFeatured, days, publishAt }) => {
       const resolvedLayout = layout ?? (days?.length ? "ITINERARY" : "PAGE");
       const itineraryOut = days?.length
         ? [
@@ -520,9 +402,11 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
           languages: languages ?? [],
           difficultyLevel: difficultyLevel ?? null,
           isFeatured: isFeatured ?? false,
+          ...(publishAt !== undefined ? { publishAt } : {}),
         },
       });
-      return `Created the draft trip "${created.activity.title}" (#${created.activity.id}). It is hidden from the website until someone publishes it in Wepilo. Add photos and departure dates there too.\nReview in Wepilo: ${dash(`/trips/${created.activity.id}`)}`;
+      const when = publishAt ? ` It is scheduled to go live ${day(publishAt)}.` : status === "PUBLISHED" ? " It is live now." : " It is hidden from the website until someone publishes it.";
+      return `Created the trip "${created.activity.title}" (#${created.activity.id}).${when} Add photos and departure dates in Wepilo too.\nReview in Wepilo: ${dash(`/trips/${created.activity.id}`)}`;
     }),
   );
 
@@ -531,13 +415,26 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
     {
       title: "Update a trip",
       description:
-        "Updates a trip in this Wepilo workspace. Only the fields you pass are changed; pass a full itinerary array (with days, each having title, description and per-day duration, meals and accommodation) to replace the day-by-day plan of the default itinerary, in order.",
+        "Updates a trip in this Wepilo workspace. Only the fields you pass are changed; pass a full itinerary array (with days, each having title, description and per-day duration, meals and accommodation) to replace the day-by-day plan of the default itinerary, in order. Pass language (e.g. de) to save a translation of the text fields instead of changing the original. Pass publishAt to schedule a draft.",
       inputSchema: tripUpdateInput,
       annotations: WRITE,
     },
-    run(async ({ id, ...fields }) => {
+    run(async ({ id, language, ...fields }) => {
       const res = await api<{ activity: Record<string, unknown> }>(`/activities/${id}`);
       const a = res.activity;
+
+      if (language) {
+        const translated: Record<string, unknown> = {};
+        for (const key of TRANSLATABLE.trip) {
+          const v = (fields as Record<string, unknown>)[key];
+          if (v !== undefined) translated[key] = v;
+        }
+        if (fields.days && !fields.itinerary) translated.itinerary = fields.days;
+        if (!Object.keys(translated).length) return `Nothing to translate: pass at least one of ${TRANSLATABLE.trip.join(", ")}.`;
+        const translations = mergeTranslation(a.translations, language, translated);
+        await api(`/activities/${id}`, { method: "PATCH", body: { translations } });
+        return `Saved the ${language} translation of trip #${id}${a.title ? ` "${a.title}"` : ""} (${Object.keys(translated).join(", ")}). The original text is unchanged.\nReview in Wepilo: ${dash(`/trips/${id}?lang=${language}`)}`;
+      }
       const itinerary = Array.isArray(a.itinerary) ? [...(a.itinerary as Record<string, any>[])] : [];
       const patch: Record<string, unknown> = {};
       const set = (key: string, value: unknown) => {
@@ -576,6 +473,7 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
       set("difficultyLevel", fields.difficultyLevel);
       set("isFeatured", fields.isFeatured);
       set("status", fields.status);
+      set("publishAt", fields.publishAt);
 
       if (fields.itinerary || fields.days) {
         const source = (fields.itinerary ?? fields.days) as Array<Record<string, any>> | undefined;
@@ -600,8 +498,9 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
       }
 
       const updated = await api(`/activities/${id}`, { method: "PATCH", body: patch });
-      const t = (updated as { activity: { title?: string | null; status?: string } }).activity;
-      return `Updated trip #${id}${t.title ? ` "${t.title}"` : ""} (now ${t.status ?? "draft"}).\nReview in Wepilo: ${dash(`/trips/${id}`)}`;
+      const t = (updated as { activity: { title?: string | null; status?: string; publishAt?: string | null } }).activity;
+      const state = t.publishAt ? `scheduled for ${day(t.publishAt)}` : t.status === "PUBLISHED" ? "live" : "draft";
+      return `Updated trip #${id}${t.title ? ` "${t.title}"` : ""} (now ${state}).\nReview in Wepilo: ${dash(`/trips/${id}`)}`;
     }),
   );
 
@@ -609,22 +508,71 @@ export function registerStaffTools(server: McpServer, env: Env, ctx: ExecutionCo
     "create_post_draft",
     {
       title: "Draft a blog post",
-      description: "Creates a blog post or travel guide as a hidden draft (never published). Use simple HTML for the content.",
+      description: "Creates a blog post or travel guide as a hidden draft, or scheduled if you pass publishAt. Use simple HTML for the content.",
       inputSchema: z.object({
         title: z.string().min(3),
         content: z.string().describe("The article body as simple HTML (<h2>, <p>, <ul><li>)."),
         type: z.enum(["BLOG", "TRAVEL_GUIDE"]).optional(),
         metaDescription: z.string().max(170).optional().describe("One or two sentences for Google results."),
         tags: z.array(z.string()).optional(),
+        publishAt: z.string().datetime({ offset: true }).optional().describe("Schedule it to go live at this time (ISO 8601 with offset)."),
       }),
       annotations: WRITE,
     },
-    run(async ({ title, content, type, metaDescription, tags }) => {
+    run(async ({ title, content, type, metaDescription, tags, publishAt }) => {
       const res = await api<{ post: { id: number; title: string } }>("/blogs", {
         method: "POST",
-        body: { title, content, postType: type ?? "BLOG", metaDescription: metaDescription ?? null, tags: tags ?? [], published: false },
+        body: { title, content, postType: type ?? "BLOG", metaDescription: metaDescription ?? null, tags: tags ?? [], published: false, ...(publishAt ? { publishAt } : {}) },
       });
-      return `Created the draft post "${res.post.title}" (#${res.post.id}). It is hidden from the website until someone publishes it in Wepilo.\nReview in Wepilo: ${dash(`/posts/${res.post.id}`)}`;
+      const when = publishAt ? `It is scheduled to go live ${day(publishAt)}.` : "It is hidden from the website until someone publishes it.";
+      return `Created the post "${res.post.title}" (#${res.post.id}). ${when}\nReview in Wepilo: ${dash(`/posts/${res.post.id}`)}`;
+    }),
+  );
+
+  server.registerTool(
+    "translate_post",
+    {
+      title: "Translate a blog post",
+      description: "Saves a translation of a blog post or travel guide in one language. The original post is unchanged. Use simple HTML for the content.",
+      inputSchema: z.object({
+        postId: z.number().int(),
+        language: z.string().regex(/^[a-z]{2,3}(-[A-Za-z0-9]{2,4})?$/).describe("Language code, e.g. de or es."),
+        title: z.string().optional(),
+        content: z.string().optional(),
+        metaTitle: z.string().optional(),
+        metaDescription: z.string().max(170).optional(),
+      }),
+      annotations: { ...WRITE, idempotentHint: true },
+    },
+    run(async ({ postId, language, ...fields }) => {
+      const res = await api<{ post: { id: number; title: string | null; translations?: unknown } }>(`/blogs/${postId}`);
+      const translations = mergeTranslation(res.post.translations, language, fields);
+      await api(`/blogs/${postId}`, { method: "PATCH", body: { translations } });
+      return `Saved the ${language} translation of post #${postId}${res.post.title ? ` "${res.post.title}"` : ""}. The original is unchanged.\nReview in Wepilo: ${dash(`/posts/${postId}?lang=${language}`)}`;
+    }),
+  );
+
+  server.registerTool(
+    "view_calendar",
+    {
+      title: "View the content calendar",
+      description: "Lists what is scheduled or was published, and every departure, between two dates (at most 120 days apart), in time order.",
+      inputSchema: z.object({
+        from: dateString.describe("First day, YYYY-MM-DD."),
+        to: dateString.describe("Last day, YYYY-MM-DD."),
+      }),
+      annotations: READ,
+    },
+    run(async ({ from, to }) => {
+      const res = await api<{ items: CalendarItem[] }>("/calendar", { query: { from, to } });
+      if (!res.items.length) return `Nothing scheduled, published or departing between ${day(from)} and ${day(to)}.`;
+      const lines = res.items.map((i) =>
+        i.kind === "departure"
+          ? `- ${day(i.at)} · departure of ${i.title ?? "a trip"} · ${i.state}`
+          : `- ${day(i.at)} · ${i.kind} #${i.id} ${i.title ?? "Untitled"} · ${i.state}`,
+      );
+      lines.push("", `Calendar: ${dash("/calendar")}`);
+      return lines.join("\n");
     }),
   );
 

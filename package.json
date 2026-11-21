@@ -1,15 +1,18 @@
 {
   "name": "wepilo",
   "private": true,
+  "license": "AGPL-3.0-only",
   "packageManager": "pnpm@11.25.0",
   "scripts": {
     "dev:api": "pnpm --filter @wepilo/api dev",
     "dev:dashboard": "pnpm --filter @wepilo/dashboard dev",
+    "dev:marketing": "pnpm --filter @wepilo/marketing dev",
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "deploy:api": "pnpm --filter @wepilo/api deploy:prod",
     "deploy:dashboard": "pnpm --filter @wepilo/dashboard deploy:prod",
+    "deploy:marketing": "pnpm --filter @wepilo/marketing deploy:prod",
     "dev:storefront": "pnpm --filter @wepilo/storefront dev",
     "deploy:storefront": "pnpm --filter @wepilo/storefront deploy:prod"
   },

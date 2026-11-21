@@ -81,6 +81,7 @@ export const KeyRound = hug(HI.KeyRoundIcon, "KeyRound");
 export const CreditCard = hug(HI.CreditCardIcon, "CreditCard");
 export const LifeBuoy = Lu.LifeBuoy as IconComponent;
 export const Globe = hug(HI.GlobeIcon, "Globe");
+export const Languages = hug(HI.LanguageSquareIcon, "Languages");
 export const ShieldCheck = hug(HI.ShieldCheckIcon, "ShieldCheck");
 export const Code = hug(HI.CodeIcon, "Code");
 export const Clock = hug(HI.Clock01Icon, "Clock");

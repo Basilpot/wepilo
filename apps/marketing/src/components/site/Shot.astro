@@ -1,0 +1,58 @@
+---
+/**
+ * A real product screenshot in a quiet frame: hairline, rounded corners, long soft shadow.
+ * Screenshots are 2400 × 1500 (16:10) unless a size is given.
+ */
+interface Props {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  eager?: boolean;
+  class?: string;
+  /** Show a slim window bar above the image. */
+  bar?: string;
+  radius?: number;
+  /** A tighter crop for phones: [src, width, height]. */
+  mobile?: [string, number, number];
+}
+const { src, alt, width = 2400, height = 1500, eager = false, class: cls, bar, radius = 18, mobile } = Astro.props;
+---
+
+<figure class:list={["shot", cls]} style={`border-radius:${radius}px`}>
+  {
+    bar && (
+      <div class="flex items-center gap-2 border-b border-line bg-white px-4 py-3" aria-hidden="true">
+        <span class="size-2.5 rounded-full bg-mist-2" />
+        <span class="size-2.5 rounded-full bg-mist-2" />
+        <span class="size-2.5 rounded-full bg-mist-2" />
+        <span class="mx-auto truncate rounded-full bg-mist px-4 py-1 font-mono text-[11px] text-faint">{bar}</span>
+        <span class="w-[46px]" />
+      </div>
+    )
+  }
+  <picture>
+  {mobile && <source media="(max-width: 640px)" srcset={mobile[0]} width={mobile[1]} height={mobile[2]} />}
+  <img
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    loading={eager ? "eager" : "lazy"}
+    fetchpriority={eager ? "high" : "auto"}
+    decoding="async"
+    class="block h-auto w-full"
+  />
+  </picture>
+</figure>
+
+<style>
+  .shot {
+    overflow: hidden;
+    background: #fff;
+    box-shadow:
+      0 0 0 1px rgb(20 20 18 / 0.08),
+      0 2px 4px rgb(20 20 18 / 0.04),
+      0 30px 70px -28px rgb(20 20 18 / 0.32);
+  }
+</style>

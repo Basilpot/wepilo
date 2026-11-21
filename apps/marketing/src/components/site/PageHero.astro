@@ -1,0 +1,22 @@
+---
+/**
+ * Inner-page opening in the homepage's style: a mono label, a centred serif headline,
+ * one line of lead and the buttons. `clip` is accepted for older callers and ignored.
+ */
+interface Props {
+  id: string;
+  label: string;
+  clip?: string;
+  lead: string;
+}
+const { id, label, lead } = Astro.props;
+---
+
+<section class="wrap pt-16 text-center md:pt-24" aria-labelledby={id}>
+  <p class="font-mono text-[14px] font-medium lowercase text-muted">[ {label} ]</p>
+  <h1 id={id} class="mx-auto mt-6 max-w-[22ch] font-display text-[clamp(2rem,1.55rem+1.5vw,2.875rem)] leading-[1.12] tracking-[-0.015em]">
+    <slot />
+  </h1>
+  <p class="mx-auto mt-6 max-w-[36rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">{lead}</p>
+  <div class="mt-8 flex flex-wrap justify-center gap-3"><slot name="actions" /></div>
+</section>

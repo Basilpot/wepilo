@@ -6,6 +6,8 @@ import { money } from "@/lib/format";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Field, FormDialog } from "@/components/form";
+import { TranslationFields } from "@/components/translation-fields";
+import { compactTranslations, type Translations } from "@/lib/translations";
 import { DataTable, RowActions, type Column } from "@/components/data-table";
 import { confirmDialog } from "@/components/confirm";
 import { useErrorMessage } from "@/pages/shared";
@@ -27,10 +29,11 @@ type Extra = {
   name: string;
   description: string | null;
   price: number | null;
+  translations?: Translations | null;
 };
 
-type FormState = { type: Extra["type"]; name: string; description: string; price: string };
-const empty: FormState = { type: "ADDON", name: "", description: "", price: "" };
+type FormState = { type: Extra["type"]; name: string; description: string; price: string; translations: Translations };
+const empty: FormState = { type: "ADDON", name: "", description: "", price: "", translations: {} };
 
 export function ExtrasPage() {
   const queryClient = useQueryClient();
@@ -55,6 +58,7 @@ export function ExtrasPage() {
         name: form.name,
         description: form.description || null,
         price: form.price === "" ? null : Number(form.price),
+        translations: compactTranslations(form.translations),
       };
       return editing ? api(`/extras/${editing.id}`, { body, method: "PATCH" }) : api("/extras", { body });
     },
@@ -80,6 +84,7 @@ export function ExtrasPage() {
       name: extra.name,
       description: extra.description ?? "",
       price: extra.price != null ? String(extra.price) : "",
+      translations: extra.translations ?? {},
     });
     setError(null);
     setDialogOpen(true);
@@ -111,7 +116,7 @@ export function ExtrasPage() {
               icon: Trash2,
               variant: "destructive",
               separatorBefore: true,
-              onSelect: () => confirmDialog({ title: `Delete the add-on "${extra.name}"?`, description: "Travellers will no longer be able to add it to a booking. Bookings that already include it are not changed." }, () => remove.mutate(extra.id)),
+              onSelect: () => confirmDialog({ title: `Delete the add-on "${extra.name}"?`, description: "It will be removed from every trip that offers it." }, () => remove.mutate(extra.id)),
             },
           ]}
         />
@@ -123,7 +128,7 @@ export function ExtrasPage() {
     <div>
       <PageHeader
         title="Extras"
-        description="Extra services travellers can add to a booking for an additional price, such as a hotel upgrade, airport pickup, equipment rental or meals. Create each add-on once here."
+        description="Extra services you offer for an additional price, such as a hotel upgrade, airport pickup, equipment rental or meals. Create each add-on once here, then pick it on each trip."
         action={
           <Button
             onClick={() => {
@@ -147,7 +152,7 @@ export function ExtrasPage() {
         onRowClick={openEdit}
         emptyIcon={Package}
         emptyTitle="No extras yet"
-        emptyHint="Add-ons let you earn more from each booking. Examples: private room upgrade, airport transfer, trekking gear rental, extra night. Select “New extra” to add your first one."
+        emptyHint="Add-ons let you earn more from each trip. Examples: private room upgrade, airport transfer, trekking gear rental, extra night. Select “New extra” to add your first one."
       />
 
       <FormDialog
@@ -181,6 +186,12 @@ export function ExtrasPage() {
         <Field label="Description" hint="Explain what is included so travellers know exactly what they are paying for.">
           <Textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
         </Field>
+        <TranslationFields
+          value={form.translations}
+          onChange={(translations) => setForm((f) => ({ ...f, translations }))}
+          fields={[{ key: "name", label: "Name" }, { key: "description", label: "Description", multiline: true }]}
+          original={{ name: form.name, description: form.description }}
+        />
       </FormDialog>
     </div>
   );

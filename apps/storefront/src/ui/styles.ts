@@ -262,6 +262,11 @@ footer.site h4{font-size:10px;letter-spacing:.14em;text-transform:uppercase;marg
 footer.site ul{list-style:none;margin:0;padding:0;display:grid;gap:10px;font-size:14px}
 footer.site a{text-decoration:none}
 footer.site a:hover{text-decoration:underline;text-underline-offset:3px}
+.langs{display:flex;flex-wrap:wrap;gap:4px 14px;list-style:none;margin:0;padding:0}
+.langs a{color:inherit;text-decoration:none;opacity:.7}
+.langs a:hover,.langs a[aria-current="true"]{opacity:1;text-decoration:underline;text-underline-offset:3px}
+details.menu .sheet .langs{padding:10px 14px 4px;border-top:1px solid var(--line);margin-top:6px}
+details.menu .sheet .langs a{display:inline;padding:0;font-size:13px}
 .fbottom{margin-top:clamp(48px,6vw,72px);padding-top:22px;border-top:1px solid rgba(255,255,255,.2);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.48)}
 
 @media (max-width:1100px){

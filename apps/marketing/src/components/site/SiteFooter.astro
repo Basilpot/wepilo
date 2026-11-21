@@ -1,0 +1,72 @@
+---
+import NavLink from "../ui/NavLink.astro";
+import Button from "../ui/Button.astro";
+import { CONTACT_EMAIL, LOGIN_URL, SETUP_CALL_URL, SIGNUP_URL } from "../../config";
+
+/** Two rows of bracketed red links, antimattr-style. */
+const rows = [
+  [
+    { label: "contact", href: `mailto:${CONTACT_EMAIL}` },
+    { label: "book a setup call", href: SETUP_CALL_URL },
+    { label: "start now", href: SIGNUP_URL },
+    { label: "log in", href: LOGIN_URL },
+  ],
+  [
+    { label: "features", href: "/features" },
+    { label: "solutions", href: "/solutions" },
+    { label: "pricing", href: "/pricing" },
+    { label: "developers", href: "/developers" },
+    { label: "faq", href: "/#faq" },
+  ],
+];
+---
+
+<footer class="relative mt-36 md:mt-56">
+  <!-- antimattr-style closing: centred serif line, a mono tag, two buttons. -->
+  <section class="wrap text-center" aria-labelledby="closing-title">
+    <h2 id="closing-title" class="mx-auto max-w-[22ch] font-display text-[clamp(2rem,1.55rem+1.5vw,2.875rem)] leading-[1.12] tracking-[-0.015em]">
+      Let's get your site <em>up to date.</em>
+    </h2>
+    <p class="mx-auto mt-5 max-w-[34rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">
+      Every paid plan starts with a free setup call, so your team isn't left to work it out alone.
+    </p>
+    <p class="mt-5 font-mono text-[14px] font-medium lowercase text-muted">[ $50 a month or $499 a year, for the whole agency ]</p>
+    <div class="mt-8 flex flex-wrap justify-center gap-3">
+      <Button href="/pricing" variant="light">see pricing</Button>
+      <Button href={SETUP_CALL_URL} variant="red">book a setup call</Button>
+    </div>
+  </section>
+
+  <div class="mt-24 border-t border-line-strong/30 md:mt-36">
+    <div class="wrap flex flex-col gap-12 pt-14 md:flex-row md:items-start md:justify-between md:pt-16">
+      <div>
+        <a href="/" class="text-[24px] font-medium tracking-[-0.04em] text-ink">wepilo</a>
+        <p class="mt-2 font-mono text-[14px] lowercase text-muted">[ keep your site current ]</p>
+      </div>
+
+      <nav aria-label="Footer" class="flex flex-col gap-4 md:items-end">
+        {
+          rows.map((row) => (
+            <ul class="grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:flex-wrap md:justify-end">
+              {row.map((l) => (
+                <li>
+                  <NavLink href={l.href} red>{l.label}</NavLink>
+                </li>
+              ))}
+            </ul>
+          ))
+        }
+      </nav>
+    </div>
+
+    <p class="wrap mt-14 flex flex-col gap-1 font-mono text-[12px] lowercase text-faint sm:flex-row sm:justify-between">
+      <span>© {new Date().getFullYear()} wepilo · agpl-3.0, publishing soon</span>
+      <span>claude is a product of anthropic. wepilo is not affiliated with anthropic.</span>
+    </p>
+
+    <!-- The giant wordmark, cropped at the bottom edge. -->
+    <div class="mt-10 h-[0.68em] overflow-hidden text-center text-[clamp(6rem,24vw,19rem)] leading-none md:mt-14" aria-hidden="true">
+      <span class="wordmark-fill inline-block select-none font-medium tracking-[-0.05em]">wepilo</span>
+    </div>
+  </div>
+</footer>

@@ -22,6 +22,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useLanguageEditing } from "@/lib/translations";
+import { LanguageSwitch, SameInEveryLanguage } from "@/components/language-switch";
+import { ScheduleButton } from "@/components/schedule-button";
+import { formatWhen } from "@/components/schedule-field";
 
 type Post = {
   id: number;
@@ -37,6 +41,8 @@ type Post = {
   canonicalUrl: string | null;
   blogCategoryId: number | null;
   writerId: number | null;
+  translations?: unknown;
+  publishAt?: string | null;
 };
 
 type Category = { id: number; name: string | null };
@@ -79,8 +85,11 @@ export function PostEditorPage() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const [form, setForm] = useState<FormState>(empty);
-  const [baseline, setBaseline] = useState(JSON.stringify(empty));
+  const [baseline, setBaseline] = useState(JSON.stringify({ f: empty, t: {} }));
   const [published, setPublished] = useState(false);
+  const [publishAt, setPublishAt] = useState<string | null>(null);
+  // Title, body and search listing can be translated; the rest is shared by every language.
+  const i18n = useLanguageEditing(form, setForm, ["title", "content", "metaTitle", "metaDescription"]);
   const [saving, setSaving] = useState<"draft" | "publish" | "unpublish" | null>(null);
 
   const { data: existing, isLoading, isError } = useQuery({
@@ -114,50 +123,58 @@ export function PostEditorPage() {
       writerId: p.writerId ? String(p.writerId) : "",
     };
     setForm(loaded);
-    setBaseline(JSON.stringify(loaded));
+    i18n.load(p.translations);
+    setBaseline(JSON.stringify({ f: loaded, t: (p.translations as object | null) ?? {} }));
     setPublished(p.published);
-  }, [existing]);
+    setPublishAt(p.publishAt ?? null);
+  }, [existing]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const dirty = JSON.stringify(form) !== baseline;
+  const dirty = JSON.stringify({ f: i18n.original, t: i18n.translations }) !== baseline;
   const confirmLeave = useLeaveGuard(dirty);
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
 
-  const save = async (intent: "draft" | "publish" | "unpublish") => {
-    if (!form.title.trim()) {
+  const save = async (intent: "draft" | "publish" | "unpublish"): Promise<boolean> => {
+    const o = i18n.original;
+    if (!o.title.trim()) {
       toast.error("Please type a title for the post before saving. The title box is at the top of the page.");
-      return;
+      return false;
     }
     const nextPublished = intent === "publish" ? true : intent === "unpublish" ? false : published;
     setSaving(intent);
     try {
       const body = {
-        title: form.title.trim(),
-        slug: form.slug || undefined,
-        content: form.content,
-        coverImage: form.coverImage || null,
-        tags: form.tags,
-        published: nextPublished,
-        postType: form.postType,
-        metaTitle: form.metaTitle || null,
-        metaDescription: form.metaDescription || null,
-        canonicalUrl: form.canonicalUrl || null,
-        blogCategoryId: form.blogCategoryId ? Number(form.blogCategoryId) : null,
-        writerId: form.writerId ? Number(form.writerId) : null,
+        title: o.title.trim(),
+        slug: o.slug || undefined,
+        content: o.content,
+        coverImage: o.coverImage || null,
+        tags: o.tags,
+        // Saving a draft never touches the published flag, so authors can keep saving their drafts.
+        ...(intent === "draft" && !published ? {} : { published: nextPublished }),
+        postType: o.postType,
+        metaTitle: o.metaTitle || null,
+        metaDescription: o.metaDescription || null,
+        canonicalUrl: o.canonicalUrl || null,
+        blogCategoryId: o.blogCategoryId ? Number(o.blogCategoryId) : null,
+        writerId: o.writerId ? Number(o.writerId) : null,
+        translations: i18n.translations,
       };
       const res = isNew
         ? await api<{ post: Post }>("/blogs", { body })
         : await api<{ post: Post }>(`/blogs/${id}`, { body, method: "PATCH" });
-      const saved = { ...form, slug: res.post.slug ?? form.slug };
-      setForm(saved);
-      setBaseline(JSON.stringify(saved));
+      const saved = { ...o, slug: res.post.slug ?? o.slug };
+      i18n.replaceOriginal(saved);
+      setBaseline(JSON.stringify({ f: saved, t: i18n.translations }));
       setPublished(nextPublished);
+      if (nextPublished) setPublishAt(null);
       void queryClient.invalidateQueries({ queryKey: ["posts"] });
       toast.success(
         intent === "publish" ? (published ? "Changes saved" : "Post published") : intent === "unpublish" ? "Post moved to drafts" : "Draft saved",
       );
       if (isNew) navigate(`/posts/${res.post.id}`, { replace: true });
+      return true;
     } catch (err) {
       toastApiError(err, "The post could not be saved. Your writing is still on this page, so check your internet connection and try saving again.");
+      return false;
     } finally {
       setSaving(null);
     }
@@ -202,21 +219,34 @@ export function PostEditorPage() {
     <div>
       <EditorHeader
         title={form.title.trim() || (isNew ? "New post" : "Untitled post")}
-        badge={<StatusBadge kind="content" status={published ? "published" : "draft"} />}
+        badge={<StatusBadge kind="content" status={published ? "published" : publishAt ? "scheduled" : "draft"} />}
         dirty={dirty}
         subtitle={
-          isNew ? "Not saved yet. Nothing is stored until you save." : `${wordCount.toLocaleString()} words · about ${Math.max(1, Math.round(wordCount / 220))} minute${Math.round(wordCount / 220) > 1 ? "s" : ""} to read`
+          isNew ? "Not saved yet. Nothing is stored until you save." : publishAt && !published ? `Goes live ${formatWhen(publishAt)}` : `${wordCount.toLocaleString()} words · about ${Math.max(1, Math.round(wordCount / 220))} minute${Math.round(wordCount / 220) > 1 ? "s" : ""} to read`
         }
         onBack={() => confirmLeave(() => navigate("/posts"))}
         actions={
+          <div className="flex flex-wrap items-center gap-2">
+          <LanguageSwitch value={i18n.lang} onChange={i18n.switchTo} translations={i18n.translations} />
+          {!isNew && !published && (
+            <ScheduleButton
+              path={`/blogs/${id}`}
+              value={publishAt}
+              onChange={setPublishAt}
+              noun="the post"
+              beforeSave={async () => (dirty ? save("draft") : true)}
+              disabled={saving !== null}
+            />
+          )}
           <PublishActions
             published={published}
             dirty={dirty}
             isNew={isNew}
             saving={saving}
             canSave={Boolean(form.title.trim())}
-            onSave={save}
+            onSave={(intent) => void save(intent)}
           />
+          </div>
         }
       />
 
@@ -226,7 +256,7 @@ export function PostEditorPage() {
             title={form.title}
             onTitleChange={(v) => set("title", v)}
             slug={form.slug}
-            onSlugChange={(v) => set("slug", v)}
+            onSlugChange={(v) => !i18n.lang && set("slug", v)}
             prefix={urlPrefix}
             placeholder="Type the title of your post here"
           />
@@ -241,6 +271,8 @@ export function PostEditorPage() {
         </div>
 
         <aside className="lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto lg:border-l lg:pl-8">
+          {i18n.lang && <SameInEveryLanguage />}
+          <fieldset disabled={Boolean(i18n.lang)} className="contents">
           <SidebarSection title="Post settings" description="Choose what kind of post this is, who wrote it, and how it is grouped.">
             <Field label="Type">
               <Select value={form.postType} onValueChange={(v) => set("postType", v as FormState["postType"])}>
@@ -292,6 +324,7 @@ export function PostEditorPage() {
             <ImageField value={form.coverImage} onChange={(url) => set("coverImage", url)} />
           </SidebarSection>
 
+          </fieldset>
           <SidebarSection title="Search engine listing" description="This preview shows how your post may look in search results. Good titles and descriptions bring more visitors.">
             <SerpPreview
               title={form.metaTitle || form.title}

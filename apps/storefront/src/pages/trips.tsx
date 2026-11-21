@@ -1,3 +1,4 @@
+import { trip as tripSchema } from "@/lib/schema";
 import { raw } from "hono/html";
 import type { Trip } from "@/lib/api";
 import { dateLong, images, list, money, plain, safeHtml, stars } from "@/lib/format";
@@ -83,12 +84,14 @@ export function TripPage({
   trip,
   departures,
   reviews,
+  reviewCount = 0,
   flash,
 }: {
   ctx: Ctx;
   trip: Trip;
   departures: Record<string, any>[];
   reviews: Record<string, any>[];
+  reviewCount?: number;
   flash: { sent?: string; error?: string };
 }) {
   const { base, currency } = ctx;
@@ -109,7 +112,10 @@ export function TripPage({
   ].filter(Boolean) as string[];
 
   return (
-    <Layout ctx={ctx} title={trip.tripSeo?.metaTitle || trip.title} description={trip.tripSeo?.metaDescription || plain(trip.overview, 160)} image={trip.tripSeo?.featuredMedia ?? gallery[0]}>
+    <Layout ctx={ctx} title={trip.tripSeo?.metaTitle || trip.title} description={trip.tripSeo?.metaDescription || plain(trip.overview, 160)} image={trip.tripSeo?.featuredMedia ?? gallery[0]}
+      canonical={trip.tripSeo?.canonicalUrl}
+      schema={tripSchema(ctx, trip, departures, reviewCount)}
+    >
       <div class="wrap trip-head">
         <div class="crumbs">
           <a href={`${base}/trips`}>Trips</a> / {trip.title}
@@ -348,7 +354,7 @@ export function TripPage({
               </div>
               <div>
                 <Flash sent={flash.sent} error={flash.error} />
-                <EnquiryForm base={base} back={`${base}/trips/${trip.slug}#enquire`} trip={trip.title} />
+                <EnquiryForm base={base} back={`${base}/trips/${trip.slug}#enquire`} trip={trip.title} dates={departures.map((d) => String(d.startDate))} />
               </div>
             </div>
           </div>
@@ -357,7 +363,8 @@ export function TripPage({
   );
 }
 
-export function EnquiryForm({ base, back, trip }: { base: string; back: string; trip?: string }) {
+/** The enquiry form. On a trip page it can ask about one of the trip's dates; it's emailed to the agency. */
+export function EnquiryForm({ base, back, trip, dates = [] }: { base: string; back: string; trip?: string; dates?: string[] }) {
   return (
     <form class="stack" method="post" action={`${base}/_/inquiry`}>
       <input type="hidden" name="back" value={back} />
@@ -374,6 +381,23 @@ export function EnquiryForm({ base, back, trip }: { base: string; back: string; 
         Phone <span class="muted" style="font-weight:400">(optional)</span>
         <input name="phone" autocomplete="tel" />
       </label>
+      {dates.length ? (
+        <div class="two" style="gap:14px">
+          <label class="f">
+            Which date? <span class="muted" style="font-weight:400">(optional)</span>
+            <select name="departureDate">
+              <option value="">Not sure yet</option>
+              {dates.map((d) => (
+                <option value={d}>{dateLong(d)}</option>
+              ))}
+            </select>
+          </label>
+          <label class="f">
+            Travellers
+            <input type="number" name="travellers" min={1} max={200} inputmode="numeric" />
+          </label>
+        </div>
+      ) : null}
       <label class="f">
         Message
         <textarea name="message" rows={5} required></textarea>

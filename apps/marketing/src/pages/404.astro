@@ -1,0 +1,16 @@
+---
+import Button from "../components/ui/Button.astro";
+import Site from "../layouts/Site.astro";
+---
+
+<Site title="Page not found · Wepilo" description="That page is not here.">
+  <section class="wrap flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
+    <p class="label">404</p>
+    <h1 class="serif mt-6 max-w-[14ch] text-display">That trail doesn't go anywhere.</h1>
+    <p class="mt-8 max-w-[32rem] text-lead text-muted">The link may be old, or the page may have moved.</p>
+    <div class="mt-10 flex flex-wrap justify-center gap-3">
+      <Button href="/" variant="dark">Back to the home page</Button>
+      <Button href="/pricing" variant="light">See pricing</Button>
+    </div>
+  </section>
+</Site>

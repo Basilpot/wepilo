@@ -7,7 +7,7 @@ import { dodoGetProduct, type DodoSubscription } from "@/lib/dodo";
 import {
   EXPIRED_LIMITS,
   PLANS,
-  PLAN_KEYS,
+  canonicalPlan,
   SELF_SERVE_PLANS,
   TRIAL_DAYS,
   API_GRACE_DAYS,
@@ -50,7 +50,7 @@ type SubscriptionBilling =
   | undefined;
 
 export function accessFor(tenant: TenantBilling, sub: SubscriptionBilling, now = Date.now()): Access {
-  const plan = (PLAN_KEYS as readonly string[]).includes(tenant.plan) ? (tenant.plan as PlanKey) : "STARTER";
+  const plan: PlanKey = canonicalPlan(tenant.plan);
   const managed = tenant.billingMode === "MANUAL";
   // A hand-set plan counts as paid: the website API is on and gets the same grace period.
   const paid = managed || Boolean(sub?.dodoSubscriptionId);
@@ -100,6 +100,20 @@ export async function loadAccess(db: Db, tenantId: number) {
   return { tenant, subscription: sub ?? null, access: accessFor(tenant, sub) };
 }
 
+/**
+ * The same access, but with the free trial marked as spent when this person's email already
+ * used one in another workspace. The trial is one per person, so a second workspace of the
+ * same owner goes straight to a paid plan.
+ */
+export async function loadAccessForTrial(db: Db, tenantId: number) {
+  const loaded = await loadAccess(db, tenantId);
+  if (!loaded) return null;
+  if (await trialEmailTaken(db, loaded.tenant.email, loaded.tenant.id)) {
+    return { ...loaded, access: { ...loaded.access, trialAvailable: false } };
+  }
+  return loaded;
+}
+
 /** Has anyone (any workspace) already used the trial with this email? */
 export async function trialEmailTaken(db: Db, email: string, exceptTenantId: number) {
   const row = await db.query.tenants.findFirst({
@@ -111,7 +125,7 @@ export async function trialEmailTaken(db: Db, email: string, exceptTenantId: num
 
 // ── Applying Dodo events ────────────────────────────────────────────────────
 
-/** $1 trial payment succeeded: unlock the chosen plan for TRIAL_DAYS. Safe to call twice. */
+/** $2.99 trial payment succeeded: unlock the chosen plan for TRIAL_DAYS. Safe to call twice. */
 export async function grantTrial(
   db: Db,
   input: { tenantId: number; plan: SelfServePlan; customerId?: string; now?: number },
@@ -180,7 +194,7 @@ export async function applySubscription(
   }
 
   const match = planForProductId(env, sub.product_id);
-  const plan = match?.plan ?? (existing?.plan as SelfServePlan | undefined) ?? "STARTER";
+  const plan = match?.plan ?? "PRO";
   const periodEnd = sub.next_billing_date ? new Date(sub.next_billing_date) : null;
   const periodStart = sub.previous_billing_date ? new Date(sub.previous_billing_date) : null;
 
@@ -289,7 +303,7 @@ export async function sendExpiryNotices(env: Env, db: Db, now = Date.now()) {
     const billingUrl = `${env.DASHBOARD_URL}/settings/billing`;
     const subject = wasTrial ? "Your Wepilo trial has ended" : "Your Wepilo plan has ended";
     const lead = wasTrial
-      ? `Your 3-day Wepilo trial for <strong>${name}</strong> has ended. Your trips, pages and settings are saved, but the dashboard and your website's API are paused until you choose a plan.`
+      ? `Your ${TRIAL_DAYS}-day Wepilo trial for <strong>${name}</strong> has ended. Your trips, pages and settings are saved, but the dashboard and your website's API are paused until you choose a plan.`
       : `The Wepilo plan for <strong>${name}</strong> has ended ${tenant.billingMode === "MANUAL" ? "on its agreed end date" : "because the subscription wasn't renewed"}. Your content is saved and your website keeps working for ${API_GRACE_DAYS} more days, but the dashboard is paused until you renew.`;
     const html = layout(
       subject,

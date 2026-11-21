@@ -1,0 +1,29 @@
+---
+import PixelIcon, { type PixelName } from "../PixelIcon.astro";
+
+/** Where a logo wall would go. No customer names yet, so: the kinds of agency Wepilo is made for. */
+const kinds: Array<{ label: string; icon: PixelName }> = [
+  { label: "Trekking agencies", icon: "mountain" },
+  { label: "Tour operators", icon: "flag" },
+  { label: "Destination management", icon: "pin" },
+  { label: "Wildlife safaris", icon: "binoculars" },
+  { label: "Cultural tours", icon: "stupa" },
+  { label: "Adventure travel", icon: "wave" },
+];
+---
+
+<section id="built-for" class="shell pb-24 pt-16 sm:pb-32 sm:pt-20">
+  <p class="text-[15px] text-muted">
+    Made for the people who plan the trip <span class="text-ink">and answer the email.</span>
+  </p>
+  <ul class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    {
+      kinds.map((kind) => (
+        <li class="tile flex h-[8.5rem] flex-col justify-between p-4">
+          <PixelIcon name={kind.icon} class="size-9" />
+          <span class="text-[14px] font-medium leading-5 tracking-[-0.01em]">{kind.label}</span>
+        </li>
+      ))
+    }
+  </ul>
+</section>

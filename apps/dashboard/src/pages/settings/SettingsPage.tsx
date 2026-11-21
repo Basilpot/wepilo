@@ -16,7 +16,8 @@ import { Field, FormDialog } from "@/components/form";
 import { ImageField } from "@/components/image-field";
 import { SettingsSection } from "@/pages/settings/parts";
 import { EmailTab } from "@/pages/settings/EmailTab";
-import { PaymentsTab } from "@/pages/settings/PaymentsTab";
+import { CurrencyTab } from "@/pages/settings/CurrencyTab";
+import { LanguagesTab } from "@/pages/settings/LanguagesTab";
 import { DomainTab } from "@/pages/settings/DomainTab";
 import { DataTable, RowActions, type Column } from "@/components/data-table";
 import { confirmDialog } from "@/components/confirm";
@@ -46,20 +47,21 @@ const TABS = [
   { value: "profile", label: "Business profile" },
   { value: "staff", label: "Staff logins" },
   { value: "api-keys", label: "API keys" },
-  { value: "payments", label: "Payments" },
+  { value: "languages", label: "Languages" },
+  { value: "currency", label: "Currency" },
   { value: "email", label: "Email" },
   { value: "website", label: "Domain" },
   { value: "billing", label: "Billing" },
 ] as const;
 
 /** Tabs whose API calls need an owner or admin. */
-const ADMIN_ONLY_TABS: string[] = ["email", "payments", "website"];
+const ADMIN_ONLY_TABS: string[] = ["email", "currency", "website", "languages"];
 
 const ROLES = [
   { value: "ADMIN", label: "Admin", hint: "Can see and change everything except the plan and billing, and the developer API keys." },
-  { value: "MANAGER", label: "Manager", hint: "Can manage trips, departure dates, customer bookings and inquiries, and all website content." },
-  { value: "EDITOR", label: "Editor", hint: "Can only write and edit blog posts, website pages and the media library. Cannot see customer bookings or business settings." },
-  { value: "AUTHOR", label: "Author", hint: "Can only write blog posts and use the media library. Their name, photo and short bio appear on the posts they write. Cannot edit website pages or see anything else." },
+  { value: "MANAGER", label: "Manager", hint: "Can manage trips, departure dates and all website content, and publish or schedule any of it." },
+  { value: "EDITOR", label: "Editor", hint: "Can write, edit, publish and schedule blog posts and website pages, and use the media library. Cannot change trips or business settings." },
+  { value: "AUTHOR", label: "Author", hint: "Can write blog posts as drafts and use the media library. An editor, manager or owner publishes them. Their name, photo and short bio appear on their posts." },
 ];
 
 const formatDate = (iso: string) =>
@@ -158,7 +160,7 @@ function ProfileTab() {
         </Field>
       </SettingsSection>
 
-      <SettingsSection title="Contact" description="How travellers can reach you. These are shown on your website and in booking emails.">
+      <SettingsSection title="Contact" description="How travellers can reach you. These are shown on your website.">
         <Field label="Website" htmlFor="website" hint="Type the full address, starting with https://. Used for the “View site” button.">
           <Input id="website" type="url" value={form.website} onChange={(e) => set("website", e.target.value)} placeholder="https://www.example.com" />
         </Field>
@@ -214,12 +216,19 @@ function StaffTab() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["staff"] });
 
   const create = useMutation({
-    meta: { success: "The staff login was created. Share the temporary password with them privately." },
-    mutationFn: () => api("/tenant/staff", { body: { ...form, bio: form.bio || undefined, image: form.image || undefined } }),
-    onSuccess: () => {
+    mutationFn: () =>
+      api<{ staff: StaffMember; existingAccount: boolean }>("/tenant/staff", {
+        body: { ...form, bio: form.bio || undefined, image: form.image || undefined, password: form.password || undefined },
+      }),
+    onSuccess: (res) => {
       invalidate();
       setDialogOpen(false);
       setForm({ name: "", email: "", password: "", role: "EDITOR", bio: "", image: "" });
+      toast.success(
+        res.existingAccount
+          ? `${res.staff.name} can now work in this workspace. They sign in with their own Wepilo password.`
+          : "The staff login was created. Share the temporary password with them privately.",
+      );
     },
     onError: (err) => setError(errorMessage(err)),
   });
@@ -365,7 +374,7 @@ function StaffTab() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         title="Add staff login"
-        description="This person will sign in to the dashboard with the email and temporary password you set here. Send them the password privately, for example by phone or a secure message, never in a public place."
+        description="This person will sign in to the dashboard with their email and password. Send the password privately, for example by phone or a secure message, never in a public place."
         onSubmit={() => create.mutate()}
         pending={create.isPending}
         submitLabel="Create login"
@@ -377,7 +386,7 @@ function StaffTab() {
         <Field label="Email" htmlFor="staff-email" required>
           <Input id="staff-email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
         </Field>
-        <Field label="Temporary password" name="password" htmlFor="staff-pass" required hint="Use at least 8 characters. Ask them to change it after their first sign in.">
+        <Field label="Temporary password" name="password" htmlFor="staff-pass" hint="Only needed when this person has no Wepilo login yet. Use at least 8 characters, and ask them to change it after their first sign in. If they already sign in to Wepilo, leave this empty: they keep their own password.">
           <Input
             id="staff-pass"
             type="password"
@@ -586,8 +595,8 @@ function ConnectedAppsSection() {
       title="Connected AI apps"
       description={
         <>
-          Connect Claude, ChatGPT or other AI apps to see what needs you today, handle inquiries and bookings, add departures and draft
-          trips by chat. Website builders like Lovable and Base44 can use the same connection to wire your website to Wepilo. Each person
+          Connect Claude, ChatGPT or other AI apps to see what&apos;s scheduled, add departures, and draft, translate and schedule trips
+          and posts by chat. Website builders like Lovable and Base44 can use the same connection to wire your website to Wepilo. Each person
           connects with their own login and keeps their role&apos;s permissions.
         </>
       }
@@ -779,8 +788,11 @@ export function SettingsPage() {
         <TabsContent value="api-keys" className="pt-4">
           <ApiKeysTab />
         </TabsContent>
-        <TabsContent value="payments" className="pt-4">
-          <PaymentsTab />
+        <TabsContent value="languages" className="pt-4">
+          <LanguagesTab />
+        </TabsContent>
+        <TabsContent value="currency" className="pt-4">
+          <CurrencyTab />
         </TabsContent>
         <TabsContent value="website" className="pt-4">
           <DomainTab />

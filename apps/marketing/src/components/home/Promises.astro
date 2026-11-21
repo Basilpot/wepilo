@@ -1,0 +1,39 @@
+---
+import PixelIcon, { type PixelName } from "../PixelIcon.astro";
+
+const promises: Array<{ title: string; body: string; icon: PixelName }> = [
+  { title: "Your own domain.", body: "Keep the address travellers already know.", icon: "globe" },
+  { title: "A role for everyone.", body: "Owners, admins, managers and editors see what they need.", icon: "people" },
+  { title: "Drafts you review.", body: "Nothing the assistant creates goes live until you publish it.", icon: "ledger" },
+  { title: "Several agencies, one login.", body: "Run more than one brand without signing out.", icon: "stack" },
+];
+---
+
+<section class="rule">
+  <div class="grid grid-cols-1 lg:grid-cols-2">
+    <div class="flex items-center px-5 py-20 sm:px-10 sm:py-28 lg:px-16">
+      <ul class="reveal w-full max-w-[34rem]">
+        {
+          promises.map((p) => (
+            <li class="grid grid-cols-[3.5rem_1fr] items-start border-t border-line-strong py-6">
+              <PixelIcon name={p.icon} class="mt-0.5 size-7" />
+              <span>
+                <span class="block text-[17px] tracking-[-0.015em]">{p.title}</span>
+                <span class="block text-[17px] tracking-[-0.015em] text-muted">{p.body}</span>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div class="dot-grid flex items-center border-t border-line px-5 py-20 sm:px-10 sm:py-28 lg:border-l lg:border-t-0 lg:px-16">
+      <div class="reveal max-w-[30rem]">
+        <p class="text-statement">
+          The dull parts, done properly. <span class="text-muted">So the exciting part of the job stays the trips.</span>
+        </p>
+        <a href="/pricing" class="btn btn-dark mt-9">See what Pro includes</a>
+      </div>
+    </div>
+  </div>
+</section>

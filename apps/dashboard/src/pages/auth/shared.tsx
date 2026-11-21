@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Mountain } from "@/components/icons";
 
 const POINTS = [
-  { title: "Trips, departures and bookings", body: "Build day-by-day itineraries, set dates and seats, and manage every customer booking in one place." },
+  { title: "Trips, dates and a calendar", body: "Build day-by-day itineraries, set dates and seats, and schedule what goes live and when." },
   { title: "A content API for your site", body: "Write or change something here, and your website shows the update automatically." },
-  { title: "Inquiries that don't get lost", body: "Every message from your website forms arrives in one inbox, with one-click reply by email, phone or WhatsApp." },
+  { title: "Every language you sell in", body: "Publish each trip, page and post in your travellers' languages, each on its own address." },
 ];
 
 export function AuthCard({

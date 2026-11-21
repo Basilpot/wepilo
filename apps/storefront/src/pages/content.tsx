@@ -1,3 +1,4 @@
+import { post as postSchema } from "@/lib/schema";
 import { raw } from "hono/html";
 import { dateLong, plain, safeHtml } from "@/lib/format";
 import { Flash, Layout, type Ctx } from "@/ui/layout";
@@ -33,7 +34,7 @@ export function BlogList({ ctx, posts }: { ctx: Ctx; posts: Record<string, any>[
 
 export function PostPage({ ctx, post }: { ctx: Ctx; post: Record<string, any> }) {
   return (
-    <Layout ctx={ctx} title={post.metaTitle || post.title} description={post.metaDescription || plain(post.content, 160)} image={post.coverImage}>
+    <Layout ctx={ctx} title={post.metaTitle || post.title} description={post.metaDescription || plain(post.content, 160)} image={post.coverImage} canonical={post.canonicalUrl} schema={postSchema(ctx, post)}>
       <div class="wrap article-head">
         <div class="crumbs">
           <a href={`${ctx.base}/blog`}>Journal</a>
@@ -62,7 +63,7 @@ export function PostPage({ ctx, post }: { ctx: Ctx; post: Record<string, any> })
 
 export function InfoPage({ ctx, page }: { ctx: Ctx; page: Record<string, any> }) {
   return (
-    <Layout ctx={ctx} title={page.metaTitle || page.title} description={page.metaDescription || plain(page.content, 160)} image={page.coverImage}>
+    <Layout ctx={ctx} title={page.metaTitle || page.title} description={page.metaDescription || plain(page.content, 160)} image={page.coverImage} canonical={page.canonicalUrl}>
       <div class="wrap article-head">
         <h1>{page.title}</h1>
       </div>

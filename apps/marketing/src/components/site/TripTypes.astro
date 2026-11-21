@@ -1,0 +1,64 @@
+---
+import SectionHead from "./SectionHead.astro";
+import Video from "./Video.astro";
+
+/** Whatever the agency sells, it's the same trip model underneath. Sample trips, not customers. */
+const kinds = [
+  { clip: "ridge", kind: "treks", name: "Tour du Mont Blanc", facts: ["11 days", "3 countries", "from $2,390"] },
+  { clip: "island", kind: "islands", name: "Greek Island Hop", facts: ["9 days", "4 islands", "from $1,640"] },
+  { clip: "viewpoint", kind: "summits", name: "Kilimanjaro, Machame", facts: ["7 days", "5,895 m", "from $2,150"] },
+  { clip: "wing", kind: "multi-country", name: "Grand Tour of Europe", facts: ["16 days", "5 countries", "from $3,950"] },
+];
+
+const fields = [
+  "day-by-day itinerary",
+  "departures and seats",
+  "price from",
+  "what's included",
+  "difficulty",
+  "max altitude",
+  "map",
+  "FAQs",
+  "photos",
+  "reviews",
+];
+---
+
+<section id="trips" class="scroll-mt-28 pt-36 md:pt-56" aria-labelledby="trips-title">
+  <div class="wrap">
+    <SectionHead
+      id="trips-title"
+      label="built for travel"
+      lead="A general CMS makes you design the trip structure yourself. Wepilo already has the fields a travel site needs, from the day-by-day itinerary to departure dates."
+    >
+      Trip pages, ready to fill in.
+    </SectionHead>
+
+    <ul class="reveal mt-20 grid md:mt-24 grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4">
+      {
+        kinds.map((k) => (
+          <li class="clip clip-scrim flex aspect-[3/4] flex-col justify-between rounded-[22px] p-3 text-white md:p-4">
+            <Video name={k.clip} />
+            <p class="label label-light">{k.kind}</p>
+            <div class="rounded-[16px] bg-white/12 p-3 ring-1 ring-white/20 backdrop-blur-md md:p-4">
+              <p class="font-display text-[19px] leading-[1.1] md:text-[22px]">{k.name}</p>
+              <p class="mt-2 flex flex-wrap gap-x-2 gap-y-1 font-mono text-[11px] text-white/80 md:text-[12px]">
+                {k.facts.map((f, i) => (
+                  <span>
+                    {i > 0 && <span class="mr-2 text-white/40">·</span>}
+                    {f}
+                  </span>
+                ))}
+              </p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="reveal mt-10 flex flex-wrap items-center gap-2.5">
+      <span class="mr-2 font-mono text-[13px] text-muted">every trip has</span>
+      {fields.map((f) => <span class="rounded-full bg-white px-3.5 py-1.5 text-[14px] text-ink-2 ring-1 ring-line">{f}</span>)}
+    </div>
+  </div>
+</section>

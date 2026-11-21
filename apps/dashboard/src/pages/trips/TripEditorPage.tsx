@@ -78,6 +78,9 @@ import {
 } from "./trip-form";
 import { TitleBlock } from "@/components/document-editor";
 import { useSession } from "@/App";
+import { TEXT_STEPS, applyTranslation, compact, diffTranslation, languageName, type Translations } from "@/pages/trips/trip-translations";
+import { ScheduleField, formatWhen } from "@/components/schedule-field";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getDefaultCurrency, money } from "@/lib/format";
 
 type OptionRow = { id: number; name: string | null; handle?: string };
@@ -131,7 +134,7 @@ const STEP_TIPS: Record<string, { title: string; points: string[] }> = {
   map: { title: "The route map", points: ["A clear route map helps travellers visualise the journey before they book.", "Explain the route in the description so the picture is easy to follow."] },
   inclusions: { title: "Be specific", points: ["Travellers should know exactly what they are paying for.", "A bulleted list works best, one item per line.", "Match what you promise in the description and highlights."] },
   exclusions: { title: "What is not covered", points: ["List what is not covered so travellers know what they will need to pay for separately.", "Anything not listed under inclusions, travellers will assume is not covered."] },
-  pricing: { title: "Setting the price", points: ["Bookings are reservation requests only. Travellers are not charged through Wepilo, so enter the price you plan to collect from them yourself.", "Price is per traveller, in your account currency.", "Group discounts show on your website only if you turn them on."] },
+  pricing: { title: "Setting the price", points: ["Wepilo doesn't take bookings or payments, so enter the price you plan to collect from travellers yourself.", "Price is per traveller, in your account currency.", "Group discounts show on your website only if you turn them on."] },
   info: { title: "Before they book", points: ["Add notes travellers should read before booking, such as packing tips, visa rules, health advice or your cancellation policy.", "Drag a note to change the order."] },
   faq: { title: "Answering questions", points: ["Group questions by topic, for example Booking, Health or Packing.", "Each group can hold many questions."] },
   duration: { title: "Length and altitude", points: ["Say how long the trip lasts in plain words, such as “7 days”.", "Altitude stops draw the climb chart on your trip page."] },
@@ -897,12 +900,12 @@ function CurrencyNotice({ translation }: { translation: boolean }) {
       <div className="space-y-1">
         <p className="font-medium">Prices are in {code}</p>
         <p className="text-muted-foreground">
-          That is the currency set in your payment settings, so enter every price here in {code}.{" "}
+          That is the currency set in your currency settings, so enter every price here in {code}.{" "}
           {translation
             ? `Currency translation is on, so visitors can see these prices converted to their own currency on your website. Travellers are still charged in ${code}.`
             : "Currency translation is off, so your website shows prices in " + code + " only. You can turn it on to let visitors see prices in their own currency."}{" "}
-          <Link to="/settings/payments" className="font-medium text-foreground underline underline-offset-4">
-            Open payment settings
+          <Link to="/settings/currency" className="font-medium text-foreground underline underline-offset-4">
+            Open currency settings
           </Link>
         </p>
       </div>
@@ -1236,7 +1239,15 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
   const [infoAdd, setInfoAdd] = useState(false);
   const [infoEdit, setInfoEdit] = useState<number | null>(null);
   const [openSections, setOpenSections] = useState<string[]>([]);
-  const [baseline, setBaseline] = useState(() => JSON.stringify(emptyTripForm));
+  const [baseline, setBaseline] = useState(() => JSON.stringify({ f: emptyTripForm, t: {} }));
+  /** The language being edited. null = the original. */
+  const [lang, setLang] = useState<string | null>(null);
+  /** The original form, kept aside while a translation is open in `form`. */
+  const [baseForm, setBaseForm] = useState<TripForm | null>(null);
+  const [translations, setTranslations] = useState<Translations>({});
+  const [publishAt, setPublishAt] = useState<string | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleDraft, setScheduleDraft] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: session } = useSession();
   const chosenLayout = searchParams.get("layout");
@@ -1257,12 +1268,18 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
   const categories = useQuery({ queryKey: ["tripCategories"], queryFn: () => api<{ data: OptionRow[] }>("/trip-categories") });
   const tags = useQuery({ queryKey: ["featuredTags"], queryFn: () => api<{ data: OptionRow[] }>("/featured-tags") });
   const extras = useQuery({ queryKey: ["extras"], queryFn: () => api<{ data: (OptionRow & { price: number | null })[] }>("/extras") });
+  const langs = useQuery({ queryKey: ["languages"], queryFn: () => api<{ defaultLanguage: string; languages: string[] }>("/tenant/languages"), staleTime: 5 * 60_000 });
 
   useEffect(() => {
     if (!existing?.activity) return;
     const loaded = toFormState(existing.activity);
+    const loadedTr = compact((existing.activity.translations as Translations | null) ?? {});
     setForm(loaded);
-    setBaseline(JSON.stringify(loaded));
+    setBaseForm(null);
+    setLang(null);
+    setTranslations(loadedTr);
+    setPublishAt((existing.activity.publishAt as string | null) ?? null);
+    setBaseline(JSON.stringify({ f: loaded, t: loadedTr }));
     setStatus((existing.activity.status as "DRAFT" | "PUBLISHED") ?? "DRAFT");
   }, [existing]);
 
@@ -1271,10 +1288,34 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
     if (mode !== "create" || (chosenLayout !== "itinerary" && chosenLayout !== "page")) return;
     const layout: TripLayout = chosenLayout === "page" ? "PAGE" : "ITINERARY";
     setForm((f) => ({ ...f, layout }));
-    setBaseline(JSON.stringify({ ...emptyTripForm, layout }));
+    setBaseline(JSON.stringify({ f: { ...emptyTripForm, layout }, t: {} }));
   }, [mode, chosenLayout]);
 
-  const dirty = JSON.stringify(form) !== baseline;
+  // While a translation is open, `form` holds it and the original waits in `baseForm`.
+  const original = lang ? (baseForm ?? form) : form;
+  const currentTranslations = useMemo(
+    () => compact(lang ? { ...translations, [lang]: diffTranslation(baseForm ?? form, form) } : translations),
+    [lang, translations, baseForm, form],
+  );
+  const dirty = JSON.stringify({ f: original, t: currentTranslations }) !== baseline;
+
+  /** Opens another language (or the original, with null), keeping what was typed in this one. */
+  const switchLanguage = (next: string | null) => {
+    if (next === lang) return;
+    const base = lang ? (baseForm ?? form) : form;
+    const kept = lang ? { ...translations, [lang]: diffTranslation(base, form) } : translations;
+    setTranslations(kept);
+    if (next === null) {
+      setForm(base);
+      setBaseForm(null);
+    } else {
+      setBaseForm(base);
+      setForm(applyTranslation(base, kept[next]));
+    }
+    setLang(next);
+  };
+  const extraLanguages = langs.data?.languages ?? [];
+  const defaultLanguage = langs.data?.defaultLanguage ?? "en";
   const confirmLeave = useLeaveGuard(dirty);
 
   // Unsaved work is copied to this browser, so a crash, a closed tab or an expired session can't lose it.
@@ -1299,7 +1340,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
       if (!raw) return;
       const saved = JSON.parse(raw) as { form: TripForm; savedAt: number };
       // Only offer it when it differs from what is saved on the server.
-      if (saved?.form && JSON.stringify(saved.form) !== baseline && Date.now() - saved.savedAt < 14 * 24 * 60 * 60 * 1000) setRecovered(saved);
+      if (saved?.form && JSON.stringify({ f: saved.form, t: translations }) !== baseline && Date.now() - saved.savedAt < 14 * 24 * 60 * 60 * 1000) setRecovered(saved);
       else localStorage.removeItem(backupKey);
     } catch {
       /* unreadable backup: ignore it */
@@ -1309,14 +1350,15 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
     if (!ready || recovered) return;
     const t = setTimeout(() => {
       try {
-        if (dirty) localStorage.setItem(backupKey, JSON.stringify({ form, savedAt: Date.now() }));
+        // Only the original is backed up; a translation in progress is kept when switching languages.
+        if (dirty && !lang) localStorage.setItem(backupKey, JSON.stringify({ form, savedAt: Date.now() }));
         else localStorage.removeItem(backupKey);
       } catch {
         /* storage full or blocked: editing still works */
       }
     }, 800);
     return () => clearTimeout(t);
-  }, [form, dirty, ready, recovered, backupKey]);
+  }, [form, dirty, ready, recovered, backupKey, lang]);
 
   // Each chapter is its own screen: start it at the top.
   useEffect(() => {
@@ -1400,7 +1442,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
     const nextStatus = kind === "draft" ? (status === "PUBLISHED" ? "PUBLISHED" : "DRAFT") : "PUBLISHED";
     setSaving(kind);
     try {
-      const payload = toPayload(form, nextStatus);
+      const payload = { ...toPayload(original, nextStatus), translations: currentTranslations };
       const res =
         mode === "create"
           ? await api<{ activity: { id: number } }>("/activities", { body: payload })
@@ -1409,7 +1451,9 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
       queryClient.invalidateQueries({ queryKey: ["trips"] });
       queryClient.invalidateQueries({ queryKey: ["trip", String(newId)] });
       setStatus(nextStatus);
-      setBaseline(JSON.stringify(form));
+      if (nextStatus === "PUBLISHED") setPublishAt(null);
+      setTranslations(currentTranslations);
+      setBaseline(JSON.stringify({ f: original, t: currentTranslations }));
       clearBackup();
       toast.success(kind === "publish" ? (status === "PUBLISHED" ? "Changes saved" : "Trip published") : "Draft saved");
       if (mode === "create") navigate(`/trips/${newId}`, { replace: true });
@@ -1489,7 +1533,14 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
   // page layout stacks the ones that apply to a simple trip.
   // On the step-by-step editor these notes live in the tips panel beside the step.
   const StepNote = ({ info }: { info: string }) => (isPage ? <InfoCard info={info} /> : null);
+  const lockedHere = (stepKey: string) => Boolean(lang) && !TEXT_STEPS.has(stepKey);
   const renderStep = (stepKey: string) => (
+    <fieldset disabled={lockedHere(stepKey)} className={cn("contents", lockedHere(stepKey) && "[&_*]:cursor-not-allowed")}>
+    {lockedHere(stepKey) && (
+      <p className="mb-4 rounded-xl border border-dashed px-4 py-3 text-sm text-muted-foreground">
+        This part is the same in every language. Switch to {languageName(defaultLanguage)} (original) to change it.
+      </p>
+    )}
     <>
               {/* 1 — Basics */}
               {stepKey === "basics" && (
@@ -1887,7 +1938,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                       <MoneyInput value={form.maxPrice} onChange={(v) => set("maxPrice", v)} placeholder="1800" />
                     </Field>
                   </div>
-                  <StepNote info="Bookings are reservation requests only. Travellers are not charged through Wepilo, so enter the price you plan to collect from them yourself." />
+                  <StepNote info="Wepilo doesn't take bookings or payments, so enter the price you plan to collect from travellers yourself." />
 
                   {fold("discount", "Group discount", form.groupDiscount.length > 0, <Section
                     title="Group discount"
@@ -1976,7 +2027,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
               {/* 14 — Extras & languages */}
               {stepKey === "extras" && (
                 <>
-                  <Section title="Extras" description="Extra services travellers can add to their booking for this trip.">
+                  <Section title="Extras" description="Extra services you offer on this trip, shown on the trip page.">
                     {extras.data?.data.length === 0 ? (
                       <EmptyState title="No extras yet" hint="Create them first on the “Extras” page in the menu. They will then appear here for you to choose." />
                     ) : (
@@ -2199,6 +2250,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                 </>
               )}
     </>
+    </fieldset>
   );
 
   /** On a simple page, rarely used fields stay folded behind a dashed row until opened (or already filled in). */
@@ -2244,7 +2296,7 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-base font-semibold tracking-tight">{form.title.trim() || (mode === "create" ? "New trip" : "Untitled trip")}</h1>
-            <StatusBadge kind="trip" status={status} className="hidden sm:inline-flex" />
+            <StatusBadge kind="trip" status={publishAt && status !== "PUBLISHED" ? "SCHEDULED" : status} className="hidden sm:inline-flex" />
             {form.isFeatured && <Badge variant="outline">Featured</Badge>}
           </div>
           <p className="truncate text-xs text-muted-foreground">
@@ -2253,6 +2305,8 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                 <span aria-hidden className="size-1.5 rounded-full bg-primary" />
                 Unsaved changes · ⌘S to save
               </span>
+            ) : publishAt && status !== "PUBLISHED" ? (
+              `Goes live ${formatWhen(publishAt)}`
             ) : form.slug ? (
               `/${form.slug}`
             ) : (
@@ -2260,6 +2314,30 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
             )}
           </p>
         </div>
+        {extraLanguages.length > 0 && (
+          <div role="group" aria-label="Language you are editing" className="flex items-center gap-1 rounded-lg border p-0.5">
+            {[null, ...extraLanguages].map((code) => {
+              const label = code ? code.toUpperCase() : defaultLanguage.toUpperCase();
+              const filled = code ? Boolean(currentTranslations[code]) : true;
+              return (
+                <button
+                  key={code ?? "original"}
+                  type="button"
+                  aria-pressed={lang === code}
+                  title={code ? `${languageName(code)}${filled ? "" : " (not translated yet)"}` : `${languageName(defaultLanguage)} (original)`}
+                  onClick={() => switchLanguage(code)}
+                  className={cn(
+                    "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 font-mono text-xs transition-colors",
+                    lang === code ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {label.toLowerCase()}
+                  {code && <span aria-hidden className={cn("size-1.5 rounded-full", filled ? "bg-primary" : "bg-border")} />}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="flex gap-2">
           {status === "PUBLISHED" && liveUrl && (
             <Button variant="outline" asChild>
@@ -2268,6 +2346,48 @@ export function TripEditorPage({ mode }: { mode: "create" | "edit" }) {
                 <span className="hidden sm:inline">View on site</span>
               </a>
             </Button>
+          )}
+          {status !== "PUBLISHED" && mode === "edit" && (
+            <Popover
+              open={scheduleOpen}
+              onOpenChange={(open) => {
+                setScheduleOpen(open);
+                if (open) setScheduleDraft(publishAt);
+              }}
+            >
+              <PopoverTrigger asChild>
+                <Button variant="outline" disabled={saving !== null}>
+                  <Clock />
+                  <span className="hidden sm:inline">{publishAt ? "Scheduled" : "Schedule"}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-auto space-y-3">
+                <div>
+                  <p className="text-sm font-medium">Go live later</p>
+                  <p className="text-xs text-muted-foreground">Saves your changes and publishes the trip at this time, in your time zone.</p>
+                </div>
+                <ScheduleField value={scheduleDraft} onChange={setScheduleDraft} />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      if (dirty && !(await doSave("draft"))) return;
+                      try {
+                        await api(`/activities/${id}`, { method: "PATCH", body: { publishAt: scheduleDraft } });
+                        setPublishAt(scheduleDraft);
+                        setScheduleOpen(false);
+                        queryClient.invalidateQueries({ queryKey: ["calendar"] });
+                        toast.success(scheduleDraft ? `Scheduled for ${formatWhen(scheduleDraft)}` : "Schedule removed. It stays a draft.");
+                      } catch (err) {
+                        toastApiError(err, "Could not save the schedule");
+                      }
+                    }}
+                  >
+                    {scheduleDraft ? "Save schedule" : "Unschedule"}
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
           {status !== "PUBLISHED" && (
             <Button variant="outline" onClick={() => save("draft")} disabled={saving !== null || (mode === "edit" && !dirty)}>

@@ -1,3 +1,14 @@
+import { useLocation } from "react-router-dom";
+import { MonoLabel } from "@/components/atoms";
+import { NAV_GROUPS } from "@/components/layout/nav";
+
+/** The menu group a page sits in, shown above its title the way the website labels sections. */
+function useSection() {
+  const { pathname } = useLocation();
+  for (const g of NAV_GROUPS) if (g.items.some((i) => pathname === i.url || pathname.startsWith(`${i.url}/`))) return g.label;
+  return null;
+}
+
 export function PageHeader({
   title,
   description,
@@ -7,8 +18,10 @@ export function PageHeader({
   description?: React.ReactNode;
   action?: React.ReactNode;
 }) {
+  const section = useSection();
   return (
     <div className="mb-8">
+      {section && <MonoLabel className="mb-2 block">{section}</MonoLabel>}
       {/* The title and the button share one row, vertically centred. The description sits below and uses the full width. */}
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <h1 className="min-w-0 text-[1.75rem] leading-9 font-semibold tracking-[-0.025em]">{title}</h1>

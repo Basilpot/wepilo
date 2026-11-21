@@ -1,0 +1,42 @@
+---
+import { tintBg } from "../../lib/tints";
+import type { SketchName, Tint } from "../../data/features";
+import Sketch from "./Sketch.astro";
+
+/**
+ * A centred section: the headline, its description and the buttons, then the annotated drawing.
+ */
+interface Props {
+  line: [string, string];
+  sketch: SketchName;
+  /** Kept for callers; the headline is the visible heading. */
+  name?: string;
+  sub: string;
+  /** A small mono note shown under the description, e.g. "included in every plan". */
+  tag?: string;
+  /** "h1" on a feature or solution page, "h2" when repeated down the homepage. */
+  level?: "h1" | "h2";
+  id: string;
+  /** Sets the section on a full-width band of this colour. */
+  tint?: Tint;
+  class?: string;
+}
+const { line, sketch, sub, tag, level = "h2", id, tint, class: cls } = Astro.props;
+const Heading = level;
+---
+
+<section class:list={[cls, tint && ["py-20 md:py-28", tintBg[tint]]]} aria-labelledby={id}>
+  <div class="wrap text-center">
+    <Heading id={id} class="mx-auto max-w-[24ch] font-display text-[clamp(1.875rem,1.5rem+1.3vw,2.75rem)] font-normal leading-[1.12] tracking-[-0.015em]">
+      {`${line[0]} `}<em>{line[1]}</em>
+    </Heading>
+    <p class="mx-auto mt-5 max-w-[38rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">{sub}</p>
+    {tag && <p class="mt-4 font-mono text-[13.5px] lowercase text-muted">[ {tag} ]</p>}
+    <div class="mt-7 flex flex-wrap justify-center gap-3 empty:hidden"><slot /></div>
+
+    <div class="mx-auto mt-10 max-w-[1200px] md:mt-6">
+      <Sketch name={sketch} annotated />
+    </div>
+
+  </div>
+</section>

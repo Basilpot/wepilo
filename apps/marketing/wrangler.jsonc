@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wepilo-marketing",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page"
+  },
+  "routes": [{ "pattern": "aboutwepilo.basilpot.com", "custom_domain": true }],
+  "vars": {
+    "DASHBOARD_URL": "https://wepilo.basilpot.com"
+  }
+}

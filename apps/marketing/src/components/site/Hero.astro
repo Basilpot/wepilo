@@ -1,0 +1,33 @@
+---
+import Button from "../ui/Button.astro";
+import { SETUP_CALL_URL } from "../../config";
+import HeroSketch from "../sketch/HeroSketch.astro";
+
+/**
+ * antimattr-style opening: a short centred serif line, the annotated product drawing,
+ * then the name, one line on what it is, a mono tag and two buttons.
+ */
+---
+
+<section class="wrap pt-16 text-center md:pt-24" aria-labelledby="hero-title">
+  <p class="mx-auto max-w-[24ch] font-display text-[clamp(2rem,1.55rem+1.5vw,2.875rem)] leading-[1.12] tracking-[-0.015em]">
+    A travel website your team <em>can keep current.</em>
+  </p>
+
+  <div class="relative mx-auto mt-12 max-w-[1200px] md:mt-8">
+    <div class="dots pointer-events-none absolute inset-x-[8%] -inset-y-6" aria-hidden="true"></div>
+    <div class="relative"><HeroSketch /></div>
+  </div>
+
+  <div class="mx-auto mt-10 max-w-[40rem] md:mt-4">
+    <h1 id="hero-title" class="font-sans text-[clamp(2rem,1.6rem+1.4vw,2.75rem)] font-medium leading-[1.1] tracking-[-0.03em]">wepilo</h1>
+    <p class="mt-3 text-[clamp(1.0625rem,1rem+0.3vw,1.25rem)] text-ink-2">
+      Website software for travel and tour agencies
+    </p>
+    <p class="mt-4 font-mono text-[14px] font-medium lowercase text-muted">[ free setup call with every plan ]</p>
+    <div class="mt-8 flex flex-wrap justify-center gap-3">
+      <Button href="/features" variant="light">see the features</Button>
+      <Button href={SETUP_CALL_URL} variant="red">book a setup call</Button>
+    </div>
+  </div>
+</section>

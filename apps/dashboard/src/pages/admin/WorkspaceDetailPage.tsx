@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PLAN_NAMES, type PlanKey } from "@/pages/billing/billing";
+import { ASSIGNABLE_PLANS, PLAN_NAMES, type PlanKey } from "@/pages/billing/billing";
 import {
   AUDIT_LABELS,
   fromDateInput,
@@ -154,7 +154,6 @@ export function WorkspaceDetailPage() {
                 [
                   ["Trips", data.usage.trips],
                   ["Posts", data.usage.posts],
-                  ["Bookings", data.usage.bookings],
                   ["Staff", data.usage.staff],
                 ] as const
               ).map(([label, value]) => (
@@ -361,7 +360,7 @@ function PlanCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(PLAN_NAMES) as PlanKey[]).map((key) => (
+                {ASSIGNABLE_PLANS.map((key) => (
                   <SelectItem key={key} value={key}>
                     {PLAN_NAMES[key]}
                   </SelectItem>

@@ -1,0 +1,38 @@
+---
+interface Props {
+  items: string[];
+  id?: string;
+}
+
+const { items, id } = Astro.props;
+---
+
+<section class="rule" id={id}>
+  <div class="shell py-20 sm:py-28">
+    <div class="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+      <div class="reveal">
+        <h2 class="text-section max-w-[16ch]">
+          <span class="block text-faint">Your content is yours</span>
+          <span class="block">and so is your data</span>
+        </h2>
+        <p class="mt-5 max-w-[28rem] text-lead text-muted">
+          Wepilo holds the copy of your business. Leave with it whenever you like, in a format your own website can
+          read.
+        </p>
+      </div>
+
+      <ul class="reveal grid gap-x-10 sm:grid-cols-2">
+        {
+          items.map((item) => (
+            <li class="flex items-center gap-3 border-b border-line py-4 text-[15px] text-muted">
+              <svg viewBox="0 0 16 16" class="size-4 shrink-0 text-ink" fill="none" aria-hidden="true">
+                <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              {item}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>

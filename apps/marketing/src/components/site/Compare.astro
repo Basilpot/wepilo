@@ -1,0 +1,74 @@
+---
+import SectionHead from "./SectionHead.astro";
+import { SIGNUP_URL } from "../../config";
+
+const rows = [
+  {
+    name: "A headless CMS",
+    what: "Powerful, generic, sales-led.",
+    gap: "You build the trip model. Wepilo ships it.",
+  },
+  {
+    name: "WordPress and a travel theme",
+    what: "Cheap and familiar.",
+    gap: "Plugins and security updates need constant attention. Wepilo needs none.",
+  },
+  {
+    name: "A custom build",
+    what: "A dev shop, one client at a time.",
+    gap: "Every change goes back to the developer. With Wepilo you make it yourself.",
+  },
+  {
+    name: "A tour directory",
+    what: "Other brands' tours, for resellers.",
+    gap: "Wepilo is for operators selling their own.",
+  },
+];
+---
+
+<section id="compare" class="scroll-mt-28 px-2 pt-28 md:px-3 md:pt-40" aria-labelledby="compare-title">
+  <div class="rounded-[28px] bg-ink py-20 text-white md:rounded-[32px] md:py-28">
+    <div class="wrap">
+      <SectionHead
+        id="compare-title"
+        label="compare"
+        dark
+        lead="Most agencies are choosing between WordPress, a custom build and a big CMS. Here is where each one falls short for a travel site."
+      >
+        How Wepilo compares.
+      </SectionHead>
+
+      <div class="reveal mt-20 border-t md:mt-24 border-white/25">
+        <div class="hidden grid-cols-12 gap-8 border-b border-white/10 py-4 font-mono text-[12px] text-white/50 md:grid">
+          <span class="col-span-4">the option</span><span class="col-span-3">what it is</span><span class="col-span-5">why wepilo</span>
+        </div>
+        {
+          rows.map((r) => (
+            <div class="grid gap-2 border-b border-white/10 py-7 md:grid-cols-12 md:gap-8">
+              <p class="font-display text-[1.5rem] leading-[1.15] tracking-[-0.02em] md:col-span-4">{r.name}</p>
+              <p class="text-[16px] text-white/60 md:col-span-3 md:pt-1.5">{r.what}</p>
+              <p class="flex gap-3 text-[16px] md:col-span-5 md:pt-1.5">
+                <span class="mt-2 size-1.5 shrink-0 rounded-full bg-apricot" aria-hidden="true" />
+                {r.gap}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="reveal mt-28 grid gap-8 md:mt-36 rounded-[24px] bg-white/[0.06] p-8 ring-1 ring-white/10 md:grid-cols-12 md:p-12" aria-labelledby="oss-title">
+        <div class="md:col-span-7">
+          <p class="label label-light">open source</p>
+          <h3 id="oss-title" class="mt-5 font-display text-title">The core is <span class="italic">open source.</span></h3>
+        </div>
+        <div class="md:col-span-5 md:self-end">
+          <p class="text-[16px] text-white/70">Developers can host it themselves for free or build themes for clients. Agencies get the hosted version, kept up to date for them.</p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a href="/developers" class="btn btn-light btn-sm">For developers</a>
+            <a href={SIGNUP_URL} class="btn btn-ghost btn-sm">Start now</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

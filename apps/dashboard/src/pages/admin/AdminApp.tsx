@@ -13,6 +13,8 @@ import { WorkspacesPage } from "./WorkspacesPage";
 import { NewWorkspacePage } from "./NewWorkspacePage";
 import { WorkspaceDetailPage } from "./WorkspaceDetailPage";
 import { AdminsPage } from "./AdminsPage";
+import { SupportInboxPage } from "./SupportInboxPage";
+import { SupportTicketPage } from "./SupportTicketPage";
 
 /** Wepilo's internal console under /admin. Uses its own login, separate from workspace sessions. */
 export function AdminApp() {
@@ -43,6 +45,8 @@ function RequireAdmin() {
         <Route path="workspaces/new" element={<NewWorkspacePage />} />
         <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
         <Route path="admins" element={<AdminsPage me={admin} />} />
+        <Route path="support" element={<SupportInboxPage />} />
+        <Route path="support/:id" element={<SupportTicketPage />} />
         <Route path="*" element={<Navigate to="/admin/workspaces" replace />} />
       </Routes>
     </AdminShell>
@@ -80,6 +84,9 @@ function AdminShell({ admin, children }: { admin: PlatformAdmin; children: React
             </NavLink>
             <NavLink to="/admin/admins" className={navClass}>
               Admins
+            </NavLink>
+            <NavLink to="/admin/support" className={navClass}>
+              Support
             </NavLink>
           </nav>
           <div className="ml-auto flex items-center gap-2">

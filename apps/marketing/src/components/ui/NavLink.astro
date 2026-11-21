@@ -1,0 +1,21 @@
+---
+/** A lowercase mono link in square brackets. The current page, and hover, go red. */
+interface Props {
+  href: string;
+  current?: boolean;
+  /** Red at rest (footer style), ink on hover. */
+  red?: boolean;
+  class?: string;
+}
+const { href, current = false, red = false, class: cls } = Astro.props;
+---
+
+<a
+  href={href}
+  aria-current={current ? "page" : undefined}
+  class:list={[
+    "inline-flex gap-[0.35em] font-mono text-[15px] lowercase transition-colors duration-150 before:content-['['] after:content-[']']",
+    red ? "text-red hover:text-ink" : "text-ink hover:text-red aria-[current=page]:text-red",
+    cls,
+  ]}><slot /></a
+>

@@ -16,8 +16,10 @@ export const tenants = sqliteTable(
   "tenants",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    email: text("email").notNull().unique(),
-    password: text("password").notNull(),
+    /** The workspace owner's email. One person may own several workspaces, so it is not unique. */
+    email: text("email").notNull(),
+    /** Unused: the account password lives on the owner's tenant_staff row. */
+    password: text("password"),
     companyName: text("company_name"),
     companyLogo: text("company_logo"),
     website: text("website"),
@@ -33,9 +35,10 @@ export const tenants = sqliteTable(
       .notNull()
       .default("PENDING"),
     plan: text("plan", {
-      enum: ["STARTER", "GROWTH", "SCALE", "ENTERPRISE"],
+      enum: ["PRO", "STARTER", "GROWTH", "SCALE", "ENTERPRISE"],
     })
       .notNull()
+      // Legacy default, kept so the table isn't rebuilt. Every insert sets the plan ("PRO") explicitly.
       .default("STARTER"),
     /** Access ends at this moment. Null = no end (manual Enterprise deals). */
     planExpiresAt: integer("plan_expires_at", { mode: "timestamp_ms" }),
@@ -45,7 +48,7 @@ export const tenants = sqliteTable(
     /** When the "your access ended" email went out for the current expiry; cleared when access is extended. */
     expiryNoticeSentAt: integer("expiry_notice_sent_at", { mode: "timestamp_ms" }),
     /**
-     * SELF_SERVE: access comes from the $1 trial or a Dodo subscription.
+     * SELF_SERVE: access comes from the $2.99 trial or a Dodo subscription.
      * MANUAL: a platform admin set the plan and end date by hand (enterprise deals, comped accounts).
      */
     billingMode: text("billing_mode", { enum: ["SELF_SERVE", "MANUAL"] }).notNull().default("SELF_SERVE"),
@@ -54,8 +57,13 @@ export const tenants = sqliteTable(
     /** Platform admin who created this workspace; null for self sign-ups. */
     createdByAdminId: integer("created_by_admin_id"),
     apiKeyHash: text("api_key_hash").unique(),
-    dodoCustomerId: text("dodo_customer_id").unique(),
+    /** The billing customer. One person shares one customer across their workspaces, so it is not unique. */
+    dodoCustomerId: text("dodo_customer_id"),
     siteConfig: text("site_config", { mode: "json" }),
+    /** The language content is written in first (BCP 47, e.g. "en"). */
+    defaultLanguage: text("default_language").notNull().default("en"),
+    /** Extra languages the agency publishes in, e.g. ["de", "es"]. Translations live on each record. */
+    languages: text("languages", { mode: "json" }).$type<string[]>(),
     ...timestamps,
   },
   (t) => [index("tenants_status_idx").on(t.status)],
@@ -86,6 +94,8 @@ export const tenantStaff = sqliteTable(
     uniqueIndex("tenant_staff_email_uidx").on(t.tenantId, t.email),
     uniqueIndex("tenant_staff_username_uidx").on(t.tenantId, t.username),
     index("tenant_staff_tenant_idx").on(t.tenantId),
+    // One person can be staff in several workspaces: the login finds every row by email.
+    index("tenant_staff_email_idx").on(t.email),
   ],
 );
 
@@ -286,6 +296,10 @@ export const activities = sqliteTable(
     status: text("status", { enum: ["DRAFT", "PUBLISHED"] })
       .notNull()
       .default("DRAFT"),
+    /** When the trip last went live. Shown on the content calendar. */
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    /** When a draft is scheduled to go live. The publish job flips it at this time, then clears it. */
+    publishAt: integer("publish_at", { mode: "timestamp_ms" }),
     canonicalUrl: text("canonical_url"),
     urlHistory: text("url_history", { mode: "json" }),
     meta: text("meta", { mode: "json" }),
@@ -403,40 +417,6 @@ export const departures = sqliteTable(  "departures",
   ],
 );
 
-export const bookings = sqliteTable(
-  "bookings",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    tenantId: integer("tenant_id")
-      .notNull()
-      .references(() => tenants.id, { onDelete: "cascade" }),
-    activityId: integer("activity_id")
-      .notNull()
-      .references(() => activities.id, { onDelete: "cascade" }),
-    departureId: integer("departure_id")
-      .notNull()
-      .references(() => departures.id, { onDelete: "cascade" }),
-    groupSize: integer("group_size").notNull().default(1),
-    totalPrice: real("total_price").notNull(),
-    status: text("status", { enum: ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"] })
-      .notNull()
-      .default("PENDING"),
-    name: text("name"),
-    email: text("email"),
-    phone: text("phone"),
-    extraIds: text("extra_ids", { mode: "json" }),
-    /** Currency totalPrice is in: the agency's currency when the booking was made. */
-    currency: text("currency").notNull().default("USD"),
-    /** Secret the website holds so the traveller can pay for this booking and nobody else can. */
-    publicToken: text("public_token"),
-    ...timestamps,
-  },
-  (t) => [
-    index("bookings_tenant_status_idx").on(t.tenantId, t.status),
-    index("bookings_tenant_activity_idx").on(t.tenantId, t.activityId),
-  ],
-);
-
 export const platformSubscriptions = sqliteTable(
   "platform_subscriptions",
   {
@@ -448,7 +428,7 @@ export const platformSubscriptions = sqliteTable(
     dodoSubscriptionId: text("dodo_subscription_id").unique(),
     dodoCustomerId: text("dodo_customer_id"),
     productId: text("product_id"),
-    plan: text("plan", { enum: ["STARTER", "GROWTH", "SCALE", "ENTERPRISE"] }).notNull(),
+    plan: text("plan", { enum: ["PRO", "STARTER", "GROWTH", "SCALE", "ENTERPRISE"] }).notNull(),
     interval: text("interval", { enum: ["monthly", "annual"] }),
     status: text("status", {
       enum: ["ACTIVE", "PAST_DUE", "CANCELED", "EXPIRED", "TRIALING"],
@@ -472,26 +452,6 @@ export const billingEvents = sqliteTable("billing_events", {
     .notNull()
     .default(sql`(unixepoch() * 1000)`),
 });
-
-export const inquiries = sqliteTable(
-  "inquiries",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    tenantId: integer("tenant_id")
-      .notNull()
-      .references(() => tenants.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    email: text("email").notNull(),
-    phone: text("phone"),
-    trip: text("trip"),
-    message: text("message"),
-    status: text("status", { enum: ["NEW", "IN_PROGRESS", "RESOLVED", "CLOSED"] })
-      .notNull()
-      .default("NEW"),
-    ...timestamps,
-  },
-  (t) => [index("inquiries_tenant_status_idx").on(t.tenantId, t.status)],
-);
 
 // ─── Engagement ──────────────────────────────────────────────────────────────
 
@@ -632,6 +592,10 @@ export const infoPages = sqliteTable(
     metaTitle: text("meta_title"),
     metaDescription: text("meta_description"),
     published: integer("published", { mode: "boolean" }).notNull().default(false),
+    /** When the page last went live. Shown on the content calendar. */
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    /** When a draft is scheduled to go live. The publish job flips it at this time, then clears it. */
+    publishAt: integer("publish_at", { mode: "timestamp_ms" }),
     featuredInNavbar: integer("featured_in_navbar", { mode: "boolean" }).notNull().default(false),
     infoPageCategoryId: integer("info_page_category_id").references(() => infoPageCategories.id, {
       onDelete: "set null",
@@ -658,6 +622,8 @@ export const blogs = sqliteTable(
     coverImage: text("cover_image"),
     tags: text("tags", { mode: "json" }),
     published: integer("published", { mode: "boolean" }).notNull().default(false),
+    /** When a draft is scheduled to go live. The publish job flips it at this time, then clears it. */
+    publishAt: integer("publish_at", { mode: "timestamp_ms" }),
     inTrash: integer("in_trash", { mode: "boolean" }).notNull().default(false),
     views: integer("views").notNull().default(0),
     likes: integer("likes").notNull().default(0),
@@ -822,9 +788,7 @@ export type TenantStaff = typeof tenantStaff.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
 export type Departure = typeof departures.$inferSelect;
-export type Booking = typeof bookings.$inferSelect;
 export type PlatformSubscription = typeof platformSubscriptions.$inferSelect;
-export type Inquiry = typeof inquiries.$inferSelect;
 export type Blog = typeof blogs.$inferSelect;
 export type InfoPage = typeof infoPages.$inferSelect;
 export type Media = typeof media.$inferSelect;
@@ -868,7 +832,6 @@ export const activityRelations = relations(activities, ({ one, many }) => ({
   }),
   tripSeo: one(tripSeo, { fields: [activities.tripSeoId], references: [tripSeo.id] }),
   departures: many(departures),
-  bookings: many(bookings),
   featuredTags: many(activityToFeaturedTag),
   locations: many(activityLocations),
   extras: many(activityExtras),
@@ -900,13 +863,6 @@ export const departureRelations = relations(departures, ({ one }) => ({
   tenant: one(tenants, { fields: [departures.tenantId], references: [tenants.id] }),
 }));
 
-export const bookingRelations = relations(bookings, ({ one, many }) => ({
-  payments: many(payments),
-  activity: one(activities, { fields: [bookings.activityId], references: [activities.id] }),
-  departure: one(departures, { fields: [bookings.departureId], references: [departures.id] }),
-  tenant: one(tenants, { fields: [bookings.tenantId], references: [tenants.id] }),
-}));
-
 export const blogRelations = relations(blogs, ({ one }) => ({
   city: one(locations, { fields: [blogs.cityId], references: [locations.id], relationName: "blogCity" }),
   author: one(tenantStaff, { fields: [blogs.authorId], references: [tenantStaff.id] }),
@@ -933,6 +889,7 @@ export const teamMemberRelations = relations(teamMembers, ({ one }) => ({
 
 export const supportTicketRelations = relations(supportTickets, ({ one, many }) => ({
   creator: one(tenantStaff, { fields: [supportTickets.creatorId], references: [tenantStaff.id] }),
+  tenant: one(tenants, { fields: [supportTickets.tenantId], references: [tenants.id] }),
   replies: many(supportTicketReplies),
 }));
 
@@ -997,77 +954,25 @@ export const tenantEmailConfig = sqliteTable("tenant_email_config", {
 
 export type TenantEmailConfig = typeof tenantEmailConfig.$inferSelect;
 
-// ─── Booking payments ────────────────────────────────────────────────────────
+// ─── Currency ────────────────────────────────────────────────────────────────
 
-/** How an agency gets paid for bookings. Stripe keys are the agency's own and stay encrypted. */
+/**
+ * Per-workspace price currency. Wepilo doesn't take payments: the agency confirms a booking and
+ * collects money itself. (The table keeps its original name; it once held payment settings.)
+ */
 export const tenantPaymentSettings = sqliteTable("tenant_payment_settings", {
   tenantId: integer("tenant_id")
     .primaryKey()
     .references(() => tenants.id, { onDelete: "cascade" }),
-  /** ISO 4217 code every price (departures, extras, bookings) is in. */
+  /** ISO 4217 code every price (departures, extras) is in. */
   currency: text("currency").notNull().default("USD"),
-  /** Lets the agency's website show prices converted to the visitor's currency. Travellers are still charged in `currency`. */
+  /** Lets the agency's website show prices converted to the visitor's currency. */
   currencyTranslation: integer("currency_translation", { mode: "boolean" }).notNull().default(false),
-  stripeEnabled: integer("stripe_enabled", { mode: "boolean" }).notNull().default(false),
-  stripeSecretKeyEnc: text("stripe_secret_key_enc"),
-  stripeWebhookSecretEnc: text("stripe_webhook_secret_enc"),
-  stripeWebhookId: text("stripe_webhook_id"),
-  stripeAccountName: text("stripe_account_name"),
-  stripeLive: integer("stripe_live", { mode: "boolean" }).notNull().default(false),
-  stripeVerifiedAt: integer("stripe_verified_at", { mode: "timestamp_ms" }),
-  bankEnabled: integer("bank_enabled", { mode: "boolean" }).notNull().default(false),
-  bankInstructions: text("bank_instructions"),
-  /** Percent taken up front (1-99). Null = the traveller pays the full amount. */
-  depositPercent: integer("deposit_percent"),
-  /** Confirm a booking (and take its seats) as soon as its payment lands. */
-  autoConfirm: integer("auto_confirm", { mode: "boolean" }).notNull().default(false),
-  lastError: text("last_error"),
   ...timestamps,
 });
 
-export const payments = sqliteTable(
-  "payments",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    tenantId: integer("tenant_id")
-      .notNull()
-      .references(() => tenants.id, { onDelete: "cascade" }),
-    bookingId: integer("booking_id")
-      .notNull()
-      .references(() => bookings.id, { onDelete: "cascade" }),
-    provider: text("provider", { enum: ["STRIPE", "BANK_TRANSFER", "CASH", "OTHER"] }).notNull(),
-    kind: text("kind", { enum: ["DEPOSIT", "BALANCE", "FULL"] }).notNull().default("FULL"),
-    /** Smallest currency unit (cents), so sums never drift. */
-    amountMinor: integer("amount_minor").notNull(),
-    currency: text("currency").notNull(),
-    /**
-     * PENDING: waiting for money. PAID: received. REVIEW: money arrived but the booking could
-     * not be confirmed (sold out), so a person has to decide. EXPIRED/FAILED: never paid.
-     */
-    status: text("status", { enum: ["PENDING", "PAID", "REVIEW", "FAILED", "EXPIRED", "REFUNDED"] })
-      .notNull()
-      .default("PENDING"),
-    /** Stripe Checkout Session id. */
-    providerRef: text("provider_ref"),
-    /** Stripe PaymentIntent id, needed to refund. */
-    providerPaymentId: text("provider_payment_id"),
-    note: text("note"),
-    paidAt: integer("paid_at", { mode: "timestamp_ms" }),
-    ...timestamps,
-  },
-  (t) => [
-    index("payments_tenant_idx").on(t.tenantId, t.status),
-    index("payments_booking_idx").on(t.bookingId),
-    uniqueIndex("payments_provider_ref_uidx").on(t.providerRef),
-  ],
-);
-
-export type Payment = typeof payments.$inferSelect;
 export type TenantPaymentSettings = typeof tenantPaymentSettings.$inferSelect;
 
-export const paymentRelations = relations(payments, ({ one }) => ({
-  booking: one(bookings, { fields: [payments.bookingId], references: [bookings.id] }),
-}));
 
 // ─── Site content tools ──────────────────────────────────────────────────────
 

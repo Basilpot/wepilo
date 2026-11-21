@@ -14,7 +14,7 @@ export const siteRoutes = new Hono<AppEnv>()
     const tenantId = c.get("tenantId");
     const tenant = await db.query.tenants.findFirst({
       where: eq(schema.tenants.id, tenantId),
-      columns: { companyName: true, companyLogo: true, companyDescription: true, phone: true, address: true, website: true, email: true, siteConfig: true },
+      columns: { companyName: true, companyLogo: true, companyDescription: true, phone: true, address: true, website: true, email: true, siteConfig: true, defaultLanguage: true, languages: true },
     });
     if (!tenant) throw new ApiError(404, "Not found");
     const config = readSiteConfig(tenant.siteConfig);
@@ -30,6 +30,8 @@ export const siteRoutes = new Hono<AppEnv>()
           website: tenant.website,
           email: tenant.email,
         },
+        /** The language content is written in, and every language the site is published in (default first). */
+        languages: { default: tenant.defaultLanguage, available: [tenant.defaultLanguage, ...(tenant.languages ?? []).filter((l) => l !== tenant.defaultLanguage)] },
         seo: config.seo,
         social: config.social,
         announcement: config.announcement.enabled && config.announcement.text ? config.announcement : null,

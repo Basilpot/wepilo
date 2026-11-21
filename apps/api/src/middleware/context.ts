@@ -4,7 +4,15 @@ import { eq, and, inArray, sql } from "drizzle-orm";
 import type { Env } from "@/env";
 import { getDb, type Db } from "@/db";
 import * as schema from "@/db/schema";
-import { verifyToken, staffCookieName, userCookieName, type StaffTokenPayload, type UserTokenPayload } from "@/lib/auth";
+import {
+  verifyToken,
+  staffCookieName,
+  userCookieName,
+  platformCookieName,
+  type StaffTokenPayload,
+  type UserTokenPayload,
+  type PlatformTokenPayload,
+} from "@/lib/auth";
 import { sha256Hex } from "@/lib/crypto";
 import { ApiError } from "@/lib/http";
 import { loadAccess, limitsFor, websiteApiOpen } from "@/lib/billing";
@@ -148,6 +156,22 @@ export function requireUser() {
     await next();
   });
 }
+
+/**
+ * Wepilo's own team. Loaded from its own cookie, separate from any workspace session:
+ * a workspace owner is never a platform admin by accident.
+ */
+export const requirePlatformAdmin = createMiddleware<{ Bindings: Env; Variables: AppVariables }>(async (c, next) => {
+  const token = isTrustedOrigin(c.env, c.req.header("origin")) ? getCookie(c, platformCookieName) : undefined;
+  const payload = token ? await verifyToken<PlatformTokenPayload>(c.env, token) : null;
+  if (payload?.kind !== "platform") return c.json({ error: "Authentication required" }, 401);
+  const admin = await c.get("db").query.platformAdmins.findFirst({
+    where: and(eq(schema.platformAdmins.id, payload.adminId), eq(schema.platformAdmins.isActive, true)),
+  });
+  if (!admin) return c.json({ error: "Authentication required" }, 401);
+  c.set("platformAdmin", admin);
+  await next();
+});
 
 export function requireTenant() {
   return createMiddleware<{ Bindings: Env; Variables: AppVariables }>(async (c, next) => {

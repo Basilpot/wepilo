@@ -1,0 +1,62 @@
+---
+import SectionHead from "./SectionHead.astro";
+import Video from "./Video.astro";
+
+/** One trip, fanned out across the languages it is published in. The centre card is the original. */
+const cards = [
+  { lang: "Français", code: "fr", title: "Le chemin de l'Inca jusqu'au Machu Picchu", path: "/fr/tours/inca-trail-machu-picchu" },
+  { lang: "Deutsch", code: "de", title: "Inka-Trail nach Machu Picchu", path: "/de/tours/inca-trail-machu-picchu" },
+  { lang: "English", code: "en", title: "Inca Trail to Machu Picchu", path: "/tours/inca-trail-machu-picchu" },
+  { lang: "Español", code: "es", title: "Camino Inca a Machu Picchu", path: "/es/tours/inca-trail-machu-picchu" },
+  { lang: "日本語", code: "ja", title: "インカ・トレイルでマチュピチュへ", path: "/ja/tours/inca-trail-machu-picchu" },
+];
+const mid = 2;
+---
+
+<section id="languages" class="scroll-mt-28 px-2 pt-28 md:px-3 md:pt-40" aria-labelledby="languages-title">
+  <div class="clip clip-dim pb-20 pt-20 text-white md:rounded-[32px] md:pb-28 md:pt-28">
+    <Video name="venice" />
+    <div class="wrap">
+      <SectionHead
+        id="languages-title"
+        label="languages"
+        dark
+        lead="Publish any trip in French, German, Spanish, Japanese or whatever your markets need. Someone who speaks the language checks the draft, and Google shows each traveller the right version."
+      >
+        Sell to travellers in their own language.
+      </SectionHead>
+    </div>
+
+    <ul class="reveal relative mx-auto mt-16 flex max-w-[1280px] items-end justify-center px-4 text-ink" aria-label="The same trip in five languages">
+      {
+        cards.map((c, i) => {
+          const off = i - mid;
+          const centre = off === 0;
+          return (
+            <li
+              class:list={[
+                "shrink-0 overflow-hidden rounded-[20px] bg-paper shadow-[0_30px_70px_-30px_rgb(0_0_0/0.7)]",
+                centre && "relative z-10 w-[min(88vw,360px)]",
+                Math.abs(off) === 1 && "z-[5] -mx-6 hidden w-[240px] md:block",
+                Math.abs(off) === 2 && "z-0 -mx-6 hidden w-[240px] opacity-90 lg:block",
+              ]}
+              style={centre ? "" : `transform: translateY(${Math.abs(off) * 28}px) scale(${1 - Math.abs(off) * 0.06})`}
+            >
+              <div class="flex items-center justify-between border-b border-line px-5 py-3">
+                <span class="text-[14px] font-semibold">{c.lang}</span>
+                <span class="rounded-full bg-mist px-2 py-0.5 font-mono text-[11px] text-muted">hreflang="{c.code}"</span>
+              </div>
+              <div class="p-5">
+                <img src="/product/trip-thumb.webp" alt="" width="720" height="300" loading="lazy" decoding="async" class="h-24 w-full rounded-xl object-cover" />
+                <p class:list={["mt-4 font-display leading-[1.1] tracking-[-0.01em]", centre ? "text-[1.75rem]" : "text-[1.25rem]"]} lang={c.code}>{c.title}</p>
+                <p class="mt-3 truncate font-mono text-[12px] text-faint">{c.path}</p>
+                {!centre && <p class="mt-3 inline-flex rounded-full bg-[#ddf3e8] px-2.5 py-0.5 text-[12px] font-medium text-pine">Approved</p>}
+                {centre && <p class="mt-3 inline-flex rounded-full bg-mist px-2.5 py-0.5 text-[12px] font-medium text-muted">Original</p>}
+              </div>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</section>

@@ -1,3 +1,5 @@
+import { TranslationFields } from "@/components/translation-fields";
+import { compactTranslations } from "@/lib/translations";
 import { Plus, Trash2 } from "@/components/icons";
 import { Field } from "@/components/form";
 import { ImageField } from "@/components/image-field";
@@ -78,6 +80,19 @@ export function HomepageEditor({ sections, onChange }: { sections: HomeSection[]
                   <Textarea rows={5} value={s.body ?? ""} onChange={(e) => patch(s.id, { body: e.target.value })} />
                 </Field>
               ) : null}
+              <div className="sm:col-span-2">
+                <TranslationFields
+                  value={s.translations ?? {}}
+                  onChange={(translations) => patch(s.id, { translations: compactTranslations(translations) })}
+                  fields={[
+                    { key: "title", label: "Heading" },
+                    ...(s.type !== "NEWSLETTER" || s.subtitle ? [{ key: "subtitle", label: "Subheading" }] : []),
+                    ...(s.type === "HERO" ? [{ key: "ctaLabel", label: "Button text" }] : []),
+                    ...(s.type === "CUSTOM_TEXT" ? [{ key: "body", label: "Text", multiline: true }] : []),
+                  ]}
+                  original={{ title: s.title ?? "", subtitle: s.subtitle ?? "", ctaLabel: s.ctaLabel ?? "", body: s.body ?? "" }}
+                />
+              </div>
             </div>
           </div>
         )}

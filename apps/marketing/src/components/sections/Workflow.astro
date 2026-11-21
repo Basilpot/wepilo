@@ -1,0 +1,100 @@
+---
+const steps = [
+  {
+    title: "Plan and publish",
+    body: "Set the itinerary, dates and price. Wepilo publishes the trip when it is complete, not before.",
+    image: "/shots/trip-editor.png",
+    alt: "The trip editor showing an itinerary and the publish checklist.",
+  },
+  {
+    title: "Take the booking",
+    body: "A request arrives from your site with the travellers' details. Confirm it and the seats come off the departure.",
+    image: "/shots/bookings.png",
+    alt: "The bookings page with a pending request waiting to be confirmed.",
+  },
+  {
+    title: "Answer the enquiry",
+    body: "Leads land in the same inbox, tagged with the trip they ask about.",
+    image: "/shots/inquiries.png",
+    alt: "The enquiries inbox with a message about an open departure.",
+  },
+  {
+    title: "Show it on your site",
+    body: "Your storefront reads trips and departures live, on your own domain.",
+    image: "/shots/storefront.png",
+    alt: "A trip on a travel agency website, with the price and the upcoming departures.",
+  },
+];
+---
+
+<section class="rule" id="solutions">
+  <div class="shell py-20 sm:py-28">
+    <div class="reveal max-w-[40rem]">
+      <p class="eyebrow">How it works</p>
+      <h2 class="mt-4 text-section">From first enquiry to confirmed booking</h2>
+    </div>
+
+    <div class="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)] lg:gap-12" data-workflow>
+      <ol class="reveal flex flex-col gap-1" role="tablist" aria-label="Workflow">
+        {
+          steps.map((step, i) => (
+            <li>
+              <button
+                type="button"
+                role="tab"
+                id={`wf-tab-${i}`}
+                aria-controls={`wf-panel-${i}`}
+                aria-selected={i === 0 ? "true" : "false"}
+                data-step={i}
+                class="wf-tab group w-full rounded-2xl px-5 py-4 text-left transition-colors"
+              >
+                <span class="flex items-baseline gap-4">
+                  <span class="font-mono text-[12px] text-faint">0{i + 1}</span>
+                  <span class="text-[1.0625rem] font-medium tracking-[-0.02em]">{step.title}</span>
+                </span>
+                <span class="wf-body mt-2 block pl-9 text-[15px] leading-6 text-muted">{step.body}</span>
+              </button>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="reveal mesh overflow-hidden rounded-[24px] px-5 pt-6 sm:px-10 sm:pt-10">
+        {
+          steps.map((step, i) => (
+            <img
+              id={`wf-panel-${i}`}
+              role="tabpanel"
+              aria-labelledby={`wf-tab-${i}`}
+              src={step.image}
+              alt={step.alt}
+              width="1440"
+              height="900"
+              loading={i === 0 ? "eager" : "lazy"}
+              decoding="async"
+              data-panel={i}
+              class:list={[
+                "shot block aspect-[16/10] w-full rounded-b-none object-cover object-left-top",
+                i !== 0 && "hidden",
+              ]}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-workflow]").forEach((root) => {
+    const tabs = root.querySelectorAll<HTMLButtonElement>("[data-step]");
+    const panels = root.querySelectorAll<HTMLElement>("[data-panel]");
+    tabs.forEach((tab) =>
+      tab.addEventListener("click", () => {
+        const step = tab.dataset.step;
+        tabs.forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
+        panels.forEach((p) => p.classList.toggle("hidden", p.dataset.panel !== step));
+      }),
+    );
+  });
+</script>

@@ -13,8 +13,11 @@ export type Env = {
   DODO_WEBHOOK_SECRET: string;
   /** "test_mode" or "live_mode" */
   DODO_ENVIRONMENT: string;
-  /** One-time $1 product that unlocks the 3-day trial */
+  /** One-time $2.99 product that unlocks the 7-day trial (TRIAL_DAYS). */
   DODO_TRIAL_PRODUCT_ID: string;
+  DODO_PRO_MONTHLY_PRODUCT_ID?: string;
+  DODO_PRO_ANNUAL_PRODUCT_ID?: string;
+  /** Legacy tier product ids, kept so old subscriptions still resolve. */
   DODO_STARTER_MONTHLY_PRODUCT_ID?: string;
   DODO_STARTER_ANNUAL_PRODUCT_ID?: string;
   DODO_GROWTH_MONTHLY_PRODUCT_ID?: string;

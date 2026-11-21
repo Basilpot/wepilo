@@ -1,10 +1,7 @@
 import { Hono } from "hono";
-import { createMiddleware } from "hono/factory";
-import { getCookie } from "hono/cookie";
-import { isTrustedOrigin } from "@/lib/origin";
 import { enforce, clientIp, LIMITS } from "@/lib/rate-limit";
 import { z } from "zod";
-import { and, count, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, or, sql } from "drizzle-orm";
 import * as schema from "@/db/schema";
 import type { Db } from "@/db";
 import type { AppEnv } from "@/types";
@@ -12,34 +9,20 @@ import { ApiError, getOffset, paginate, paginationSchema, slugify, contains } fr
 import {
   clearPlatformAuthCookie,
   hashPassword,
-  platformCookieName,
   setPlatformAuthCookie,
   setStaffAuthCookie,
   signToken,
   verifyPassword,
-  verifyToken,
-  type PlatformTokenPayload,
 } from "@/lib/auth";
+import { requirePlatformAdmin } from "@/middleware/context";
 import { accessFor } from "@/lib/billing";
 import { PLAN_KEYS } from "@/lib/plans";
 import { issueStaffToken } from "@/lib/staff-tokens";
 import { escapeHtml, layout, sendEmail } from "@/lib/email";
+import { platformSupportRoutes } from "@/routes/platform-support";
 import type { Env } from "@/env";
 
 const IMPERSONATION_SECONDS = 60 * 60;
-
-/** Loads the platform admin from its own cookie. Workspace sessions never grant access here. */
-const requirePlatformAdmin = createMiddleware<AppEnv>(async (c, next) => {
-  const token = isTrustedOrigin(c.env, c.req.header("origin")) ? getCookie(c, platformCookieName) : undefined;
-  const payload = token ? await verifyToken<PlatformTokenPayload>(c.env, token) : null;
-  if (payload?.kind !== "platform") return c.json({ error: "Authentication required" }, 401);
-  const admin = await c.get("db").query.platformAdmins.findFirst({
-    where: and(eq(schema.platformAdmins.id, payload.adminId), eq(schema.platformAdmins.isActive, true)),
-  });
-  if (!admin) return c.json({ error: "Authentication required" }, 401);
-  c.set("platformAdmin", admin);
-  await next();
-});
 
 async function audit(
   db: Db,
@@ -65,6 +48,27 @@ async function findOwner(db: Db, tenant: schema.Tenant) {
     where: and(eq(schema.tenantStaff.tenantId, tenant.id), eq(schema.tenantStaff.role, "OWNER")),
   });
   return owners.find((o) => o.email === tenant.email) ?? owners[0] ?? null;
+}
+
+/**
+ * The workspace's owner login, created with a locked password if it is missing.
+ * A workspace without one cannot be signed into or handed over, so the team needs a way back in.
+ */
+async function ownerLogin(db: Db, tenant: schema.Tenant, name?: string) {
+  const existing = await findOwner(db, tenant);
+  if (existing) return existing;
+  const [owner] = await db
+    .insert(schema.tenantStaff)
+    .values({
+      tenantId: tenant.id,
+      name: name ?? tenant.companyName ?? tenant.slug ?? "Owner",
+      email: tenant.email,
+      password: await lockedPasswordHash(),
+      role: "OWNER",
+      permissions: [],
+    })
+    .returning();
+  return owner;
 }
 
 async function sendSetupEmail(env: Env, input: { to: string; name: string; companyName: string; url: string; adminName: string }) {
@@ -236,17 +240,20 @@ const platformTenantRoutes = new Hono<AppEnv>()
     if (await db.query.tenants.findFirst({ where: eq(schema.tenants.slug, slug), columns: { id: true } })) {
       throw new ApiError(409, "Slug already taken", "SLUG_TAKEN");
     }
-    if (await db.query.tenants.findFirst({ where: eq(schema.tenants.email, email), columns: { id: true } })) {
-      throw new ApiError(409, "A workspace already uses this owner email", "EMAIL_TAKEN");
-    }
+    // One person may own several workspaces, so the same owner email is allowed here.
 
-    const passwordHash = await lockedPasswordHash();
+    // A customer who already signs in keeps their own password. A new one gets a locked
+    // password and a setup link to choose one.
+    const known = await db.query.tenantStaff.findFirst({
+      where: eq(schema.tenantStaff.email, email),
+      orderBy: [asc(schema.tenantStaff.id)],
+    });
+    const passwordHash = known?.password ?? (await lockedPasswordHash());
     const now = new Date();
     const [tenant] = await db
       .insert(schema.tenants)
       .values({
         email,
-        password: passwordHash,
         companyName: body.companyName,
         slug,
         phone: body.phone || null,
@@ -255,7 +262,7 @@ const platformTenantRoutes = new Hono<AppEnv>()
         plan: body.plan,
         planExpiresAt: body.planExpiresAt,
         billingMode: "MANUAL",
-        // Hand-made workspaces don't get the self-serve $1 trial.
+        // Hand-made workspaces don't get the self-serve $2.99 trial.
         trialUsedAt: now,
         internalNotes: body.internalNotes || null,
         createdByAdminId: admin.id,
@@ -286,7 +293,7 @@ const platformTenantRoutes = new Hono<AppEnv>()
     const id = Number(c.req.param("id"));
     const db = c.get("db");
     const tenant = await tenantById(db, id);
-    const [sub, staff, [trips], [posts], [bookings], log, openSetup] = await Promise.all([
+    const [sub, staff, [trips], [posts], log, openSetup] = await Promise.all([
       db.query.platformSubscriptions.findFirst({ where: eq(schema.platformSubscriptions.tenantId, id) }),
       db.query.tenantStaff.findMany({ where: eq(schema.tenantStaff.tenantId, id), orderBy: schema.tenantStaff.id }),
       db.select({ value: count() }).from(schema.activities).where(eq(schema.activities.tenantId, id)),
@@ -294,7 +301,6 @@ const platformTenantRoutes = new Hono<AppEnv>()
         .select({ value: count() })
         .from(schema.blogs)
         .where(and(eq(schema.blogs.tenantId, id), eq(schema.blogs.inTrash, false))),
-      db.select({ value: count() }).from(schema.bookings).where(eq(schema.bookings.tenantId, id)),
       db.query.platformAuditLog.findMany({
         where: eq(schema.platformAuditLog.tenantId, id),
         orderBy: [desc(schema.platformAuditLog.createdAt), desc(schema.platformAuditLog.id)],
@@ -329,7 +335,7 @@ const platformTenantRoutes = new Hono<AppEnv>()
       /** Expiry of the owner's open setup link, if one is waiting to be used. */
       pendingSetupUntil: openSetup[0]?.expiresAt ?? null,
       staff: staff.map((s) => ({ id: s.id, name: s.name, email: s.email, role: s.role, isActive: s.isActive, createdAt: s.createdAt })),
-      usage: { trips: trips.value, posts: posts.value, bookings: bookings.value, staff: staff.length },
+      usage: { trips: trips.value, posts: posts.value, staff: staff.length },
       log: log.map((l) => ({ id: l.id, action: l.action, detail: l.detail, createdAt: l.createdAt, admin: l.admin })),
     });
   })
@@ -365,8 +371,7 @@ const platformTenantRoutes = new Hono<AppEnv>()
     if (body.ownerEmail !== undefined) {
       const email = body.ownerEmail.toLowerCase();
       if (email !== tenant.email) {
-        const taken = await db.query.tenants.findFirst({ where: eq(schema.tenants.email, email), columns: { id: true } });
-        if (taken) throw new ApiError(409, "A workspace already uses this owner email", "EMAIL_TAKEN");
+        // The same person may own several workspaces, so this email can be in use elsewhere.
         const staffTaken = await db.query.tenantStaff.findFirst({
           where: and(eq(schema.tenantStaff.tenantId, id), eq(schema.tenantStaff.email, email)),
           columns: { id: true },
@@ -398,8 +403,7 @@ const platformTenantRoutes = new Hono<AppEnv>()
     const db = c.get("db");
     const admin = c.get("platformAdmin")!;
     const tenant = await tenantById(db, id);
-    const owner = await findOwner(db, tenant);
-    if (!owner) throw new ApiError(409, "This workspace has no owner login");
+    const owner = await ownerLogin(db, tenant);
 
     const { token, expiresAt } = await issueStaffToken(db, owner.id, "SETUP");
     const url = setupUrl(c.env, token);
@@ -422,8 +426,7 @@ const platformTenantRoutes = new Hono<AppEnv>()
     const admin = c.get("platformAdmin")!;
     const tenant = await tenantById(db, id);
     if (tenant.status === "SUSPENDED") throw new ApiError(409, "Reactivate the workspace first");
-    const owner = await findOwner(db, tenant);
-    if (!owner) throw new ApiError(409, "This workspace has no owner login");
+    const owner = await ownerLogin(db, tenant);
 
     const token = await signToken(
       c.env,
@@ -487,4 +490,5 @@ const platformAdminRoutes = new Hono<AppEnv>()
 export const platformRoutes = new Hono<AppEnv>()
   .route("/auth", platformAuthRoutes)
   .route("/tenants", platformTenantRoutes)
-  .route("/admins", platformAdminRoutes);
+  .route("/admins", platformAdminRoutes)
+  .route("/support", platformSupportRoutes);

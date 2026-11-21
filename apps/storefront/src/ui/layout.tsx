@@ -5,11 +5,63 @@ import { css } from "@/ui/styles";
 
 export type Ctx = {
   site: Site;
-  /** Path prefix: "/himal-trails" when serving any agency, "" when one agency owns the whole site. */
+  /**
+   * Path prefix for links: the agency ("/himal-trails" when serving any agency, "" on its own
+   * domain), plus the language ("/de") when the visitor is reading another language.
+   */
   base: string;
+  /** The agency's prefix without a language, for switching languages. */
+  siteBase: string;
+  /** The language being shown; undefined is the original. */
+  lang?: string;
+  /** The rest of the path after the prefix, e.g. "/trips/kilimanjaro", for the same page in other languages. */
+  path: string;
   /** The agency's currency, for prices. */
   currency: string;
+  /** "https://your-agency.travel", for canonical links and structured data. */
+  origin: string;
 };
+
+/** The absolute address of a path on this site, e.g. abs(ctx, "/trips/x"). */
+export const abs = (ctx: Ctx, path = ctx.path) => `${ctx.origin}${`${ctx.base}${path}` || "/"}`;
+
+/** Structured data for search engines. `<` is escaped so text in it can't close the script tag. */
+export const JsonLd = ({ data }: { data: unknown }) => (
+  <script type="application/ld+json">{raw(JSON.stringify(data).replace(/</g, "\\u003c"))}</script>
+);
+
+/** The same page in another language: the original at the root, the others under their code. */
+export const inLanguage = (ctx: Ctx, code: string) => {
+  const def = ctx.site.languages?.default ?? "en";
+  return `${ctx.siteBase}${code === def ? "" : `/${code}`}${ctx.path}` || "/";
+};
+
+/** "de" → "Deutsch": each language named in itself, as visitors expect in a switcher. */
+const nativeName = (code: string) => {
+  try {
+    const n = new Intl.DisplayNames([code], { type: "language" }).of(code);
+    return n ? n.charAt(0).toUpperCase() + n.slice(1) : code;
+  } catch {
+    return code;
+  }
+};
+
+function LanguageLinks({ ctx }: { ctx: Ctx }) {
+  const langs = ctx.site.languages;
+  if (!langs || langs.available.length < 2) return null;
+  const current = ctx.lang ?? langs.default;
+  return (
+    <ul class="langs" aria-label="Language">
+      {langs.available.map((code) => (
+        <li>
+          <a href={inLanguage(ctx, code)} hreflang={code} lang={code} aria-current={code === current ? "true" : undefined}>
+            {nativeName(code)}
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 /** Links inside the agency's content start with "/", so they need the prefix. Everything else is left alone. */
 export const link = (base: string, href: string) => (href.startsWith("/") ? `${base}${href === "/" ? "" : href}` || "/" : href);
@@ -52,6 +104,8 @@ export function Layout({
   description,
   image,
   noindex,
+  canonical,
+  schema,
   children,
 }: {
   ctx: Ctx;
@@ -59,6 +113,10 @@ export function Layout({
   description?: string | null;
   image?: string | null;
   noindex?: boolean;
+  /** The preferred address of this page; defaults to the page itself. */
+  canonical?: string | null;
+  /** JSON-LD objects describing the page. */
+  schema?: unknown[];
   children?: Child;
 }) {
   const { site, base } = ctx;
@@ -70,7 +128,7 @@ export function Layout({
   const flat = nav.flatMap((i) => [i, ...(i.children ?? [])]);
 
   return (
-    <html lang="en">
+    <html lang={ctx.lang ?? site.languages?.default ?? "en"}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -82,6 +140,18 @@ export function Layout({
         <meta property="og:title" content={fullTitle} />
         {desc ? <meta property="og:description" content={desc} /> : null}
         {og ? <meta property="og:image" content={og} /> : null}
+        <link rel="canonical" href={canonical || abs(ctx)} />
+        <meta property="og:url" content={canonical || abs(ctx)} />
+        {(schema ?? []).map((data) => (
+          <JsonLd data={data} />
+        ))}
+        {/* The same page in every language the agency publishes in, so search engines show each visitor theirs. */}
+        {(site.languages?.available.length ?? 0) > 1
+          ? [
+              ...site.languages!.available.map((code) => <link rel="alternate" hreflang={code} href={`${ctx.origin}${inLanguage(ctx, code)}`} />),
+              <link rel="alternate" hreflang="x-default" href={`${ctx.origin}${inLanguage(ctx, site.languages!.default)}`} />,
+            ]
+          : null}
         {/* A path-prefixed preview should never be indexed. A site on its own domain should be. */}
         {noindex ?? base !== "" ? <meta name="robots" content="noindex" /> : null}
         <style>{raw(css)}</style>
@@ -113,6 +183,7 @@ export function Layout({
                   <a href={link(base, i.href)}>{i.label}</a>
                 ))}
                 <a href={`${base}/contact`}>Plan a trip</a>
+                <LanguageLinks ctx={ctx} />
               </div>
             </details>
           </div>
@@ -167,6 +238,7 @@ export function Layout({
               <span>
                 © {new Date().getFullYear()} {name}
               </span>
+              <LanguageLinks ctx={ctx} />
               <span>Built with Wepilo</span>
             </div>
           </div>

@@ -7,7 +7,8 @@ import { ApiError, paginate, paginationSchema, contains } from "@/lib/http";
 import { getRates } from "@/lib/fx";
 import { requireStaff, requireTenant } from "@/middleware/context";
 import { hashPassword } from "@/lib/auth";
-import { enforce } from "@/lib/rate-limit";
+import { enforce, LIMITS } from "@/lib/rate-limit";
+import { notifyPlatformOfReply, notifyPlatformOfTicket } from "@/lib/support-mail";
 import type { Context } from "hono";
 
 // ── Support tickets ──────────────────────────────────────────────────────────
@@ -65,6 +66,8 @@ export const supportRoutes = new Hono<AppEnv>()
       .parse(await c.req.json());
     const db = c.get("db");
     const staff = c.get("staff")!;
+    // A request sends mail, so it counts against the account limit.
+    await enforce(db, LIMITS.account, `support:${staff.tenantId}`);
     const [ticket] = await db
       .insert(schema.supportTickets)
       .values({
@@ -78,6 +81,13 @@ export const supportRoutes = new Hono<AppEnv>()
         priority: body.priority,
       })
       .returning();
+    // The Wepilo team hears about it by email, so nothing waits for someone to open the console.
+    const task = notifyPlatformOfTicket(c.env, db, ticket.id);
+    try {
+      c.executionCtx.waitUntil(task);
+    } catch {
+      await task;
+    }
     return c.json({ ticket }, 201);
   })
   .get("/:id", requireStaff(), requireTenant(), async (c) => {
@@ -116,6 +126,13 @@ export const supportRoutes = new Hono<AppEnv>()
         message: body.message,
       })
       .returning();
+    // The Wepilo team hears about the reply by email.
+    const task = notifyPlatformOfReply(c.env, db, ticket.id, { authorName: staff.name, message: body.message });
+    try {
+      c.executionCtx.waitUntil(task);
+    } catch {
+      await task;
+    }
     return c.json({ reply }, 201);
   })
   // Attachments: private files on a ticket, visible to the ticket's owner and workspace admins.

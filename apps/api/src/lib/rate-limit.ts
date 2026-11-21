@@ -78,6 +78,6 @@ export const LIMITS = {
   login: { name: "login", max: 8, windowSeconds: 15 * 60 },
   /** Anything that sends an email or creates accounts: per IP. */
   account: { name: "account", max: 10, windowSeconds: 60 * 60 },
-  /** Public website forms (inquiry, booking request, newsletter, review): per IP + tenant. */
+  /** Public website forms (enquiry, newsletter, review): per IP + tenant. */
   publicForm: { name: "public-form", max: 12, windowSeconds: 10 * 60 },
 } satisfies Record<string, Limit>;

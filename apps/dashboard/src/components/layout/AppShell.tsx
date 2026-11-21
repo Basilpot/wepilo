@@ -1,8 +1,10 @@
 import { useContext, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  ChevronRight,
+  Building2,
+  Check,
+  ChevronDown,
   ChevronsUpDown,
   CreditCard,
   ExternalLink,
@@ -13,6 +15,7 @@ import {
   LogOut,
   Moon,
   Mountain,
+  Plus,
   Search,
   Settings,
   Sun,
@@ -20,10 +23,10 @@ import {
 import { motion } from "motion/react";
 import { ThemeContext } from "@/components/theme-provider";
 import { CommandMenu } from "@/components/layout/CommandMenu";
-import { NAV_GROUPS, QUICK_LINKS, findNavItem, isActive, type NavItem } from "@/components/layout/nav";
+import { SIDEBAR_ITEMS, findNavItem, hubFor, isActive, isHubActive, type NavItem } from "@/components/layout/nav";
+import { NewWorkspaceDialog } from "@/components/workspace-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +43,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -52,20 +54,11 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { api } from "@/lib/api";
+import { api, toastApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { rememberWorkspace } from "@/lib/workspaces";
 import { PLAN_NAMES, daysLeft, useBillingPortal } from "@/pages/billing/billing";
 import type { Session } from "@/App";
-
-const COLLAPSED_KEY = "wepilo-nav-collapsed";
-
-function readCollapsed(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? "[]");
-  } catch {
-    return [];
-  }
-}
 
 function initials(name: string) {
   return (
@@ -89,24 +82,10 @@ async function signOut() {
   window.location.href = "/login";
 }
 
-function useNewInquiries() {
-  const { pathname } = useLocation();
-  const { data, refetch } = useQuery({
-    queryKey: ["inquiries", "new-count"],
-    queryFn: () =>
-      api<{ pagination: { total: number } }>("/inquiries", { query: { status: "NEW", limit: 1 } }),
-    staleTime: 30_000,
-  });
-  useEffect(() => {
-    void refetch();
-  }, [pathname, refetch]);
-  return data?.pagination.total ?? 0;
-}
-
 function NavLinkItem({ item, badge }: { item: NavItem; badge?: number }) {
   const { pathname } = useLocation();
   const { setOpenMobile } = useSidebar();
-  const active = isActive(pathname, item.url);
+  const active = isHubActive(pathname, item);
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild tooltip={item.title} isActive={active}>
@@ -141,6 +120,16 @@ function WorkspaceHeader({ session }: { session: Session }) {
   const { isMobile } = useSidebar();
   const storefrontUrl = useStorefrontUrl();
   const tenant = session.tenant;
+  const [newWorkspaceOpen, setNewWorkspaceOpen] = useState(false);
+  const switchTo = useMutation({
+    mutationFn: (id: number) => api("/auth/switch", { body: { tenantId: id } }),
+    onSuccess: (_res, id) => {
+      rememberWorkspace(id);
+      // Everything on screen belongs to the workspace we just left.
+      window.location.assign("/");
+    },
+    onError: (err) => toastApiError(err),
+  });
   const name = tenant?.companyName ?? tenant?.slug ?? "Workspace";
   const paid = session.access?.state === "ACTIVE" || session.access?.state === "PAST_DUE";
   const website = tenant?.website ? (/^https?:\/\//.test(tenant.website) ? tenant.website : `https://${tenant.website}`) : null;
@@ -205,6 +194,32 @@ function WorkspaceHeader({ session }: { session: Session }) {
               ) : null}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            {session.workspaces.length > 1 && (
+              <>
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Switch workspace</DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  {session.workspaces.map((w) => (
+                    <DropdownMenuItem
+                      key={w.id}
+                      disabled={switchTo.isPending}
+                      onSelect={() => {
+                        if (w.id !== tenant?.id) switchTo.mutate(w.id);
+                      }}
+                    >
+                      <Building2 />
+                      <span className="min-w-0 flex-1 truncate">{w.companyName ?? w.slug}</span>
+                      {w.id === tenant?.id && <Check />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem onSelect={() => setNewWorkspaceOpen(true)}>
+              <Plus />
+              New workspace
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to="/settings">
                 <Settings />
@@ -214,6 +229,7 @@ function WorkspaceHeader({ session }: { session: Session }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
+      <NewWorkspaceDialog open={newWorkspaceOpen} onOpenChange={setNewWorkspaceOpen} />
     </SidebarMenu>
   );
 }
@@ -331,22 +347,6 @@ function UserMenu({ session }: { session: Session }) {
 }
 
 function AppSidebar({ session }: { session: Session }) {
-  const newInquiries = useNewInquiries();
-  const { pathname } = useLocation();
-  const [collapsed, setCollapsed] = useState<string[]>(readCollapsed);
-
-  const toggleGroup = (label: string, open: boolean) => {
-    setCollapsed((prev) => {
-      const next = open ? prev.filter((l) => l !== label) : [...prev, label];
-      try {
-        localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next));
-      } catch {
-        // storage blocked; collapse state just won't persist
-      }
-      return next;
-    });
-  };
-
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader>
@@ -356,46 +356,12 @@ function AppSidebar({ session }: { session: Session }) {
         <SidebarGroup className="py-1">
           <SidebarGroupContent>
             <SidebarMenu>
-              {QUICK_LINKS.map((item) => (
-                <NavLinkItem
-                  key={item.url}
-                  item={item}
-                  badge={item.url === "/inquiries" ? newInquiries : undefined}
-                />
+              {SIDEBAR_ITEMS.map((item) => (
+                <NavLinkItem key={item.url} item={item} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {NAV_GROUPS.map((group) => {
-          const hasActive = group.items.some((i) => isActive(pathname, i.url));
-          const open = hasActive || !collapsed.includes(group.label);
-          return (
-            <Collapsible
-              key={group.label}
-              open={open}
-              onOpenChange={(o) => toggleGroup(group.label, o)}
-              className="group/collapsible"
-            >
-              <SidebarGroup className="py-1">
-                <SidebarGroupLabel asChild className="group/label hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-                  <CollapsibleTrigger>
-                    {group.label}
-                    <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                  </CollapsibleTrigger>
-                </SidebarGroupLabel>
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {group.items.map((item) => (
-                        <NavLinkItem key={item.url} item={item} />
-                      ))}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </CollapsibleContent>
-              </SidebarGroup>
-            </Collapsible>
-          );
-        })}
       </SidebarContent>
       <SidebarFooter>
         <UserMenu session={session} />
@@ -447,7 +413,7 @@ function BillingBanner({ session }: { session: Session }) {
   if (access.state === "TRIAL") {
     text =
       days === 0
-        ? "Your trial ends today. Choose a plan to keep access to your trips, bookings and website content."
+        ? "Your trial ends today. Choose a plan to keep access to your trips and website content."
         : `Your trial ends in ${days} day${days === 1 ? "" : "s"}. You won't be charged automatically, so choose a plan before then to keep access.`;
     action = billingLink("Choose a plan");
   } else if (access.state === "PAST_DUE") {
@@ -499,7 +465,7 @@ function HeaderThemeToggle() {
 
 function SiteHeader({ session, onSearch }: { session: Session; onSearch: () => void }) {
   const { pathname } = useLocation();
-  const current = findNavItem(pathname);
+  const current = hubFor(pathname) ?? findNavItem(pathname);
   const website = session.tenant?.website;
   return (
     <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 rounded-t-xl border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
@@ -559,6 +525,48 @@ function useStorefrontUrl() {
   return data ?? null;
 }
 
+/** Sibling pages of a hub: the everyday ones as tabs, the setup ones behind one menu. */
+function HubTabs({ pathname }: { pathname: string }) {
+  const hub = hubFor(pathname);
+  if (!hub) return null;
+  const tabClass = (active: boolean) =>
+    cn(
+      "-mb-px flex shrink-0 items-center gap-1 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+      active ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+    );
+  const moreActive = hub.more.find((t) => isActive(pathname, t.url));
+  return (
+    <nav aria-label={hub.title} className="-mx-1 mb-6 flex gap-1 overflow-x-auto border-b px-1">
+      {hub.tabs.map((tab) => {
+        const active = isActive(pathname, tab.url);
+        return (
+          <Link key={tab.url} to={tab.url} aria-current={active ? "page" : undefined} className={tabClass(active)}>
+            {tab.title}
+          </Link>
+        );
+      })}
+      {hub.more.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger className={tabClass(Boolean(moreActive))}>
+            {moreActive ? moreActive.title : hub.moreLabel}
+            <ChevronDown className="size-3.5 opacity-60" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {hub.more.map((tab) => (
+              <DropdownMenuItem key={tab.url} asChild>
+                <Link to={tab.url}>
+                  <tab.icon />
+                  {tab.title}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </nav>
+  );
+}
+
 export function AppShell({ session, children }: { session: Session; children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
@@ -589,7 +597,10 @@ export function AppShell({ session, children }: { session: Session; children: Re
         <BillingBanner session={session} />
         <SiteHeader session={session} onSearch={() => setSearchOpen(true)} />
         <div className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
-          <div key={pathname.split("/")[1] ?? ""} className="mx-auto w-full max-w-[1400px]">{children}</div>
+          <div key={pathname.split("/")[1] ?? ""} className="mx-auto w-full max-w-[1400px]">
+            <HubTabs pathname={pathname} />
+            {children}
+          </div>
         </div>
       </SidebarInset>
       <CommandMenu open={searchOpen} onOpenChange={setSearchOpen} onNavigate={(url) => navigate(url)} />

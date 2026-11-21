@@ -25,6 +25,7 @@ type StatusDef = { label: string; tone: Tone };
 const STATUSES = {
   trip: {
     DRAFT: { label: "Draft", tone: "neutral" },
+    SCHEDULED: { label: "Scheduled", tone: "info" },
     PUBLISHED: { label: "Live on site", tone: "success" },
   },
   review: {
@@ -34,19 +35,12 @@ const STATUSES = {
   },
   content: {
     draft: { label: "Draft", tone: "neutral" },
+    scheduled: { label: "Scheduled", tone: "info" },
     published: { label: "Published", tone: "success" },
   },
-  inquiry: {
-    NEW: { label: "New", tone: "info" },
-    IN_PROGRESS: { label: "In progress", tone: "warning" },
-    RESOLVED: { label: "Resolved", tone: "success" },
-    CLOSED: { label: "Closed", tone: "neutral" },
-  },
-  booking: {
-    PENDING: { label: "Pending", tone: "warning" },
-    CONFIRMED: { label: "Confirmed", tone: "info" },
-    COMPLETED: { label: "Completed", tone: "success" },
-    CANCELLED: { label: "Cancelled", tone: "neutral" },
+  schedule: {
+    SCHEDULED: { label: "Scheduled", tone: "info" },
+    PUBLISHED: { label: "Published", tone: "success" },
   },
   departure: {
     OPEN: { label: "Open", tone: "success" },
@@ -122,7 +116,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset",
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[11px] lowercase whitespace-nowrap ring-1 ring-inset",
         TONE_CLASSES[tone],
         className,
       )}

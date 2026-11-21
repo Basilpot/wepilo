@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { eq, and, desc, or, count, sql, inArray } from "drizzle-orm";
 import * as schema from "@/db/schema";
+import { publishAtInput, publishFields, assertCanPublish } from "@/lib/publish";
+import { translationsSchema } from "@/lib/i18n";
 import type { AppEnv } from "@/types";
 import { ApiError, slugify, paginate, paginationSchema, contains } from "@/lib/http";
 import { requireStaff, requireTenant, assertPlanLimit, tenantLimits } from "@/middleware/context";
@@ -23,7 +25,9 @@ const blogBaseSchema = z.object({
   cityId: z.number().int().nullable().optional(),
   writerId: z.number().int().nullable().optional(),
   blogCategoryId: z.number().int().nullable().optional(),
-  translations: z.record(z.string(), z.any()).optional(),
+  translations: translationsSchema.optional(),
+  /** Schedule this draft to go live at this time (ISO 8601). `null` clears the schedule. */
+  publishAt: publishAtInput,
 });
 
 /** Authors write posts and use the media library. Pages and the rest of the website content are for the other roles. */
@@ -92,6 +96,7 @@ export const blogRoutes = new Hono<AppEnv>()
         views: true,
         likes: true,
         postType: true,
+        updatedAt: true,
       },
     });
     return c.json(paginate(rows, q.page, q.limit, totalRow.value));
@@ -129,14 +134,15 @@ export const blogRoutes = new Hono<AppEnv>()
     });
     if (existing) throw new ApiError(409, "Slug already in use", "SLUG_TAKEN");
     const staff = c.get("staff")!;
-    const { slug: _s, ...data } = body;
+    if (body.published || body.publishAt) assertCanPublish(staff.role);
+    const { slug: _s, publishAt, ...data } = body;
     const [post] = await db
       .insert(schema.blogs)
       .values({
         tenantId,
         ...data,
         slug,
-        publishedAt: body.published ? new Date() : null,
+        ...publishFields({ goingLive: body.published, wasLive: false, publishAt }),
         authorId: staff.id,
       })
       .returning();
@@ -151,9 +157,18 @@ export const blogRoutes = new Hono<AppEnv>()
       where: and(eq(schema.blogs.id, id), eq(schema.blogs.tenantId, tenantId)),
     });
     if (!existing) throw new ApiError(404, "Post not found");
+    if (body.published !== undefined || body.publishAt) assertCanPublish(c.get("staff")!.role);
 
-    const { slug: newSlug, ...updates } = body;
-    const payload: Partial<typeof schema.blogs.$inferInsert> = { ...updates, updatedAt: new Date() };
+    const { slug: newSlug, publishAt, ...updates } = body;
+    const payload: Partial<typeof schema.blogs.$inferInsert> = {
+      ...updates,
+      ...publishFields({
+        goingLive: body.published === undefined ? undefined : body.published && !existing.published,
+        wasLive: existing.published && body.published !== false,
+        publishAt,
+      }),
+      updatedAt: new Date(),
+    };
     if (newSlug !== undefined) {
       const slug = slugify(newSlug);
       if (slug !== existing.slug) {
@@ -167,7 +182,6 @@ export const blogRoutes = new Hono<AppEnv>()
         payload.urlHistory = history;
       }
     }
-    if (payload.published && !existing.published) payload.publishedAt = new Date();
 
     const [post] = await db
       .update(schema.blogs)
@@ -223,6 +237,16 @@ export const infoPageRoutes = new Hono<AppEnv>()
     });
     return c.json({ data: rows });
   })
+  // Public: the live pages' addresses, for a website's sitemap and footer.
+  .get("/published", requireTenant(), async (c) => {
+    const db = c.get("db");
+    const rows = await db.query.infoPages.findMany({
+      where: and(eq(schema.infoPages.tenantId, c.get("tenantId")), eq(schema.infoPages.published, true)),
+      columns: { id: true, title: true, slug: true, publishedAt: true, updatedAt: true, translations: true },
+      orderBy: [desc(schema.infoPages.updatedAt)],
+    });
+    return c.json({ data: rows });
+  })
   .get("/slug/:slug", requireTenant(), async (c) => {
     const db = c.get("db");
     const row = await db.query.infoPages.findFirst({
@@ -256,6 +280,8 @@ export const infoPageRoutes = new Hono<AppEnv>()
         published: z.boolean().optional(),
         featuredInNavbar: z.boolean().optional(),
         infoPageCategoryId: z.number().int().nullable().optional(),
+        translations: translationsSchema.optional(),
+        publishAt: publishAtInput,
       })
       .parse(await c.req.json());
     const db = c.get("db");
@@ -274,6 +300,8 @@ export const infoPageRoutes = new Hono<AppEnv>()
         published: body.published ?? false,
         featuredInNavbar: body.featuredInNavbar ?? false,
         infoPageCategoryId: body.infoPageCategoryId ?? null,
+        translations: body.translations ?? null,
+        ...publishFields({ goingLive: body.published, wasLive: false, publishAt: body.publishAt }),
       })
       .returning();
     return c.json({ page: row }, 201);
@@ -290,12 +318,27 @@ export const infoPageRoutes = new Hono<AppEnv>()
         published: z.boolean().optional(),
         featuredInNavbar: z.boolean().optional(),
         infoPageCategoryId: z.number().int().nullable().optional(),
+        translations: translationsSchema.optional(),
+        publishAt: publishAtInput,
       })
       .partial()
       .parse(await c.req.json());
     const db = c.get("db");
-    const { slug: newSlug, ...updates } = body;
-    const payload: Partial<typeof schema.infoPages.$inferInsert> = { ...updates, updatedAt: new Date() };
+    const existing = await db.query.infoPages.findFirst({
+      where: and(eq(schema.infoPages.id, Number(c.req.param("id"))), eq(schema.infoPages.tenantId, c.get("tenantId"))),
+      columns: { published: true },
+    });
+    if (!existing) throw new ApiError(404, "Page not found");
+    const { slug: newSlug, publishAt, ...updates } = body;
+    const payload: Partial<typeof schema.infoPages.$inferInsert> = {
+      ...updates,
+      ...publishFields({
+        goingLive: body.published === undefined ? undefined : body.published && !existing.published,
+        wasLive: existing.published && body.published !== false,
+        publishAt,
+      }),
+      updatedAt: new Date(),
+    };
     if (newSlug !== undefined) payload.slug = slugify(newSlug);
     const [row] = await db
       .update(schema.infoPages)

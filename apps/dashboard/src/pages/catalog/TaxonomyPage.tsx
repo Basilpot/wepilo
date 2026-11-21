@@ -5,6 +5,8 @@ import { api } from "@/lib/api";
 import { ImageField } from "@/components/image-field";
 import { PageHeader } from "@/components/PageHeader";
 import { Field, FormDialog } from "@/components/form";
+import { TranslationFields } from "@/components/translation-fields";
+import { compactTranslations, type Translations } from "@/lib/translations";
 import { DataTable, RowActions, type Column } from "@/components/data-table";
 import { confirmDialog } from "@/components/confirm";
 import { useErrorMessage } from "@/pages/shared";
@@ -24,10 +26,11 @@ type TaxonomyItem = {
   showOnHomepage: boolean;
   /** Locations only: COUNTRY, REGION or CITY. */
   type?: string;
+  translations?: Translations | null;
 };
 
-type FormState = { name: string; handle: string; image: string; showOnHomepage: boolean; type: string };
-const empty: FormState = { name: "", handle: "", image: "", showOnHomepage: false, type: "CITY" };
+type FormState = { name: string; handle: string; image: string; showOnHomepage: boolean; type: string; translations: Translations };
+const empty: FormState = { name: "", handle: "", image: "", showOnHomepage: false, type: "CITY", translations: {} };
 
 const categoryLabel = locationCategoryLabel;
 
@@ -93,6 +96,7 @@ function TaxonomyTab({
         image: form.image || null,
         showOnHomepage: form.showOnHomepage,
         ...(typed ? { type: form.type } : {}),
+        translations: compactTranslations(form.translations),
       };
       return editing ? api(`${path}/${editing.id}`, { body, method: "PATCH" }) : api(path, { body });
     },
@@ -123,6 +127,7 @@ function TaxonomyTab({
       image: item.image ?? "",
       showOnHomepage: item.showOnHomepage,
       type: item.type ?? "CITY",
+      translations: item.translations ?? {},
     });
     setError(null);
     setDialogOpen(true);
@@ -274,6 +279,12 @@ function TaxonomyTab({
           />
           Show on homepage
         </label>
+        <TranslationFields
+          value={form.translations}
+          onChange={(translations) => setForm((f) => ({ ...f, translations }))}
+          fields={[{ key: "name", label: "Name" }]}
+          original={{ name: form.name }}
+        />
       </FormDialog>
     </div>
   );

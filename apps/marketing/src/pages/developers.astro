@@ -1,0 +1,68 @@
+---
+import Button from "../components/ui/Button.astro";
+import Site from "../layouts/Site.astro";
+import SketchBlock from "../components/sketch/SketchBlock.astro";
+import PointsRow from "../components/sketch/PointsRow.astro";
+import SpecSheet from "../components/sketch/SpecSheet.astro";
+import type { GlyphName } from "../components/sketch/util";
+import { CONTACT_EMAIL } from "../config";
+
+const devMail = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Wepilo for developers")}`;
+
+const points: Array<{ icon: GlyphName; title: string; body: string }> = [
+  { icon: "schema", title: "Travel schema", body: "Trips with day-by-day itineraries, departures, destinations, pages, posts, team and reviews. Already modelled." },
+  { icon: "layout", title: "Any frontend", body: "Design each client's site from scratch. Claude can build it with you from the API guide." },
+  { icon: "code", title: "Website API", body: "Read trips, pages and posts from Astro, Next.js, Nuxt or a build script." },
+  { icon: "link", title: "MCP connector", body: "An open standard, so Claude can read and draft content for the agency." },
+];
+
+/** Real endpoints from docs/API.md. */
+const endpoints: Array<{ icon: GlyphName; title: string; note: string; where: string }> = [
+  { icon: "list", title: "GET /activities", note: "Published trips, filtered, sorted and paginated.", where: "api › trips" },
+  { icon: "page", title: "GET /activities/slug/:slug", note: "One trip with its itinerary, extras, FAQs and SEO.", where: "api › trips" },
+  { icon: "calendar", title: "GET /departures", note: "Dates, seats and status for a trip.", where: "api › departures" },
+  { icon: "layout", title: "GET /site", note: "Menus and homepage sections in one cacheable request.", where: "api › site shell" },
+  { icon: "draft", title: "GET /blogs/published", note: "The agency's journal, paginated.", where: "api › content" },
+  { icon: "form", title: "POST /inquiries", note: "Send a contact or trip enquiry from your form.", where: "api › enquiries" },
+];
+---
+
+<Site
+  title="For developers · Wepilo"
+  description="Wepilo's core is going open source under AGPL-3.0: a travel content schema, a website API and an MCP connector. Build any frontend on it, or use the hosted version for clients."
+>
+  <SketchBlock
+    id="dev-title"
+    level="h1"
+    class="pt-16 md:pt-24"
+    line={["Build the site once", "and hand it over."]}
+    sketch="api"
+    name="Wepilo for developers"
+    sub="After launch the agency updates its own content, so you aren't the bottleneck. The core is AGPL-3.0, and we're publishing it soon."
+    tag="open source · agpl-3.0"
+  >
+    <Button href="/pricing" variant="light">see pricing</Button>
+    <Button href={devMail} variant="dark">get early access</Button>
+  </SketchBlock>
+
+  <div class="pt-36 md:pt-48">
+    <PointsRow items={points} label="What you get" />
+  </div>
+
+  <div class="pt-36 md:pt-48">
+    <SpecSheet name="the website API" title="What's in the website API" items={endpoints} />
+  </div>
+
+  <section class="wrap pt-36 text-center md:pt-48" aria-labelledby="repo-title">
+    <h2 id="repo-title" class="mx-auto max-w-[22ch] font-display text-[clamp(1.75rem,1.45rem+1vw,2.375rem)] leading-[1.12] tracking-[-0.015em]">
+      The repository opens <em>with the first release.</em>
+    </h2>
+    <p class="mx-auto mt-5 max-w-[34rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">
+      Want early access, or a site built for a client? Write and tell us what you're building.
+    </p>
+    <p class="mt-5 font-mono text-[14px] lowercase text-muted">[ {CONTACT_EMAIL} ]</p>
+    <div class="mt-8 flex justify-center">
+      <Button href={devMail} variant="dark">write to us</Button>
+    </div>
+  </section>
+</Site>

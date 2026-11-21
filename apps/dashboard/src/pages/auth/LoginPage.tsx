@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "@/lib/api";
+import { lastWorkspace, rememberWorkspace } from "@/lib/workspaces";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,15 +28,23 @@ export function LoginPage() {
   });
 
   const login = useMutation({
-    mutationFn: (values: FormValues) => api("/auth/tenant/login", { body: values }),
-    onSuccess: redirect,
+    mutationFn: (values: FormValues) =>
+      api<{ tenant: { id: number } }>("/auth/login", { body: { ...values, tenantId: lastWorkspace() } }),
+    onSuccess: (res) => {
+      rememberWorkspace(res.tenant.id);
+      redirect();
+    },
     onError: capture,
   });
 
   return (
     <AuthCard
       title={welcome ? "You're all set" : "Sign in"}
-      description={welcome ? "Now sign in with your email and the password you just chose to open your workspace." : "Enter your email address and password to open your Wepilo workspace."}
+      description={
+        welcome
+          ? "Now sign in with your email and the password you just chose to open your workspace."
+          : "Enter your email address and password. One sign-in opens every workspace you can work in, and you can switch between them from the sidebar."
+      }
       footer={
         <>
           No account yet?{" "}

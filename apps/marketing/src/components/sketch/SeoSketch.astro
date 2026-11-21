@@ -1,0 +1,63 @@
+---
+import SketchFrame from "./SketchFrame.astro";
+import { ridge, cap, type Callout } from "./util";
+
+/** SEO: how a trip shows up in search and when it's shared, plus the sitemap built for you. */
+interface Props {
+  annotated?: boolean;
+}
+const { annotated = false } = Astro.props;
+
+const callouts: Callout[] = [
+  { at: [720, 236], to: [960, 200], side: "right", lines: ["title and description", "checked as you write"] },
+  { at: [880, 350], to: [960, 360], side: "right", lines: ["the photo people see", "when a trip is shared"] },
+  { at: [300, 410], to: [262, 410], side: "left", lines: ["sitemap and travel", "schema, built for you"] },
+];
+
+const tree = [
+  { label: "/tours", y: 380 },
+  { label: "/journal", y: 420 },
+  { label: "/es", y: 460 },
+  { label: "/de", y: 500 },
+];
+---
+
+<SketchFrame title="A trip in a search result and as a shared link, with its sitemap." callouts={callouts} annotated={annotated}>
+  <!-- Search result. -->
+  <rect x="300" y="80" width="420" height="170" class="w" />
+  <rect x="316" y="96" width="388" height="28" />
+  <circle cx="331" cy="109" r="5" />
+  <line x1="335" y1="113" x2="339" y2="117" />
+  <text x="348" y="114" class="m">kilimanjaro machame 7 days</text>
+  <text x="316" y="152" class="m">your-agency.travel › tours › kilimanjaro</text>
+  <text x="316" y="176" style="font-size:14.5px" class="b">Kilimanjaro Machame Route, 7 Days</text>
+  <text x="316" y="198" style="font-size:12px">Climb Kilimanjaro on the Machame route with</text>
+  <text x="316" y="214" style="font-size:12px">local guides. Small groups, Jan to Oct departures.</text>
+  <rect x="604" y="226" width="9" height="9" class="r" />
+  <text x="704" y="235" text-anchor="end" class="m">137 / 160</text>
+
+  <!-- Shared link. -->
+  <rect x="600" y="290" width="280" height="230" class="w" />
+  <image href="/video/cloud-sea.jpg" x="600" y="290" width="280" height="140" preserveAspectRatio="xMidYMid slice" />
+  <line x1="600" y1="430" x2="880" y2="430" />
+  <text x="614" y="452" class="m">your-agency.travel</text>
+  <text x="614" y="474" style="font-size:13px" class="b">Kilimanjaro, Machame Route</text>
+  <rect x="614" y="488" width="220" height="6" class="bar" />
+  <rect x="614" y="502" width="160" height="6" class="bar" />
+
+  <!-- Sitemap. -->
+  <rect x="300" y="300" width="70" height="26" />
+  <text x="335" y="317" text-anchor="middle" class="m">/</text>
+  <line x1="335" y1="326" x2="335" y2="500" />
+  {
+    tree.map((t) => (
+      <g>
+        <line x1="335" y1={t.y} x2="380" y2={t.y} />
+        <rect x="380" y={t.y - 13} width="96" height="26" class="w" />
+        <text x="392" y={t.y + 4} class="m">{t.label}</text>
+      </g>
+    ))
+  }
+  <rect x="300" y="536" width="196" height="26" />
+  <text x="312" y="553" class="m">schema.org · TouristTrip</text>
+</SketchFrame>

@@ -103,7 +103,7 @@ export function EmailTab() {
     >
       <SettingsSection
         title="Who gets alerts"
-        description="Booking requests and website inquiries are emailed here. Leave it empty to use your account email."
+        description="Enquiries from your website forms are emailed here, with the traveller as reply-to, so you answer from your usual inbox. Wepilo doesn't keep a copy. Leave it empty to use your account email."
       >
         <Field label="Send alerts to" hint={`Type an address and press Enter. Empty means ${data.ownerEmail ?? "your account email"}.`}>
           <StringArrayInput value={form.recipients} onChange={(v) => set("recipients", v)} placeholder="sales@youragency.com" />

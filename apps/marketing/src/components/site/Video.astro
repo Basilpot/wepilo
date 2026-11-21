@@ -1,0 +1,27 @@
+---
+/**
+ * A muted, looping background clip. It only loads and plays while on screen, and stays on its
+ * poster frame for people who prefer reduced motion. Clips live in /public/video (Mixkit free licence).
+ */
+interface Props {
+  name: string;
+  class?: string;
+  /** Start loading straight away (the hero). */
+  eager?: boolean;
+}
+const { name, class: cls, eager = false } = Astro.props;
+---
+
+<video
+  class:list={["size-full object-cover", cls]}
+  src={`/video/${name}.mp4`}
+  poster={`/video/${name}.jpg`}
+  muted
+  loop
+  playsinline
+  disablepictureinpicture
+  preload={eager ? "auto" : "none"}
+  aria-hidden="true"
+  tabindex="-1"
+  data-bg-video
+></video>

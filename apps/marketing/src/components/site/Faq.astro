@@ -1,0 +1,70 @@
+---
+import { CONTACT_EMAIL } from "../../config";
+
+const defaults = [
+  {
+    q: "Do I need to pay for Claude?",
+    a: "No. The connector works on Claude's free plan. If you translate or rewrite a lot, Claude Pro (about $20 a month, on your own Anthropic account) gives you more room.",
+  },
+  {
+    q: "We use ChatGPT, not Claude. Can we still use Wepilo?",
+    a: "Today the connector is for Claude. It uses MCP, an open standard, so others can follow. Tell us what your team uses: it shapes what we build next.",
+  },
+  {
+    q: "Will Claude publish anything on its own?",
+    a: "No. Claude saves drafts unless you ask it to publish or schedule. Even then it uses your role, so an author's Claude can only write drafts.",
+  },
+  {
+    q: "Can travellers book through the site?",
+    a: "Not directly. They ask about a date and the question is emailed to you. You reply and take the booking and payment the way you do today.",
+  },
+  {
+    q: "Do we need a new inbox for enquiries?",
+    a: "No. Enquiries are sent to the email addresses you choose, so your team keeps answering from the email it uses today.",
+  },
+  {
+    q: "Who is it for?",
+    a: "Travel and tour agencies with a writer but no developer. Build your site with Claude's help, or send us an enquiry and we'll build it for you.",
+  },
+  {
+    q: "Is it open source?",
+    a: "Yes, under AGPL-3.0. We're publishing the code soon. Developers will be able to self-host free; the hosted version adds updates, backups and support.",
+  },
+];
+
+interface Props {
+  items?: Array<{ q: string; a: string }>;
+  line?: [string, string];
+  id?: string;
+}
+const { items = defaults, line = ["Questions agencies", "ask first."], id = "faq" } = Astro.props;
+const faqs = items;
+---
+
+<section id={id} class="wrap scroll-mt-28 pt-40 md:pt-56" aria-labelledby={`${id}-title`}>
+  <div class="text-center">
+    <h2 id={`${id}-title`} class="mx-auto max-w-[22ch] font-display text-[clamp(1.875rem,1.5rem+1.3vw,2.75rem)] leading-[1.12] tracking-[-0.015em]">
+      {line[0]} <em>{line[1]}</em>
+    </h2>
+    <p class="mt-5 font-mono text-[14px] lowercase text-muted">
+      [ anything else? <a class="text-red hover:text-ink" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> ]
+    </p>
+  </div>
+  <div class="mx-auto mt-14 max-w-[800px]">
+    <div class="reveal border-t border-ink">
+      {
+        faqs.map((f) => (
+          <details class="group border-b border-line [&[open]>summary]:text-ink">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-[19px] font-medium tracking-[-0.01em] [&::-webkit-details-marker]:hidden">
+              {f.q}
+              <span class="shrink-0 font-mono text-[15px] text-muted transition-colors group-hover:text-ink group-open:text-red" aria-hidden="true">
+                <span class="group-open:hidden">[ + ]</span><span class="hidden group-open:inline">[ – ]</span>
+              </span>
+            </summary>
+            <p class="max-w-[60ch] border-l border-red pb-1 pl-5 mb-7 text-[16px] leading-[1.6] text-ink-2">{f.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>

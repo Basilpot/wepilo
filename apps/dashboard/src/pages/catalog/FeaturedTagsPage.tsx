@@ -4,6 +4,8 @@ import { ArrowDown, ArrowUp, PenLine, Plus, Trash2, Tag } from "@/components/ico
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Field, FormDialog } from "@/components/form";
+import { TranslationFields } from "@/components/translation-fields";
+import { compactTranslations, type Translations } from "@/lib/translations";
 import { DataTable, RowActions, type Column } from "@/components/data-table";
 import { confirmDialog } from "@/components/confirm";
 import { useErrorMessage } from "@/pages/shared";
@@ -21,10 +23,11 @@ type FeaturedTag = {
   description: string | null;
   showOnHomepage: boolean;
   order: number;
+  translations?: Translations | null;
 };
 
-type FormState = { name: string; slug: string; description: string; showOnHomepage: boolean };
-const empty: FormState = { name: "", slug: "", description: "", showOnHomepage: false };
+type FormState = { name: string; slug: string; description: string; showOnHomepage: boolean; translations: Translations };
+const empty: FormState = { name: "", slug: "", description: "", showOnHomepage: false, translations: {} };
 
 export function FeaturedTagsPage() {
   const queryClient = useQueryClient();
@@ -49,6 +52,7 @@ export function FeaturedTagsPage() {
         slug: form.slug || undefined,
         description: form.description || null,
         showOnHomepage: form.showOnHomepage,
+        translations: compactTranslations(form.translations),
       };
       return editing
         ? api(`/featured-tags/${editing.id}`, { body, method: "PATCH" })
@@ -91,6 +95,7 @@ export function FeaturedTagsPage() {
       slug: tag.slug,
       description: tag.description ?? "",
       showOnHomepage: tag.showOnHomepage,
+      translations: tag.translations ?? {},
     });
     setError(null);
     setDialogOpen(true);
@@ -205,6 +210,12 @@ export function FeaturedTagsPage() {
           />
           Show on homepage
         </Label>
+        <TranslationFields
+          value={form.translations}
+          onChange={(translations) => setForm((f) => ({ ...f, translations }))}
+          fields={[{ key: "name", label: "Name" }, { key: "description", label: "Description", multiline: true }]}
+          original={{ name: form.name, description: form.description }}
+        />
       </FormDialog>
     </div>
   );

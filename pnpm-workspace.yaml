@@ -6,6 +6,12 @@ allowBuilds:
   esbuild: true
   workerd: true
 
+minimumReleaseAgeExclude:
+  - '@astrojs/markdown-satteri@0.4.9'
+  - '@astrojs/runtime@0.1.1'
+  - '@astrojs/vite-plugin-astro@0.1.2'
+  - astro@7.4.11
+
 onlyBuiltDependencies:
   - esbuild
   - workerd

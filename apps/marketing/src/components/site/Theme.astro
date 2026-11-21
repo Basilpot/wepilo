@@ -1,0 +1,67 @@
+---
+import Shot from "./Shot.astro";
+
+const hosting = [
+  ["Enquiry form", "Messages go straight to your inbox."],
+  ["Media library", "Wepilo resizes and compresses your photos."],
+  ["Sitemap and schema", "Search engines can read every trip."],
+  ["Starter themes", "Choose one and add your logo."],
+  ["Your own domain", "Connected for you, with SSL."],
+  ["Monthly report", "Visits, enquiries and uptime by email."],
+];
+---
+
+<section id="hosting" class="relative scroll-mt-28 pt-36 md:pt-56" aria-labelledby="theme-title">
+  <div class="wrap">
+    <div class="reveal grid gap-10 md:grid-cols-12">
+      <div class="md:col-span-7">
+        <p class="label">site and hosting</p>
+        <h2 id="theme-title" class="mt-6 max-w-[13ch] text-section">Start with a site <span class="serif">that already looks good.</span></h2>
+      </div>
+      <p class="text-lead text-ink-2 md:col-span-5 md:self-end">
+        Pick a starter theme and connect your domain. Everything you write in Wepilo shows up there. If you already have
+        a site, your developer can pull the content from our API instead.
+      </p>
+    </div>
+
+    <div class="relative mt-20 md:mt-24">
+      <div class="absolute inset-x-0 -bottom-16 top-1/4 rounded-[32px] bg-mist" aria-hidden="true"></div>
+      <div class="reveal relative mx-auto max-w-[1080px] px-4 pr-[14%] sm:pr-[18%]">
+        <Shot
+          src="/product/store-home.webp"
+          alt="The starter theme showing the sample agency's homepage: a large headline over a sea-of-clouds photo, and featured trips below."
+          bar="himalayanquest.com"
+        />
+        <Shot
+          src="/product/store-mobile.webp"
+          alt="The same theme on a phone, open on the Everest Base Camp Trek page with its photos."
+          width={780}
+          height={1688}
+          radius={30}
+          class="absolute -bottom-10 right-0 w-[28%] max-w-[260px] ring-8 ring-white sm:w-[24%]"
+        />
+      </div>
+    </div>
+
+    <div class="reveal mt-40 border-t border-line pt-14 md:mt-56">
+      <div class="grid gap-10 md:grid-cols-12">
+        <div class="md:col-span-4">
+          <h3 class="font-display text-title">We run the hosting.</h3>
+          <p class="mt-4 max-w-[28ch] text-[16px] text-muted">
+            You won't need to look after servers or security updates.
+          </p>
+        </div>
+        <ul class="grid gap-x-10 gap-y-8 sm:grid-cols-2 md:col-span-8 lg:grid-cols-3">
+          {
+            hosting.map(([k, v]) => (
+              <li>
+                <p class="text-[17px] font-semibold">{k}</p>
+                <p class="mt-1.5 text-[15px] text-muted">{v}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { eq, and, count, sql, desc } from "drizzle-orm";
+import { eq, and, asc, count, sql, desc, isNotNull, ne } from "drizzle-orm";
 import * as schema from "@/db/schema";
 import type { AppEnv } from "@/types";
 import { ApiError, paginate, paginationSchema, getOffset, slugify } from "@/lib/http";
@@ -16,7 +16,9 @@ import {
   dodoGetSubscription,
   dodoListPayments,
 } from "@/lib/dodo";
-import { applySubscription, catalogPrices, grantTrial, loadAccess, trialEmailTaken } from "@/lib/billing";
+import { applySubscription, catalogPrices, grantTrial, loadAccess, loadAccessForTrial, trialEmailTaken } from "@/lib/billing";
+import { hasAccount } from "@/lib/account";
+import { langCode } from "@/lib/i18n";
 
 const profileSchema = z.object({
   companyName: z.string().min(1).optional(),
@@ -30,7 +32,8 @@ const profileSchema = z.object({
 const staffCreateSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  password: z.string().min(8),
+  /** Only needed for a brand-new login. Someone who already signs in keeps their own password. */
+  password: z.string().min(8).optional(),
   role: z.enum(["ADMIN", "MANAGER", "EDITOR", "AUTHOR"]).default("EDITOR"),
   permissions: z.array(z.string()).default([]),
   /** Public byline profile. The username is made from the name when left out. */
@@ -64,6 +67,29 @@ export const tenantRoutes = new Hono<AppEnv>()
       .where(eq(schema.tenants.id, tenantId))
       .returning({ id: schema.tenants.id });
     return c.json({ tenant: { id: tenant.id } });
+  })
+  // ── Languages ──────────────────────────────────────────────────────────────
+  // The language content is written in, and the extra languages the site is published in.
+  // Translations themselves live on each record (see lib/i18n.ts).
+  .get("/languages", requireStaff(), async (c) => {
+    const tenant = await c.get("db").query.tenants.findFirst({
+      where: eq(schema.tenants.id, c.get("tenantId")),
+      columns: { defaultLanguage: true, languages: true },
+    });
+    if (!tenant) throw new ApiError(404, "Tenant not found");
+    return c.json({ defaultLanguage: tenant.defaultLanguage, languages: tenant.languages ?? [] });
+  })
+  .put("/languages", requireStaff("OWNER", "ADMIN"), async (c) => {
+    const body = z
+      .object({ defaultLanguage: langCode, languages: z.array(langCode).max(20) })
+      .parse(await c.req.json());
+    const languages = [...new Set(body.languages)].filter((l) => l !== body.defaultLanguage);
+    await c
+      .get("db")
+      .update(schema.tenants)
+      .set({ defaultLanguage: body.defaultLanguage, languages, updatedAt: new Date() })
+      .where(eq(schema.tenants.id, c.get("tenantId")));
+    return c.json({ defaultLanguage: body.defaultLanguage, languages });
   })
   .get("/staff", requireStaff(), async (c) => {
     const db = c.get("db");
@@ -106,6 +132,16 @@ export const tenantRoutes = new Hono<AppEnv>()
       where: and(eq(schema.tenantStaff.tenantId, tenantId), eq(schema.tenantStaff.email, body.email.toLowerCase())),
     });
     if (existing) throw new ApiError(409, "Email already in use");
+
+    // A person who already signs in to Wepilo keeps their own password. Only a brand-new
+    // login needs one, so this workspace can't take over an account the person owns elsewhere.
+    const account = await db.query.tenantStaff.findFirst({
+      where: eq(schema.tenantStaff.email, body.email.toLowerCase()),
+      orderBy: [asc(schema.tenantStaff.id)],
+    });
+    if (!account && !body.password) {
+      throw new ApiError(400, "A temporary password is needed for a new login.", "VALIDATION");
+    }
     const username = await uniqueUsername(db, tenantId, body.username ?? body.name);
     const [staff] = await db
       .insert(schema.tenantStaff)
@@ -116,12 +152,12 @@ export const tenantRoutes = new Hono<AppEnv>()
         image: body.image ?? null,
         name: body.name,
         email: body.email.toLowerCase(),
-        password: await hashPassword(body.password),
+        password: account ? account.password : await hashPassword(body.password!),
         role: body.role,
         permissions: body.permissions,
       })
       .returning({ id: schema.tenantStaff.id, name: schema.tenantStaff.name, email: schema.tenantStaff.email, role: schema.tenantStaff.role });
-    return c.json({ staff }, 201);
+    return c.json({ staff, existingAccount: Boolean(account) }, 201);
   })
   .patch("/staff/:id", requireStaff("OWNER", "ADMIN"), async (c) => {
     const id = Number(c.req.param("id"));
@@ -145,6 +181,11 @@ export const tenantRoutes = new Hono<AppEnv>()
     if (!target) throw new ApiError(404, "Staff not found");
     if (target.role === "OWNER" && (body.role || body.isActive === false)) {
       throw new ApiError(400, "Cannot modify owner role or deactivate owner");
+    }
+    if (body.password && (await hasAccount(db, target.email, tenantId))) {
+      // Their password belongs to them, not to this workspace. Changing it here would change
+      // it everywhere they can sign in, so this workspace never sets it.
+      throw new ApiError(409, "This person signs in with their own password. Ask them to reset it instead.", "PASSWORD_OWNED");
     }
     const [staff] = await db
       .update(schema.tenantStaff)
@@ -226,30 +267,12 @@ export const tenantRoutes = new Hono<AppEnv>()
       .from(schema.activities)
       .where(and(eq(schema.activities.tenantId, tenantId), eq(schema.activities.status, "DRAFT")));
 
-    const confirmedBookings = await db
-      .select({ value: count() })
-      .from(schema.bookings)
-      .where(and(eq(schema.bookings.tenantId, tenantId), eq(schema.bookings.status, "CONFIRMED")));
-
-    const pendingBookings = await db
-      .select({ value: count() })
-      .from(schema.bookings)
-      .where(and(eq(schema.bookings.tenantId, tenantId), eq(schema.bookings.status, "PENDING")));
-
-    const newInquiries = await db
-      .select({ value: count() })
-      .from(schema.inquiries)
-      .where(and(eq(schema.inquiries.tenantId, tenantId), eq(schema.inquiries.status, "NEW")));
-
-    const [revenueRow] = await db
-      .select({ total: sql<number>`coalesce(sum(${schema.bookings.totalPrice}), 0)` })
-      .from(schema.bookings)
-      .where(
-        and(
-          eq(schema.bookings.tenantId, tenantId),
-          sql`${schema.bookings.status} IN ('CONFIRMED', 'COMPLETED')`,
-        ),
-      );
+    // Drafts with a publish date: trips, posts and pages waiting to go live.
+    const [scheduledTrips, scheduledPosts, scheduledPages] = await Promise.all([
+      db.select({ value: count() }).from(schema.activities).where(and(eq(schema.activities.tenantId, tenantId), isNotNull(schema.activities.publishAt))),
+      db.select({ value: count() }).from(schema.blogs).where(and(eq(schema.blogs.tenantId, tenantId), isNotNull(schema.blogs.publishAt))),
+      db.select({ value: count() }).from(schema.infoPages).where(and(eq(schema.infoPages.tenantId, tenantId), isNotNull(schema.infoPages.publishAt))),
+    ]);
 
     const upcomingDepartures = await db.query.departures.findMany({
       where: and(
@@ -269,41 +292,20 @@ export const tenantRoutes = new Hono<AppEnv>()
       columns: { id: true, title: true, slug: true, popularityScore: true, views: true, averageRating: true },
     });
 
-    const monthly = await db.all<{
-      month: string;
-      bookings: number;
-      revenue: number;
-    }>(sql`
-      SELECT strftime('%Y-%m', ${schema.bookings.createdAt} / 1000, 'unixepoch') AS month,
-             COUNT(*) AS bookings,
-             COALESCE(SUM(CASE WHEN ${schema.bookings.status} IN ('CONFIRMED','COMPLETED') THEN ${schema.bookings.totalPrice} ELSE 0 END), 0) AS revenue
-      FROM ${schema.bookings}
-      WHERE ${schema.bookings.tenantId} = ${tenantId}
-        AND ${schema.bookings.createdAt} >= (unixepoch() * 1000) - 31536000000
-      GROUP BY month
-      ORDER BY month ASC
-    `);
-
     return c.json({
       trips: {
         total: tripStats.total,
         published: publishedTrips[0].value,
         drafts: draftTrips[0].value,
       },
-      bookings: {
-        confirmed: confirmedBookings[0].value,
-        pending: pendingBookings[0].value,
-      },
-      revenue: revenueRow.total,
-      inquiriesNew: newInquiries[0].value,
+      scheduled: scheduledTrips[0].value + scheduledPosts[0].value + scheduledPages[0].value,
       upcomingDepartures,
       topActivities,
-      monthly,
     });
   })
   .get("/billing", requireStaff(), async (c) => {
     const db = c.get("db");
-    const loaded = await loadAccess(db, c.get("tenantId"));
+    const loaded = await loadAccessForTrial(db, c.get("tenantId"));
     if (!loaded) throw new ApiError(404, "Tenant not found");
     const prices = await catalogPrices(c.env).catch(() => ({}) as Record<string, null>);
     const priceOf = (id: string | undefined) => (id ? (prices[id] ?? null) : null);
@@ -342,9 +344,9 @@ export const tenantRoutes = new Hono<AppEnv>()
       }),
     });
   })
-  // Step 1 for every new workspace: pay $1, get TRIAL_DAYS on the chosen plan, no auto-renewal.
+  // Step 1 for every new workspace: pay $2.99, get TRIAL_DAYS on the chosen plan, no auto-renewal.
   .post("/billing/trial", requireStaff("OWNER"), async (c) => {
-    const body = z.object({ plan: z.enum(["STARTER", "GROWTH", "SCALE"]) }).parse(await c.req.json());
+    const body = z.object({ plan: z.enum(["PRO"]).default("PRO") }).parse(await c.req.json());
     const db = c.get("db");
     const tenantId = c.get("tenantId");
     const loaded = await loadAccess(db, tenantId);
@@ -371,7 +373,7 @@ export const tenantRoutes = new Hono<AppEnv>()
   .post("/billing/checkout", requireStaff("OWNER"), async (c) => {
     const body = z
       .object({
-        plan: z.enum(["STARTER", "GROWTH", "SCALE"]),
+        plan: z.enum(["PRO"]).default("PRO"),
         interval: z.enum(["monthly", "annual"]),
       })
       .parse(await c.req.json());
@@ -424,9 +426,7 @@ export const tenantRoutes = new Hono<AppEnv>()
 
       const trialPayment = ours.find((p) => p.metadata.kind === "trial");
       if (trialPayment && !loaded.tenant.trialUsedAt) {
-        const plan = SELF_SERVE_PLANS.includes(trialPayment.metadata.plan as SelfServePlan)
-          ? (trialPayment.metadata.plan as SelfServePlan)
-          : "STARTER";
+        const plan: SelfServePlan = "PRO";
         applied = (await grantTrial(db, { tenantId, plan, customerId })).applied || applied;
       }
 
@@ -457,6 +457,22 @@ export const tenantRoutes = new Hono<AppEnv>()
 
 async function ensureDodoCustomer(env: AppEnv["Bindings"], db: AppEnv["Variables"]["db"], tenant: schema.Tenant) {
   if (tenant.dodoCustomerId) return tenant.dodoCustomerId;
+  // One person, one billing customer: another workspace of the same owner already has one.
+  const sibling = await db.query.tenants.findFirst({
+    where: and(
+      eq(schema.tenants.email, tenant.email),
+      isNotNull(schema.tenants.dodoCustomerId),
+      ne(schema.tenants.id, tenant.id),
+    ),
+    columns: { dodoCustomerId: true },
+  });
+  if (sibling?.dodoCustomerId) {
+    await db
+      .update(schema.tenants)
+      .set({ dodoCustomerId: sibling.dodoCustomerId, updatedAt: new Date() })
+      .where(eq(schema.tenants.id, tenant.id));
+    return sibling.dodoCustomerId;
+  }
   const customer = await dodoCreateCustomer(env, tenant.email, tenant.companyName ?? undefined);
   await db
     .update(schema.tenants)

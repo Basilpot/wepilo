@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { eq, and, desc, asc, or, sql, count, inArray } from "drizzle-orm";
 import * as schema from "@/db/schema";
+import { publishAtInput, publishFields } from "@/lib/publish";
+import { translationsSchema } from "@/lib/i18n";
 import type { AppEnv } from "@/types";
 import { ApiError, slugify, paginate, paginationSchema, getOffset, contains } from "@/lib/http";
 import { requireStaff, requireTenant, assertPlanLimit } from "@/middleware/context";
@@ -75,6 +77,8 @@ const activityBaseSchema = z.object({
   difficultyLevel: z.enum(["EASY", "MODERATE", "HARD", "EXTREME"]).nullable().optional(),
   isFeatured: z.boolean().optional(),
   status: z.enum(["DRAFT", "PUBLISHED"]).optional(),
+  /** Schedule this draft to go live at this time (ISO 8601). `null` clears the schedule. */
+  publishAt: publishAtInput,
   /** Every place the trip visits, of any category. Country, region and city are filled in from these. */
   locationIds: z.array(z.number().int()).optional(),
   countryId: z.number().int().nullable().optional(),
@@ -93,7 +97,7 @@ const activityBaseSchema = z.object({
       schema: z.string().nullable().optional(),
     })
     .optional(),
-  translations: z.record(z.string(), z.any()).optional(),
+  translations: translationsSchema.optional(),
   extraIds: z.array(z.number().int()).optional(),
   featuredTagIds: z.array(z.number().int()).optional(),
 });
@@ -298,13 +302,14 @@ export const catalogRoutes = new Hono<AppEnv>()
       tripSeoId = seo.id;
     }
 
-    const { tripSeo: _seo, extraIds, featuredTagIds, locationIds, ...activityData } = body;
+    const { tripSeo: _seo, extraIds, featuredTagIds, locationIds, publishAt, ...activityData } = body;
     const places = locationIds ? await resolveLocations(db, tenantId, locationIds) : null;
     const [activity] = await db
       .insert(schema.activities)
       .values({
         tenantId,
         ...activityData,
+        ...publishFields({ goingLive: body.status === "PUBLISHED", wasLive: false, publishAt }),
         ...(places ? { countryId: places.countryId, regionId: places.regionId, cityId: places.cityId } : {}),
         slug,
         tripSeoId,
@@ -352,10 +357,15 @@ export const catalogRoutes = new Hono<AppEnv>()
       }
     }
 
-    const { tripSeo: _seo, extraIds, featuredTagIds, locationIds, slug: newSlug, ...updates } = body;
+    const { tripSeo: _seo, extraIds, featuredTagIds, locationIds, slug: newSlug, publishAt, ...updates } = body;
     const places = locationIds ? await resolveLocations(db, tenantId, locationIds) : null;
     const updatePayload: Partial<typeof schema.activities.$inferInsert> = {
       ...updates,
+      ...publishFields({
+        goingLive: body.status === undefined ? undefined : body.status === "PUBLISHED" && existing.status !== "PUBLISHED",
+        wasLive: existing.status === "PUBLISHED" && body.status !== "DRAFT",
+        publishAt,
+      }),
       ...(places ? { countryId: places.countryId, regionId: places.regionId, cityId: places.cityId } : {}),
       updatedAt: new Date(),
     };
@@ -448,7 +458,7 @@ const taxonomyBody = z.object({
   name: z.string().min(1),
   image: z.string().nullable().optional(),
   showOnHomepage: z.boolean().optional(),
-  translations: z.record(z.string(), z.any()).optional(),
+  translations: translationsSchema.optional(),
 });
 
 function taxonomyRoutes(table: TaxonomyTable, name: string, fixedType?: string) {
@@ -553,6 +563,7 @@ export const featuredTagRoutes = new Hono<AppEnv>()
         description: z.string().nullable().optional(),
         showOnHomepage: z.boolean().optional(),
         order: z.number().int().optional(),
+        translations: translationsSchema.optional(),
       })
       .parse(await c.req.json());
     const db = c.get("db");
@@ -565,6 +576,7 @@ export const featuredTagRoutes = new Hono<AppEnv>()
         description: body.description ?? null,
         showOnHomepage: body.showOnHomepage ?? false,
         order: body.order ?? 0,
+        translations: body.translations ?? null,
       })
       .returning();
     return c.json({ featuredTag: row }, 201);
@@ -588,12 +600,14 @@ export const featuredTagRoutes = new Hono<AppEnv>()
         description: z.string().nullable().optional(),
         showOnHomepage: z.boolean().optional(),
         order: z.number().int().optional(),
+        translations: translationsSchema.optional(),
       })
       .parse(await c.req.json());
     const db = c.get("db");
     const [row] = await db
       .update(schema.featuredTags)
       .set({
+        ...(body.translations !== undefined ? { translations: body.translations } : {}),
         ...(body.name !== undefined ? { name: body.name } : {}),
         ...(body.slug !== undefined ? { slug: slugify(body.slug) } : {}),
         ...(body.description !== undefined ? { description: body.description } : {}),
@@ -643,6 +657,7 @@ export const extraRoutes = new Hono<AppEnv>()
         description: z.string().nullable().optional(),
         price: z.number().nonnegative().nullable().optional(),
         images: z.array(z.string()).optional(),
+        translations: translationsSchema.optional(),
       })
       .parse(await c.req.json());
     const db = c.get("db");
@@ -655,6 +670,7 @@ export const extraRoutes = new Hono<AppEnv>()
         description: body.description ?? null,
         price: body.price ?? null,
         images: body.images ?? [],
+        translations: body.translations ?? null,
       })
       .returning();
     return c.json({ extra: row }, 201);
@@ -667,6 +683,7 @@ export const extraRoutes = new Hono<AppEnv>()
         description: z.string().nullable().optional(),
         price: z.number().nonnegative().nullable().optional(),
         images: z.array(z.string()).optional(),
+        translations: translationsSchema.optional(),
       })
       .parse(await c.req.json());
     const db = c.get("db");

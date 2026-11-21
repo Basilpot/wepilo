@@ -2,18 +2,22 @@ import { z } from "zod";
 import { and, asc, desc, eq } from "drizzle-orm";
 import type { Db } from "@/db";
 import * as schema from "@/db/schema";
+import { langCode } from "@/lib/i18n";
 
 const short = z.string().trim().max(200);
 const url = z.string().trim().max(500);
+/** Per-language text for one object: `{ de: { title: "…" } }`. See lib/i18n.ts. */
+const tr = <T extends z.ZodRawShape>(shape: T) => z.record(langCode, z.object(shape).partial()).optional();
 
 const navItem: z.ZodType<NavItem> = z.lazy(() =>
   z.object({
     label: z.string().trim().min(1).max(60),
     href: url.min(1),
     children: z.array(navItem).max(12).optional(),
+    translations: tr({ label: z.string().trim().max(60) }),
   }),
 );
-export type NavItem = { label: string; href: string; children?: NavItem[] };
+export type NavItem = { label: string; href: string; children?: NavItem[]; translations?: Record<string, { label?: string }> };
 
 export const SECTION_TYPES = [
   "HERO",
@@ -41,6 +45,7 @@ const homeSection = z.object({
   body: z.string().max(20_000).nullish(),
   ctaLabel: z.string().trim().max(60).nullish(),
   ctaHref: url.nullish(),
+  translations: tr({ title: short, subtitle: z.string().trim().max(500), body: z.string().max(20_000), ctaLabel: z.string().trim().max(60) }),
 });
 export type HomeSection = z.infer<typeof homeSection>;
 
@@ -56,7 +61,7 @@ export const siteConfigSchema = z.object({
     header: menu,
     footer: z.object({
       mode: z.enum(["AUTO", "MANUAL"]).default("AUTO"),
-      columns: z.array(z.object({ title: z.string().trim().min(1).max(60), items: z.array(navItem).max(15) })).max(6).default([]),
+      columns: z.array(z.object({ title: z.string().trim().min(1).max(60), items: z.array(navItem).max(15), translations: tr({ title: z.string().trim().max(60) }) })).max(6).default([]),
     }),
   }),
   /** URL patterns the website uses, so generated links match its routes. {slug} / {handle} are replaced. */
@@ -82,8 +87,14 @@ export const siteConfigSchema = z.object({
     siteTitle: short.nullish(),
     description: z.string().trim().max(500).nullish(),
     ogImage: url.nullish(),
+    translations: tr({ siteTitle: short, description: z.string().trim().max(500) }),
   }),
-  announcement: z.object({ enabled: z.boolean().default(false), text: z.string().trim().max(200).default(""), href: url.nullish() }),
+  announcement: z.object({
+    enabled: z.boolean().default(false),
+    text: z.string().trim().max(200).default(""),
+    href: url.nullish(),
+    translations: tr({ text: z.string().trim().max(200) }),
+  }),
 });
 export type SiteConfig = z.infer<typeof siteConfigSchema>;
 
@@ -133,6 +144,17 @@ export function readSiteConfig(stored: unknown): SiteConfig {
 const fill = (pattern: string, values: Record<string, string>) =>
   pattern.replace(/\{(\w+)\}/g, (_, k: string) => encodeURIComponent(values[k] ?? ""));
 
+/** A record's translated name or title, reshaped as menu-label translations: `{ de: { label } }`. */
+function labels(translations: unknown, key: string): NavItem["translations"] {
+  if (!translations || typeof translations !== "object") return undefined;
+  const out: Record<string, { label: string }> = {};
+  for (const [lang, t] of Object.entries(translations as Record<string, Record<string, unknown>>)) {
+    const v = t?.[key];
+    if (typeof v === "string" && v.trim()) out[lang] = { label: v };
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 /** The menus as the website should render them: manual ones as saved, automatic ones from published content. */
 export async function resolveNavigation(db: Db, tenantId: number, config: SiteConfig) {
   const { paths, navigation } = config;
@@ -141,27 +163,27 @@ export async function resolveNavigation(db: Db, tenantId: number, config: SiteCo
     ? await Promise.all([
         db.query.infoPages.findMany({
           where: and(eq(schema.infoPages.tenantId, tenantId), eq(schema.infoPages.published, true)),
-          columns: { title: true, slug: true, featuredInNavbar: true },
+          columns: { title: true, slug: true, featuredInNavbar: true, translations: true },
           orderBy: [asc(schema.infoPages.title)],
           limit: 40,
         }),
         db.query.tripCategories.findMany({
           where: eq(schema.tripCategories.tenantId, tenantId),
-          columns: { name: true, handle: true },
+          columns: { name: true, handle: true, translations: true },
           orderBy: [asc(schema.tripCategories.name)],
           limit: 12,
         }),
         db.query.featuredTags.findMany({
           where: and(eq(schema.featuredTags.tenantId, tenantId), eq(schema.featuredTags.showOnHomepage, true)),
-          columns: { name: true, slug: true },
+          columns: { name: true, slug: true, translations: true },
           orderBy: [asc(schema.featuredTags.order)],
           limit: 8,
         }),
       ])
     : [[], [], []];
 
-  const pageItem = (p: { title: string | null; slug: string | null }): NavItem | null =>
-    p.slug ? { label: p.title ?? p.slug, href: fill(paths.page, { slug: p.slug }) } : null;
+  const pageItem = (p: { title: string | null; slug: string | null; translations: unknown }): NavItem | null =>
+    p.slug ? { label: p.title ?? p.slug, href: fill(paths.page, { slug: p.slug }), translations: labels(p.translations, "title") } : null;
   const compact = (items: Array<NavItem | null>) => items.filter((i): i is NavItem => i !== null);
 
   const header: NavItem[] =
@@ -172,7 +194,7 @@ export async function resolveNavigation(db: Db, tenantId: number, config: SiteCo
             label: "Trips",
             href: paths.trips,
             ...(categories.length
-              ? { children: categories.map((c) => ({ label: c.name ?? c.handle, href: fill(paths.category, { handle: c.handle }) })) }
+              ? { children: categories.map((c) => ({ label: c.name ?? c.handle, href: fill(paths.category, { handle: c.handle }), translations: labels(c.translations, "name") })) }
               : {}),
           },
           { label: "Blog", href: paths.posts },
@@ -188,8 +210,8 @@ export async function resolveNavigation(db: Db, tenantId: number, config: SiteCo
                 {
                   title: "Explore",
                   items: [
-                    ...tags.map((t) => ({ label: t.name, href: `${paths.trips}?tag=${encodeURIComponent(t.slug)}` })),
-                    ...categories.slice(0, 6).map((c) => ({ label: c.name ?? c.handle, href: fill(paths.category, { handle: c.handle }) })),
+                    ...tags.map((t) => ({ label: t.name, href: `${paths.trips}?tag=${encodeURIComponent(t.slug)}`, translations: labels(t.translations, "name") })),
+                    ...categories.slice(0, 6).map((c) => ({ label: c.name ?? c.handle, href: fill(paths.category, { handle: c.handle }), translations: labels(c.translations, "name") })),
                   ].slice(0, 10),
                 },
               ]
@@ -211,7 +233,7 @@ export async function resolveHomepage(db: Db, tenantId: number, config: SiteConf
       case "FEATURED_TRIPS": {
         const rows = await db.query.activities.findMany({
           where: and(eq(schema.activities.tenantId, tenantId), eq(schema.activities.status, "PUBLISHED"), eq(schema.activities.isFeatured, true)),
-          columns: { id: true, title: true, slug: true, price: true, duration: true, images: true, averageRating: true, difficultyLevel: true },
+          columns: { id: true, title: true, slug: true, price: true, duration: true, images: true, averageRating: true, difficultyLevel: true, translations: true },
           with: { tripSeo: { columns: { featuredMedia: true } } },
           orderBy: [desc(schema.activities.popularityScore), desc(schema.activities.createdAt)],
           limit,
@@ -222,7 +244,7 @@ export async function resolveHomepage(db: Db, tenantId: number, config: SiteConf
       case "DESTINATIONS": {
         const rows = await db.query.locations.findMany({
           where: and(eq(schema.locations.tenantId, tenantId), eq(schema.locations.showOnHomepage, true)),
-          columns: { id: true, type: true, handle: true, name: true, image: true },
+          columns: { id: true, type: true, handle: true, name: true, image: true, translations: true },
           orderBy: [asc(schema.locations.name)],
           limit,
         });
@@ -232,7 +254,7 @@ export async function resolveHomepage(db: Db, tenantId: number, config: SiteConf
       case "CATEGORIES": {
         const rows = await db.query.tripCategories.findMany({
           where: and(eq(schema.tripCategories.tenantId, tenantId), eq(schema.tripCategories.showOnHomepage, true)),
-          columns: { id: true, handle: true, name: true, image: true },
+          columns: { id: true, handle: true, name: true, image: true, translations: true },
           orderBy: [asc(schema.tripCategories.name)],
           limit,
         });
@@ -250,7 +272,7 @@ export async function resolveHomepage(db: Db, tenantId: number, config: SiteConf
       case "LATEST_POSTS": {
         const rows = await db.query.blogs.findMany({
           where: and(eq(schema.blogs.tenantId, tenantId), eq(schema.blogs.published, true), eq(schema.blogs.inTrash, false)),
-          columns: { id: true, title: true, slug: true, coverImage: true, publishedAt: true, metaDescription: true },
+          columns: { id: true, title: true, slug: true, coverImage: true, publishedAt: true, metaDescription: true, translations: true },
           orderBy: [desc(schema.blogs.publishedAt), desc(schema.blogs.createdAt)],
           limit,
         });

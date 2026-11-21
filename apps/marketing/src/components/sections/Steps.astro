@@ -1,0 +1,58 @@
+---
+interface Step {
+  number: string;
+  title: string;
+  body: string;
+  link: { label: string; href: string };
+  image: string;
+  alt: string;
+}
+
+interface Props {
+  steps: Step[];
+  id?: string;
+}
+
+const { steps, id } = Astro.props;
+---
+
+<section class="rule" id={id}>
+  <div class="shell">
+    {
+      steps.map((step, index) => (
+        <div
+          class:list={[
+            "grid items-center gap-10 py-16 sm:py-24 lg:grid-cols-[2fr_3fr] lg:gap-12",
+            index > 0 && "border-t border-line",
+          ]}
+        >
+          <div class:list={["reveal", index % 2 === 1 && "lg:order-2"]}>
+            <p class="step-number">{step.number}</p>
+            <h3 class="mt-5 text-section max-w-[16ch]">{step.title}</h3>
+            <p class="mt-5 max-w-[30rem] text-lead text-muted">{step.body}</p>
+            <a href={step.link.href} class="link mt-6 inline-flex items-center gap-1.5 text-[15px]">
+              {step.link.label}
+              <svg viewBox="0 0 16 16" class="size-3.5" fill="none" aria-hidden="true">
+                <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </a>
+          </div>
+
+          <div class:list={["reveal", index % 2 === 1 && "lg:order-1"]}>
+            <div class="mesh overflow-hidden rounded-2xl p-3 sm:p-5">
+              <img
+                src={step.image}
+                alt={step.alt}
+                width="1440"
+                height="900"
+                loading="lazy"
+                decoding="async"
+                class="shot-sm aspect-[16/10] w-full object-cover object-left-top"
+              />
+            </div>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</section>

@@ -44,7 +44,7 @@ export type WorkspaceDetail = {
   owner: { id: number; name: string; email: string } | null;
   pendingSetupUntil: string | null;
   staff: Array<{ id: number; name: string; email: string; role: string; isActive: boolean; createdAt: string }>;
-  usage: { trips: number; posts: number; bookings: number; staff: number };
+  usage: { trips: number; posts: number; staff: number };
   log: Array<{
     id: number;
     action: string;

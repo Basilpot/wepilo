@@ -1,0 +1,29 @@
+---
+/**
+ * The band of agency types. Devin shows customer logos here; we have no customers to
+ * name yet, so this shows the kinds of agency Wepilo is built for.
+ */
+const kinds = [
+  "Trekking agencies",
+  "Tour operators",
+  "Destination management",
+  "Wildlife tours",
+  "Cultural & heritage",
+  "Adventure travel",
+];
+---
+
+<section class="rule">
+  <div class="shell py-10 sm:py-12">
+    <p class="text-center text-[13px] text-faint">Built for the agencies that answer their own email</p>
+    <ul class="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:gap-x-12">
+      {
+        kinds.map((kind) => (
+          <li class="text-[15px] font-medium tracking-[-0.01em] text-faint transition-colors duration-300 hover:text-ink">
+            {kind}
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

@@ -44,7 +44,7 @@ function extractEmail(from: string) {
   return from.match(/<([^>]+)>/)?.[1] ?? from;
 }
 
-/** Where the agency wants inquiry and booking alerts delivered. */
+/** Where the agency wants enquiry alerts delivered. */
 export async function alertRecipients(db: Db, tenantId: number): Promise<string[]> {
   const [config, tenant] = await Promise.all([
     db.query.tenantEmailConfig.findFirst({ where: eq(schema.tenantEmailConfig.tenantId, tenantId), columns: { inquiryRecipients: true } }),
@@ -56,7 +56,7 @@ export async function alertRecipients(db: Db, tenantId: number): Promise<string[
 
 /**
  * Sends one email as the agency. If the agency's own account fails, falls back to the platform
- * sender once so a revoked key doesn't silently swallow booking alerts.
+ * sender once so a revoked key doesn't silently swallow enquiry alerts.
  */
 export async function sendAsTenant(
   env: Env,

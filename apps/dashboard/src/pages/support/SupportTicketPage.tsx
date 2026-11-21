@@ -190,9 +190,14 @@ export function SupportTicketPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">
               {item.authorName}
-              {item.staff && (
+              {item.staff ? (
                 <Badge variant="secondary" className="ml-2">
                   {item.staff.role}
+                </Badge>
+              ) : (
+                // No staff login: this reply came from the Wepilo team.
+                <Badge variant="secondary" className="ml-2">
+                  Wepilo
                 </Badge>
               )}
               <span className="ml-2 text-xs font-normal text-muted-foreground">

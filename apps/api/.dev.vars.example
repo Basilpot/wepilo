@@ -6,12 +6,8 @@ PLATFORM_SUPPORT_EMAIL=support@yourdomain.com
 # Dodo Payments (test-mode values locally; DODO_ENVIRONMENT is set in wrangler.jsonc)
 DODO_API_KEY=replace_me
 DODO_WEBHOOK_SECRET=whsec_replace_me
-# One-time $1 product that unlocks the 3-day trial
+# One-time $2.99 product that unlocks the 7-day trial
 DODO_TRIAL_PRODUCT_ID=pdt_replace_me
 # Subscription products (leave a line out if that interval isn't sold)
-DODO_STARTER_MONTHLY_PRODUCT_ID=pdt_replace_me
-DODO_STARTER_ANNUAL_PRODUCT_ID=pdt_replace_me
-DODO_GROWTH_MONTHLY_PRODUCT_ID=pdt_replace_me
-DODO_GROWTH_ANNUAL_PRODUCT_ID=pdt_replace_me
-DODO_SCALE_MONTHLY_PRODUCT_ID=pdt_replace_me
-DODO_SCALE_ANNUAL_PRODUCT_ID=pdt_replace_me
+DODO_PRO_MONTHLY_PRODUCT_ID=pdt_replace_me
+DODO_PRO_ANNUAL_PRODUCT_ID=pdt_replace_me

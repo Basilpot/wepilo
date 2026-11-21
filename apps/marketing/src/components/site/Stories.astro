@@ -1,0 +1,119 @@
+---
+import SectionHead from "./SectionHead.astro";
+/**
+ * Before and after, side by side: the content-agency email thread on the left, the same job done
+ * with Claude and Wepilo on the right. Illustrations of the workflow, not customer quotes.
+ */
+type Line = { who: "them" | "you" | "claude" | "note"; text: string };
+const stories: Array<{ id: string; tab: string; before: Line[]; after: Line[] }> = [
+  {
+    id: "refresh",
+    tab: "Refresh a trip",
+    before: [
+      { who: "you", text: "Can you update the Inca Trail tour for 2027? Dates and the permit rules changed." },
+      { who: "them", text: "Sure, it's in the queue. Draft by Thursday for your review." },
+      { who: "note", text: "Thursday: a draft arrives. Your team rewrites two paragraphs anyway." },
+    ],
+    after: [
+      { who: "you", text: "Refresh the Inca Trail tour for 2027: new permit rules, and add an FAQ about altitude." },
+      { who: "claude", text: "Done. Saved as a draft in Wepilo: 2 days rewritten, 1 FAQ added, meta description 154 characters." },
+      { who: "note", text: "Your editor reads it, changes a line and publishes it the same morning." },
+    ],
+  },
+  {
+    id: "translate",
+    tab: "Open a new market",
+    before: [
+      { who: "you", text: "We want our top ten tours in Spanish before FITUR in Madrid." },
+      { who: "them", text: "Translation is quoted separately. Five to seven working days per batch." },
+      { who: "note", text: "The fair comes and goes. The Spanish pages don't." },
+    ],
+    after: [
+      { who: "you", text: "Translate our ten most popular tours into Spanish." },
+      { who: "claude", text: "Ten Spanish drafts ready, each on its own /es/ address, linked to the English page for Google." },
+      { who: "note", text: "A Spanish-speaking guide on your team checks them and approves." },
+    ],
+  },
+  {
+    id: "post",
+    tab: "Write a journal post",
+    before: [
+      { who: "you", text: "Could we get a post about our new Dolomites hut-to-hut route?" },
+      { who: "them", text: "That's outside this month's package. Next month, or as an extra." },
+      { who: "note", text: "The route was new in March. The post goes up in June." },
+    ],
+    after: [
+      { who: "you", text: "Write a journal post about our new Dolomites route, from the guide's notes I pasted." },
+      { who: "claude", text: "Draft post saved in Wepilo with a title, headings and alt text for all six photos." },
+      { who: "note", text: "Scheduled for Monday morning, after your editor signs off." },
+    ],
+  },
+];
+
+const bubble = {
+  them: "self-start bg-white text-ink-2",
+  you: "self-end bg-mist-2 text-ink",
+  claude: "self-start bg-white text-ink",
+  note: "self-center bg-transparent text-center text-[14px] italic text-faint shadow-none",
+} as const;
+---
+
+<section id="stories" class="relative scroll-mt-28 pt-36 md:pt-56" aria-labelledby="stories-title" data-stories>
+  <div class="wrap">
+    <SectionHead
+      id="stories-title"
+      label="before and after"
+      lead="Three everyday jobs, done through a content agency and done in Wepilo. Pick one below."
+    >
+      The same request, handled two ways.
+    </SectionHead>
+
+    {
+      stories.map((s, n) => (
+        <div role="tabpanel" id={`story-${s.id}`} aria-labelledby={`story-tab-${s.id}`} hidden={n !== 0} class="mt-16 grid gap-8 md:mt-20 md:grid-cols-2 md:gap-12">
+          <div class="flex min-h-[380px] flex-col gap-4 rounded-[28px] bg-mist p-6 md:p-8">
+            <p class="text-[15px] font-semibold">With a content agency</p>
+            <p class="-mt-2 text-[14px] text-muted">You brief, wait, then rewrite half of it.</p>
+            {s.before.map((l) => (
+              <p class:list={["max-w-[85%] rounded-2xl px-5 py-4 text-[15px] leading-[1.5] shadow-[0_0_0_1px_rgb(20_20_18/0.05)]", bubble[l.who]]}>{l.text}</p>
+            ))}
+          </div>
+          <div class="relative">
+            <div class="relative flex min-h-[380px] flex-col gap-4 rounded-[28px] bg-ink p-6 md:p-8">
+              <p class="text-[15px] font-semibold text-white">With Wepilo</p>
+              <p class="-mt-2 text-[14px] text-white/60">You ask, review the draft and publish.</p>
+              {s.after.map((l) => (
+                <p class:list={["max-w-[85%] rounded-2xl px-5 py-4 text-[15px] leading-[1.5] shadow-[0_0_0_1px_rgb(20_20_18/0.06)]", l.who === "you" ? "self-end bg-white text-ink shadow-none" : l.who === "note" ? "self-center text-center text-[14px] italic text-white/60 shadow-none" : "self-start bg-white/10 text-white shadow-none ring-1 ring-white/15"]}>
+                  {l.who === "claude" && <span class="mb-1 block font-mono text-[11px] uppercase tracking-[0.08em] text-apricot">Claude</span>}
+                  {l.text}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))
+    }
+
+    <div class="reveal mt-16">
+      <div class="relative h-0.5 bg-line" aria-hidden="true">
+        <span data-progress class="absolute inset-y-0 left-0 w-1/3 bg-ember"></span>
+      </div>
+      <div role="tablist" aria-label="Examples" class="grid grid-cols-1 gap-2 pt-5 sm:grid-cols-3">
+        {
+          stories.map((s, n) => (
+            <button
+              type="button"
+              role="tab"
+              id={`story-tab-${s.id}`}
+              aria-controls={`story-${s.id}`}
+              aria-selected={n === 0 ? "true" : "false"}
+              class="py-2 text-left text-[17px] text-faint transition-colors hover:text-ink aria-selected:text-ink"
+            >
+              {s.tab}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

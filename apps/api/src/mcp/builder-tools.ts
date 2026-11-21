@@ -8,20 +8,21 @@ import type { ConnectionProps } from "./props";
 
 /** `docs/API.md` split into its numbered top-level sections ("## 3. Trips"…). */
 function guideSections() {
-  const parts = apiGuide.split(/^(?=## \d+\. )/m);
+  const parts = apiGuide.split(/^(?=## \d+[a-z]?\. )/m);
   const intro = parts.shift() ?? "";
   return {
     intro,
-    sections: parts.map((body) => ({ title: body.split("\n")[0].replace(/^## \d+\.\s*/, "").trim(), body })),
+    sections: parts.map((body) => ({ title: body.split("\n")[0].replace(/^## \d+[a-z]?\.\s*/, "").trim(), body })),
   };
 }
 
 const SECTION_KEYS = {
   setup: ["Identify the agency", "Conventions"],
   trips: ["Trips"],
-  booking: ["Departures and bookings"],
-  inquiries: ["Inquiries and newsletter"],
-  content: ["Website content"],
+  departures: ["Departures"],
+  enquiries: ["Enquiries and newsletter"],
+  languages: ["Languages"],
+  content: ["Site shell and homepage", "Website content"],
   accounts: ["Traveller accounts (optional)"],
   examples: ["Examples", "Caching tips", "Checklist before launch"],
 } as const;
@@ -91,9 +92,9 @@ export function registerBuilderTools(server: McpServer, env: Env, ctx: Execution
     {
       title: "Wepilo website API guide",
       description:
-        "Returns the Wepilo website API documentation for one topic: setup (headers, pagination, errors), trips, booking (departures and booking requests), inquiries (contact and newsletter forms), content (pages, posts, redirects), accounts (traveller sign-in) or examples (Next.js, plain fetch, caching, launch checklist).",
+        "Returns the Wepilo website API documentation for one topic: setup (headers, pagination, errors), trips, departures (dates and seats left), enquiries (contact and newsletter forms, emailed to the agency), languages (?lang= and /de/ URLs), content (pages, posts, redirects), accounts (traveller sign-in) or examples (Next.js, plain fetch, caching, launch checklist).",
       inputSchema: z.object({
-        topic: z.enum(["setup", "trips", "booking", "inquiries", "content", "accounts", "examples"]),
+        topic: z.enum(["setup", "trips", "departures", "enquiries", "languages", "content", "accounts", "examples"]),
       }),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

@@ -1,0 +1,125 @@
+{
+  "title": "Choose the visual world for Wepilo",
+  "question": "The roll assigned Hut Board. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Hut Board",
+      "kicker": "THE ROLL",
+      "lineage": "Himalayan teahouse and mountain-hut booking boards",
+      "thesis": "The warden's board: every night, every bunk, every guest at a glance.",
+      "palette": ["#143a2a", "#1f8a4c", "#f1f3ef", "#e9a23b", "#ffffff"],
+      "materials": ["painted pine-green board", "chalk-white marks", "brass peg markers"],
+      "viewport": "Pine-green side rail; home opens on a Today board of three lanes (reply, confirm, departing) with seat pegs per departure.",
+      "risk": "Pegs and amber markers turn into decoration if they appear anywhere they don't count something real.",
+      "raised": [
+        {"from": "challenger-warm-app", "raise": "The amber marker and the green fill are only ever on things you can act on; everything else stays neutral."},
+        {"from": "challenger-crouwel", "raise": "One visible 8px cell grid governs board lanes, tables and peg rows, so every count lines up."},
+        {"from": "challenger-jcard", "raise": "Capacity is a hard limit: a departure's peg row can't overflow, and a full row reads full at a glance."}
+      ],
+      "html": ".impeccable/mocks/decision/assigned.html"
+    },
+    {
+      "id": "model-pick",
+      "label": "Survey Sheet",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "1:50,000 topographic survey sheets of trekking regions",
+      "thesis": "The agency's business read like a route map: contours, waypoints, elevation.",
+      "palette": ["#f4f6f1", "#1f8a4c", "#9a6b45", "#2f6f9f", "#1b2620"],
+      "materials": ["contour hairlines", "map-label small caps", "route dashes"],
+      "viewport": "Light survey-green ground; departures as route lines with waypoint dots; bookings trend drawn as an elevation profile.",
+      "risk": "Maps are the obvious travel motif, and contour texture easily drifts into costume.",
+      "html": ".impeccable/mocks/decision/model-pick.html"
+    },
+    {
+      "id": "challenger-warm-app",
+      "label": "Warm Consumer Surface",
+      "verdict": "competitive",
+      "lineage": "friendly consumer app surfaces",
+      "thesis": "Soft cards on a warm ground, plain words, and one bright colour that always means 'press me'.",
+      "palette": ["#f6f1ea", "#ffffff", "#1f8a4c", "#2a2420"],
+      "materials": ["large-radius white cards", "warm tinted ground"],
+      "viewport": "Single column of rounded cards: To reply, To confirm, Departing soon, then stats.",
+      "case": "Strong on clarity for non-technical owners; weaker on identity, reading close to any friendly app.",
+      "risk": "Lands near the generic soft-SaaS look you asked to avoid.",
+      "html": ".impeccable/mocks/decision/challenger-warm-app.html"
+    },
+    {
+      "id": "challenger-ikeda",
+      "label": "Data-sublime field",
+      "verdict": "declined",
+      "lineage": "Ryoji Ikeda datamatics",
+      "palette": ["#000000", "#ffffff"],
+      "materials": ["barcode bars", "monospace numerals"],
+      "thesis": "Pure black-and-white data field.",
+      "viewport": "Barcode columns and dense numerals.",
+      "risk": "Cold and technical for agency owners.",
+      "case": "Loses on both axes: owners don't identify with it and it hides the task.",
+      "kept": "Tabular numerals everywhere numbers are compared."
+    },
+    {
+      "id": "challenger-crouwel",
+      "label": "Crouwel grid specimen",
+      "verdict": "declined",
+      "lineage": "Wim Crouwel grid posters",
+      "palette": ["#ffffff", "#1d4ed8", "#111111"],
+      "materials": ["visible construction grid"],
+      "thesis": "The grid is the design.",
+      "viewport": "Monumental grid letterforms.",
+      "risk": "Poster, not a working tool.",
+      "case": "Loses on both axes for a daily ops screen.",
+      "kept": "A strict visible cell grid."
+    },
+    {
+      "id": "challenger-jcard",
+      "label": "Cassette j-card",
+      "verdict": "declined",
+      "lineage": "mixtape inlay cards",
+      "palette": ["#ffffff", "#1e3a8a", "#c0392b"],
+      "materials": ["ballpoint on lined inlay"],
+      "thesis": "Sides that must not overflow the tape.",
+      "viewport": "Folded tracklist.",
+      "risk": "Nostalgia costume.",
+      "case": "Loses on both axes; unrelated to travel work.",
+      "kept": "Hard capacity limits that read at a glance."
+    },
+    {
+      "id": "challenger-rail",
+      "label": "Centre-rail reference setting",
+      "verdict": "declined",
+      "lineage": "scholarly editions",
+      "palette": ["#efe8da", "#1a1a1a", "#c0392b"],
+      "materials": ["hairline rules", "small caps"],
+      "thesis": "Two columns round a keyed rail.",
+      "viewport": "Book page.",
+      "risk": "Reads as a book, not a dashboard.",
+      "case": "Loses on both axes.",
+      "kept": "Every state is a printed mark, never just a colour."
+    },
+    {
+      "id": "challenger-mascots",
+      "label": "Character goods catalog",
+      "verdict": "declined",
+      "lineage": "mascot rosters",
+      "palette": ["#ffe4ec", "#d6f5ff", "#fff3c4"],
+      "materials": ["pastel cells", "bubble type"],
+      "thesis": "Ranked roster of characters.",
+      "viewport": "Pastel grid.",
+      "risk": "Too playful, which you ruled out.",
+      "case": "Loses on both axes.",
+      "kept": "Each item has fixed, findable furniture."
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A clean admin dashboard of the kind every SaaS ships, executed well.",
+    "palette": ["#ffffff", "#f4f4f5", "#18181b", "#1f8a4c"],
+    "materials": ["neutral sidebar", "stat cards", "area chart"],
+    "viewport": "Grey sidebar, four stat cards, a bookings chart and recent lists.",
+    "risk": "Indistinguishable from other admin templates by design.",
+    "html": ".impeccable/mocks/decision/canon.html"
+  },
+  "steer": true
+}

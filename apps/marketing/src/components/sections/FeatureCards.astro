@@ -1,0 +1,56 @@
+---
+interface Item {
+  title: string;
+  body: string;
+  image: string;
+  alt: string;
+  ratio?: string;
+}
+
+interface Props {
+  heading?: string;
+  lead?: string;
+  items: Item[];
+  columns?: 2 | 3;
+  id?: string;
+}
+
+const { heading, lead, items, columns = 2, id } = Astro.props;
+---
+
+<section class="rule" id={id}>
+  <div class="shell py-20 sm:py-28">
+    {
+      heading && (
+        <div class="reveal">
+          <h2 class="text-section max-w-[20ch]">{heading}</h2>
+          {lead && <p class="mt-5 max-w-[34rem] text-lead text-muted">{lead}</p>}
+        </div>
+      )
+    }
+
+    <div class={`mt-14 grid gap-x-8 gap-y-14 ${columns === 3 ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+      {
+        items.map((item) => (
+          <figure class="reveal">
+            <div class="mesh overflow-hidden rounded-2xl p-3 sm:p-5">
+              <img
+                src={item.image}
+                alt={item.alt}
+                width="1440"
+                height="900"
+                loading="lazy"
+                decoding="async"
+                class={`shot-sm w-full ${item.ratio ?? "aspect-[16/10] object-cover object-left-top"}`}
+              />
+            </div>
+            <figcaption class="mt-5">
+              <h3 class="text-[1.0625rem] font-medium tracking-[-0.02em]">{item.title}</h3>
+              <p class="mt-2 max-w-[34rem] text-[15px] leading-6 text-muted">{item.body}</p>
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+  </div>
+</section>

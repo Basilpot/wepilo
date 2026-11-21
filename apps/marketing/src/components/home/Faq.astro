@@ -1,0 +1,60 @@
+---
+/** Questions worth answering up front. Plain <details>, so it works without JavaScript. */
+const faqs = [
+  {
+    q: "Can I keep my current website?",
+    a: "Yes. Your developer points the site at the Wepilo API and keeps the design you already have. If you don't have a site, Wepilo comes with a storefront you can put on your own domain.",
+  },
+  {
+    q: "Do travellers pay through Wepilo?",
+    a: "No. A booking on your site is a reservation request. You talk it through with the traveller, confirm it, and collect payment however you already do. Wepilo never holds your money.",
+  },
+  {
+    q: "Will the AI publish things on its own?",
+    a: "No. New trips and posts it creates are saved as hidden drafts until you publish them, and Wepilo never emails a traveller on its own. It can only do what your own login is allowed to do.",
+  },
+  {
+    q: "What happens if I stop paying?",
+    a: "The dashboard pauses, but your website keeps answering for fifteen more days, so nothing breaks while you decide.",
+  },
+  {
+    q: "Where do I start?",
+    a: "With the checklist on your dashboard. It keeps track of what is left: your business profile, a first trip and its departures, payments, your homepage and your team.",
+  },
+];
+---
+
+<section class="rule">
+  <div class="shell py-28 sm:py-36">
+    <div class="reveal grid grid-cols-1 items-end gap-6 border-b border-line-strong pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)_auto] lg:gap-12">
+      <div>
+        <p class="font-mono text-[13px] text-muted">Before you ask.</p>
+        <h2 class="mt-5 max-w-[14ch] text-section">The questions <span class="serif">every agency asks.</span></h2>
+      </div>
+      <p class="max-w-[22rem] text-[17px] leading-7 text-ink-2">
+        Five things worth knowing before you start, answered plainly.
+      </p>
+      <a href="mailto:hello@wepilo.com" class="btn btn-dark">Ask us something else</a>
+    </div>
+
+    <div class="reveal mt-10 overflow-hidden rounded-[10px] border border-line bg-card">
+      {
+        faqs.map((f, i) => (
+          <details class="faq group border-line [&:not(:last-child)]:border-b" open={i === 0}>
+            <summary class="flex cursor-pointer list-none items-center gap-6 px-5 py-6 sm:px-8">
+              <span class="faq-icon flex size-8 shrink-0 items-center justify-center rounded-full ring-1 ring-line-strong transition-colors">
+                <svg viewBox="0 0 16 16" class="size-3.5 transition-transform duration-300" fill="none" aria-hidden="true">
+                  <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+              </span>
+              <span class="text-[clamp(1.0625rem,0.95rem+0.4vw,1.3125rem)] tracking-[-0.02em]">{f.q}</span>
+            </summary>
+            <div class="px-5 pb-8 pl-[4.75rem] sm:pl-[5.75rem] sm:pr-8">
+              <p class="max-w-[44rem] text-[16px] leading-7 text-muted">{f.a}</p>
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>

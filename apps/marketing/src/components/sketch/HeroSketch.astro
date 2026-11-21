@@ -1,0 +1,83 @@
+---
+import SketchFrame from "./SketchFrame.astro";
+import { ridge, cap, type Callout } from "./util";
+
+/** The homepage drawing: a live trip page, with the editor that keeps it current laid over it. */
+interface Props {
+  annotated?: boolean;
+}
+const { annotated = true } = Astro.props;
+
+const langs = ["en", "es", "fr", "de", "ja"];
+const days = ["Day 1 · Machame Gate", "Day 2 · Shira Cave", "Day 3 · Barranco Camp", "Day 4 · Karanga Camp"];
+const deps = ["12 jan 2027 · 4 left", "02 feb 2027 · full", "16 mar 2027 · 9 left"];
+
+const callouts: Callout[] = [
+  { at: [863, 94], to: [930, 94], side: "right", lines: ["every trip in the", "languages you sell in"] },
+  { at: [852, 420], to: [930, 300], side: "right", lines: ["change a date once,", "the whole site follows"] },
+  { at: [852, 474], to: [930, 540], side: "right", lines: ["enquiries go straight", "to your own email"] },
+  { at: [300, 549], to: [262, 470], side: "left", lines: ["drafts are written for", "you; an editor publishes"] },
+];
+---
+
+<SketchFrame title="A trip page on an agency website, with the Wepilo editor open beside it." callouts={callouts} annotated={annotated}>
+  <!-- The website. -->
+  <rect x="400" y="40" width="470" height="470" class="w" />
+  <line x1="400" y1="76" x2="870" y2="76" />
+  {[420, 436, 452].map((x) => <circle cx={x} cy="58" r="4" />)}
+  <rect x="490" y="49" width="260" height="18" />
+  <text x="500" y="62" class="m">your-agency.travel/tours/kilimanjaro</text>
+
+  <rect x="418" y="92" width="64" height="8" class="k" stroke="none" />
+  {[560, 600, 640].map((x) => <rect x={x} y="94" width="30" height="5" class="bar" />)}
+  {
+    langs.map((l, i) => (
+      <g>
+        <rect x={718 + i * 28} y="86" width="24" height="16" class={i === 0 ? "k" : "w"} />
+        <text x={730 + i * 28} y="98" text-anchor="middle" class="m" style={`font-size:9.5px;${i === 0 ? "fill:#fff" : ""}`}>{l}</text>
+      </g>
+    ))
+  }
+
+  <image href="/video/summit-walk.jpg" x="418" y="116" width="434" height="150" preserveAspectRatio="xMidYMid slice" />
+  <rect x="418" y="116" width="434" height="150" />
+
+  <text x="418" y="300" class="s" style="font-size:23px">Kilimanjaro, Machame Route</text>
+  <text x="418" y="322" class="m">7 days · 5,895 m · moderate</text>
+
+  <text x="418" y="352" class="m">itinerary</text>
+  {
+    days.map((d, i) => (
+      <g>
+        <circle cx="426" cy={373 + i * 30} r="5" class="w" />
+        {i < days.length - 1 && <line x1="426" y1={378 + i * 30} x2="426" y2={398 + i * 30} />}
+        <text x="442" y={377 + i * 30}>{d}</text>
+      </g>
+    ))
+  }
+
+  <rect x="680" y="338" width="172" height="160" class="w" />
+  <text x="692" y="358" class="m">from</text>
+  <text x="692" y="386" class="s" style="font-size:25px">$2,150</text>
+  {deps.map((d, i) => <text x="692" y={410 + i * 18} class="m">{d}</text>)}
+  <rect x="692" y="462" width="148" height="24" class="k" />
+  <text x="766" y="478" text-anchor="middle" class="m" style="fill:#fff">send enquiry</text>
+
+  <!-- The editor, open on one departure. -->
+  <rect x="300" y="400" width="232" height="196" class="w" />
+  <text x="314" y="422" class="m">edit departure</text>
+  <line x1="300" y1="432" x2="532" y2="432" />
+  <text x="314" y="452" class="m">date</text>
+  <rect x="314" y="458" width="204" height="22" />
+  <text x="322" y="473">12 jan 2027</text>
+  <text x="314" y="498" class="m">seats left</text>
+  <rect x="314" y="504" width="204" height="22" />
+  <text x="322" y="519">4 of 12</text>
+  <rect x="314" y="538" width="84" height="22" />
+  <text x="356" y="553" text-anchor="middle" class="m">draft</text>
+  <line x1="402" y1="549" x2="424" y2="549" />
+  <path d="M418 545 L424 549 L418 553" />
+  <rect x="428" y="538" width="90" height="22" class="k" />
+  <text x="473" y="553" text-anchor="middle" class="m" style="fill:#fff">publish</text>
+  <text x="314" y="584" class="m">drafted by ai · 2m ago</text>
+</SketchFrame>

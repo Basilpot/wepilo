@@ -1,0 +1,28 @@
+---
+/**
+ * The site's button, in Tailwind. Soft gradient fill, a highlight along the top edge, a hairline
+ * border and a layered shadow (tokens in @theme), lifting on hover and pressing in on click.
+ */
+interface Props {
+  href: string;
+  /** red: the one main action. dark: primary. light: secondary, readable on any background. */
+  variant?: "red" | "dark" | "light";
+  size?: "md" | "sm";
+  class?: string;
+}
+const { href, variant = "dark", size = "md", class: cls } = Astro.props;
+
+const base =
+  "rounded-[10px] inline-flex items-center justify-center gap-2 whitespace-nowrap font-sans font-semibold tracking-[-0.005em] transition-[transform,box-shadow,filter] duration-150 ease-out hover:-translate-y-px active:translate-y-px active:brightness-[.97] active:duration-75 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-red";
+const sizes = {
+  md: "h-[46px] px-[22px] text-[15px]",
+  sm: "h-10 rounded-[9px] px-4 text-[14px]",
+};
+const variants = {
+  red: "bg-linear-to-b from-[#ea3f5c] to-[#c8102e] text-white shadow-btn-red hover:shadow-btn-red-hover hover:brightness-105",
+  dark: "bg-linear-to-b from-[#2e2e2e] to-[#121212] text-white shadow-btn-dark hover:shadow-btn-dark-hover hover:brightness-110",
+  light: "bg-linear-to-b from-white to-[#f1f1f1] text-ink shadow-btn-light hover:shadow-btn-light-hover",
+};
+---
+
+<a href={href} data-round class:list={[base, sizes[size], variants[variant], cls]}><slot /></a>

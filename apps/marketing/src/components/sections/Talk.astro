@@ -1,0 +1,54 @@
+---
+interface Props {
+  dashboard: string;
+}
+
+const { dashboard } = Astro.props;
+---
+
+<section class="rule" id="talk">
+  <div class="mesh">
+    <div class="shell py-20 sm:py-28">
+      <div class="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.2fr_1fr] lg:gap-20">
+        <div class="reveal">
+          <h2 class="text-section max-w-[18ch]">
+            <span class="block text-faint">Tell us about your agency</span>
+            <span class="block">we will show you around</span>
+          </h2>
+          <p class="mt-5 max-w-[32rem] text-lead text-ink/70">
+            Thirty minutes on a call, or a workspace of your own to poke at. Either way you will know in a few
+            minutes whether Wepilo fits how you already work.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="mailto:hello@wepilo.com" class="btn btn-dark btn-lg">Book a demo</a>
+            <a href={`${dashboard}/signup`} class="btn btn-light btn-lg">Start a workspace</a>
+          </div>
+        </div>
+
+        <ul class="reveal space-y-4">
+          <li class="flex gap-4 rounded-2xl border border-line bg-surface-2 p-5">
+            <span class="font-mono text-[11px] text-faint">01</span>
+            <div>
+              <p class="text-sm font-medium">We look at your current site</p>
+              <p class="mt-1 text-[14px] leading-6 text-muted">And at the trips you actually sell.</p>
+            </div>
+          </li>
+          <li class="flex gap-4 rounded-2xl border border-line bg-surface-2 p-5">
+            <span class="font-mono text-[11px] text-faint">02</span>
+            <div>
+              <p class="text-sm font-medium">We set up a workspace with your content</p>
+              <p class="mt-1 text-[14px] leading-6 text-muted">So you see your site, not an empty template.</p>
+            </div>
+          </li>
+          <li class="flex gap-4 rounded-2xl border border-line bg-surface-2 p-5">
+            <span class="font-mono text-[11px] text-faint">03</span>
+            <div>
+              <p class="text-sm font-medium">You keep it if it helps</p>
+              <p class="mt-1 text-[14px] leading-6 text-muted">Your content is yours, and you can take it with you.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

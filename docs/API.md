@@ -1,6 +1,6 @@
 # Wepilo API: website integration guide
 
-This guide is for developers building an agency's public website on top of Wepilo. The website reads trips, departures, pages, posts and the rest from the API, and sends bookings, inquiries and newsletter sign-ups back to it.
+This guide is for developers building an agency's public website on top of Wepilo. The website reads trips, departures, pages, posts and the rest from the API, and sends enquiries and newsletter sign-ups back to it. Wepilo doesn't take bookings or payments.
 
 - **Base URL (production):** `https://wepiloapi.basilpot.com/api/v1`
 - **Base URL (local):** `http://localhost:8787/api/v1`
@@ -57,7 +57,7 @@ Errors use a regular HTTP status with a JSON body:
 | 401 / 403 | Not signed in / not allowed |
 | 404 | Not found, or not published |
 | 409 | Conflict, such as `DEPARTURE_CLOSED` or `NOT_ENOUGH_SPOTS` |
-| 429 | `RATE_LIMITED`: too many requests from one visitor. Wait the number of seconds in the `Retry-After` header. Public forms (bookings, inquiries, newsletter) allow about 12 submissions per visitor per 10 minutes. |
+| 429 | `RATE_LIMITED`: too many requests from one visitor. Wait the number of seconds in the `Retry-After` header. Public forms (enquiries, newsletter) allow about 12 submissions per visitor per 10 minutes. |
 | 402 | `API_ACCESS_INACTIVE`: the agency has no paid plan (new, on trial, or lapsed more than 15 days ago). `PLAN_LIMIT` / `PAYMENT_REQUIRED` only affect dashboard actions. |
 
 ### Dates and money
@@ -133,11 +133,11 @@ Each item includes the trip fields plus `tripCategory`, `country`, `region`, `ci
 | `GET /public/currency` | `{ base, translation, rates, updatedAt }`. `base` is the currency every price is stored in. When the agency has switched on currency translation, `rates` holds one unit of `base` in each currency (about 160), refreshed daily. To show a price in the visitor's currency, multiply it by `rates[their currency]`. When translation is off, `rates` is `null`. Rates come from exchangerate-api.com (free tier), so please link to it. They are a guide for browsing: travellers are always charged in `base`. |
 | `GET /public/homepage/sections` | Everything flagged *Show on homepage*: `{ categories, countries, regions, cities, tags }` |
 
-## 4. Departures and bookings
+## 4. Departures
 
 ### Departures
 
-`GET /departures?activityId=12&status=OPEN`
+`GET /departures?activityId=12&status=OPEN&from=2026-11-01`
 
 ```json
 {
@@ -151,66 +151,14 @@ Each item includes the trip fields plus `tripCategory`, `country`, `region`, `ci
 }
 ```
 
-- `status` is `OPEN`, `FULL` or `DELAYED`. Only `OPEN` departures accept bookings.
-- Past departures are returned too, so filter out `startDate < today` on your side.
+- `availableSpots` is the number of seats left. The agency keeps it up to date in the dashboard; Wepilo doesn't take bookings.
+- `status` is `OPEN`, `FULL` or `DELAYED`. `FULL` follows `availableSpots` reaching 0.
+- `from` and `to` (YYYY-MM-DD) limit the range by start date. Without them, past departures are returned too.
+- To let a traveller ask about a date, send an enquiry with `departureDate` (below).
 
-### Create a booking
+## 5. Enquiries and newsletter
 
-`POST /bookings`
-
-```json
-{
-  "activityId": 12,
-  "departureId": 7,
-  "groupSize": 2,
-  "name": "Aarav Shah",
-  "email": "aarav@example.com",
-  "phone": "+977 9800000001",
-  "extraIds": [3, 5]
-}
-```
-
-On success it returns `201 { "booking": { "id": 42, "status": "PENDING", "totalPrice": 2900, ... } }`.
-
-- `totalPrice` is `departure.price × groupSize + Σ(extra.price × groupSize)`, worked out on the server.
-- Creating a booking takes no payment. Without online payments the agency confirms it in the dashboard (that takes the seats): show something like "Request received, we'll confirm within 24 hours". With payments on, continue to [Paying for a booking](#paying-for-a-booking).
-- `extraIds` must be extras offered on that trip (`400` otherwise). Duplicates are counted once. `groupSize` is 1 to 200.
-- The agency is emailed about each new request, with the traveller's address as Reply-To.
-- Errors: `404` if the trip or departure isn't found, `409 DEPARTURE_CLOSED` (full, delayed, or already started), `409 NOT_ENOUGH_SPOTS`, `429 RATE_LIMITED`.
-
-### Paying for a booking
-
-If the agency has switched on payments (`GET /payments/options` says `online: true`), send the traveller to pay right after creating the booking. The booking response includes a secret `publicToken` (it is never shown in the dashboard or returned again), plus the `currency` the price is in. Keep both in your server session; the token is what proves this traveller owns the booking.
-
-`GET /payments/options` returns:
-
-```json
-{ "currency": "EUR", "stripe": true, "bankTransfer": { "instructions": "IBAN …" }, "depositPercent": 25, "online": true }
-```
-
-**Card (Stripe)**: `POST /payments/checkout`
-
-```json
-{
-  "bookingId": 42,
-  "token": "bk_…",
-  "kind": "DEPOSIT",
-  "successUrl": "https://youragency.com/thanks?booking=42",
-  "cancelUrl": "https://youragency.com/cart"
-}
-```
-
-`kind` is `FULL` (default; pays whatever is still due) or `DEPOSIT` (only before anything is paid, and only if `depositPercent` is set). The amount is always worked out on the server. It returns `{ "url": "https://checkout.stripe.com/…", "amountMinor": 25000, "currency": "EUR", "kind": "DEPOSIT" }`: redirect the traveller to `url`. `successUrl` and `cancelUrl` must be pages on the agency's own website (the address saved under Business profile → Website, or a verified custom domain). Over HTTPS only, except `localhost` in development.
-
-The booking is marked paid when Stripe confirms, usually within seconds, and the agency is emailed. Depending on the agency's setting the booking is confirmed automatically or waits for them. Don't treat the redirect to `successUrl` as proof of payment; show "payment received, we'll confirm shortly" and let the agency's confirmation email do the rest.
-
-**Bank transfer**: `POST /payments/bank-transfer` with `{ "bookingId", "token", "kind" }` returns `{ "reference": "WP-42", "amountMinor": …, "currency": "…", "instructions": "…" }`. Show the instructions and reference. The agency marks it received in the dashboard once the money arrives. Calling it again returns the same pending payment.
-
-Errors: `404` for an unknown booking or wrong token (the same answer for both), `409 PAYMENTS_OFF`, `409 ALREADY_PAID`, `409 BOOKING_CLOSED` (cancelled or completed), `400` for a `successUrl` that isn't the agency's site, `502 CHECKOUT_FAILED` when the payment provider refuses, `429 RATE_LIMITED`.
-
-## 5. Inquiries and newsletter
-
-### Contact / inquiry form
+### Contact and trip enquiry form
 
 `POST /inquiries`
 
@@ -220,11 +168,15 @@ Errors: `404` for an unknown booking or wrong token (the same answer for both), 
   "email": "priya@example.in",
   "phone": "+91 98000 00000",
   "trip": "Everest Base Camp Trek",
+  "departureDate": "2026-11-01",
+  "travellers": 2,
   "message": "Is the trek suitable for first-timers?"
 }
 ```
 
-`name`, `email` and `message` are required. `trip` is free text, usually the trip title when the form sits on a trip page. Returns `201 { inquiry }`.
+`name`, `email` and `message` are required. `trip` is free text, usually the trip title when the form sits on a trip page. `departureDate` and `travellers` are optional, for a "ask about this date" form.
+
+Wepilo doesn't store enquiries. Each one is emailed straight to the addresses the agency chose under **Settings → Email** (the owner's address if none), with the traveller as Reply-To, so the agency answers from the email it already uses. Returns `202 { "ok": true }`. Errors: `400 VALIDATION`, `429 RATE_LIMITED`.
 
 ### Newsletter
 
@@ -262,6 +214,18 @@ Errors: `404` for an unknown booking or wrong token (the same answer for both), 
 
 If the agency verified its domain in **Settings → Domain**, requests from that site's browser (with or without `www`) are recognised from the `Origin` header alone. Server-side requests still send `x-api-key` or `x-tenant-slug`.
 
+## 5c. Languages
+
+`GET /site` includes the agency's languages:
+
+```json
+"languages": { "default": "en", "available": ["en", "de", "es"] }
+```
+
+Add `?lang=de` to any public `GET` (trips, departures, posts, pages, categories, places, extras, `/site`) to get the German text laid over the original. Fields nobody translated keep the original text, so a page is never half empty. The response carries `Content-Language: de`. Without `lang` nothing changes.
+
+Recommended URLs: the default language at the root (`/trips/kilimanjaro`), every other language under its code (`/de/trips/kilimanjaro`), with `<link rel="alternate" hreflang="…">` tags between them. The starter storefront does this for you.
+
 ## 6. Website content
 
 | Endpoint | Description |
@@ -269,6 +233,7 @@ If the agency verified its domain in **Settings → Domain**, requests from that
 | `GET /blogs/published?search=&categoryId=` | Paginated list of live posts |
 | `GET /blogs/slug/:slug` | One live post, with `blogCategory`, `author` and `writer` |
 | `GET /info-pages/slug/:slug` | One published page (About, Terms, Privacy and so on) with its `category` |
+| `GET /info-pages/published` | Every published page as `{ id, title, slug, publishedAt, updatedAt }`, for a sitemap or footer |
 | `GET /info-page-categories` | Categories for grouping pages in menus or footers |
 | `GET /auth/authors/:username` | Public author profile. Authors are staff logins (role Author) with a username, photo and short bio. |
 | `GET /team` | Team members |
@@ -277,6 +242,10 @@ If the agency verified its domain in **Settings → Domain**, requests from that
 | `GET /testimonials`, `GET /public/testimonials/public` | Testimonials |
 | `GET /reviews?activityId=` | Paginated trip reviews. Only reviews the agency has published are returned, each with `author`, `rating`, `title`, `text` and `images` (photo URLs). A trip's `averageRating` counts published reviews only. |
 | `GET /documents` | Licences and certificates to show for trust |
+
+### Sitemap and structured data
+
+Build `sitemap.xml` from `GET /activities`, `GET /blogs/published` and `GET /info-pages/published` (use `updatedAt` as `lastmod`), plus category and destination pages. With more than one language, list each page once per language with `xhtml:link` alternates, and add matching `hreflang` links in each page's `<head>`. On trip pages, use `tripSeo.schema` as the JSON-LD if the agency wrote one; otherwise build a `TouristTrip` from the trip (itinerary days as an `ItemList`, departures as `Offer`s) and an `FAQPage` from `faq`. Escape `<` as `\u003c` inside the script tag.
 
 ### Redirects
 
@@ -345,30 +314,29 @@ export default async function TripPage({ params }: { params: Promise<{ slug: str
 }
 ```
 
-### Booking form (server action)
+### "Ask about this date" form (server action)
 
 ```ts
 "use server";
 import { wepilo } from "@/lib/wepilo";
 
-export async function requestBooking(form: FormData) {
+export async function askAboutDate(form: FormData) {
   try {
-    const { booking } = await wepilo<{ booking: { id: number } }>("/bookings", {
+    await wepilo("/inquiries", {
       method: "POST",
       body: JSON.stringify({
-        activityId: Number(form.get("activityId")),
-        departureId: Number(form.get("departureId")),
-        groupSize: Number(form.get("groupSize")),
         name: form.get("name"),
         email: form.get("email"),
-        phone: form.get("phone"),
+        phone: form.get("phone") || undefined,
+        trip: form.get("trip"),
+        departureDate: form.get("departureDate"),
+        travellers: Number(form.get("travellers")) || undefined,
+        message: form.get("message"),
       }),
       cache: "no-store",
     });
-    return { ok: true, bookingId: booking.id };
-  } catch (e: any) {
-    if (e.code === "NOT_ENOUGH_SPOTS") return { ok: false, error: "Not enough seats left on this date." };
-    if (e.code === "DEPARTURE_CLOSED") return { ok: false, error: "This date is no longer open for booking." };
+    return { ok: true };
+  } catch {
     return { ok: false, error: "Something went wrong. Please try again." };
   }
 }
@@ -387,7 +355,7 @@ await fetch("https://wepiloapi.basilpot.com/api/v1/inquiries", {
 ## 9. Caching tips
 
 - Trips, pages, posts and taxonomy change rarely. Cache them for 5–15 minutes (ISR or `revalidate`), or rebuild on a schedule.
-- Departures (`availableSpots`) change with bookings, so cache them for a minute at most, or fetch them on demand on the booking step.
+- Departures (`availableSpots`) change when the agency updates seats, so cache them for a minute at most.
 - Never cache `POST` requests.
 
 ## 10. Checklist before launch
@@ -395,7 +363,8 @@ await fetch("https://wepiloapi.basilpot.com/api/v1/inquiries", {
 - [ ] API key stored as a server-side secret (`WEPILO_API_KEY`), never shipped to the browser
 - [ ] Trip pages handle `404` and `redirectTo`
 - [ ] Past departures filtered out
-- [ ] Booking form explains that bookings are confirmed by the agency
+- [ ] Enquiry forms send `trip` (and `departureDate` when asking about a date)
+- [ ] Other languages served under `/{lang}/…` with `?lang=` and hreflang tags
 - [ ] Rich-text HTML rendered and sanitised
 - [ ] SEO: use `tripSeo.metaTitle` / `metaDescription` / `canonicalUrl` and inject `tripSeo.schema` as JSON-LD
 - [ ] `POST /activities/:id/view` called on trip pages
@@ -408,7 +377,7 @@ await fetch("https://wepiloapi.basilpot.com/api/v1/inquiries", {
   - `get_website_connection`: the API base URL, the agency slug and the header rules;
   - `get_api_guide`: the sections of this guide;
   - `sample_public_data`: real records in the exact response shape;
-  - and, for staff, tools such as `today_summary`, `list_trips`, `get_trip`, `create_trip_draft`, `update_trip`, `create_extra`, `list_inquiries`, `list_bookings`, `list_departures` and the booking management tools.
+  - and, for staff, tools such as `today_summary`, `list_trips`, `get_trip`, `create_trip_draft`, `update_trip` (including translations), `translate_post`, `create_post_draft`, `create_extra`, `list_departures`, `update_departure` and `view_calendar`.
 
   The connection only informs the builder while it writes code. The published site still talks to this API directly, using `x-tenant-slug` in browser code and `x-api-key` only on the server.
 

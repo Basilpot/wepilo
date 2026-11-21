@@ -1,3 +1,5 @@
+import { TranslationFields } from "@/components/translation-fields";
+import { compactTranslations } from "@/lib/translations";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "@/components/icons";
@@ -42,8 +44,13 @@ const PATHS: Array<[keyof SiteConfig["paths"], string]> = [
 const clean = (config: SiteConfig): SiteConfig => ({
   ...config,
   social: Object.fromEntries(Object.entries(config.social).map(([k, v]) => [k, v?.toString().trim() || null])),
-  seo: { siteTitle: config.seo.siteTitle?.trim() || null, description: config.seo.description?.trim() || null, ogImage: config.seo.ogImage || null },
-  announcement: { ...config.announcement, href: config.announcement.href?.trim() || null },
+  seo: {
+    siteTitle: config.seo.siteTitle?.trim() || null,
+    description: config.seo.description?.trim() || null,
+    ogImage: config.seo.ogImage || null,
+    translations: compactTranslations(config.seo.translations ?? {}),
+  },
+  announcement: { ...config.announcement, href: config.announcement.href?.trim() || null, translations: compactTranslations(config.announcement.translations ?? {}) },
 });
 
 type Snippet = { id: number; name: string };
@@ -164,6 +171,12 @@ export function WebsitePage() {
             <Field label="Link (optional)">
               <Input value={config.announcement.href ?? ""} onChange={(e) => set("announcement", { ...config.announcement, href: e.target.value })} placeholder="/trips/everest-base-camp" />
             </Field>
+            <TranslationFields
+              value={config.announcement.translations ?? {}}
+              onChange={(translations) => set("announcement", { ...config.announcement, translations })}
+              fields={[{ key: "text", label: "Message" }]}
+              original={{ text: config.announcement.text }}
+            />
           </SettingsSection>
 
           <SettingsSection title="Search and sharing" description="The default title, description and picture when your homepage is shared or found on Google.">
@@ -176,6 +189,12 @@ export function WebsitePage() {
             <Field label="Sharing picture">
               <ImageField value={config.seo.ogImage} onChange={(url) => set("seo", { ...config.seo, ogImage: url || null })} />
             </Field>
+            <TranslationFields
+              value={config.seo.translations ?? {}}
+              onChange={(translations) => set("seo", { ...config.seo, translations })}
+              fields={[{ key: "siteTitle", label: "Site title" }, { key: "description", label: "Description", multiline: true }]}
+              original={{ siteTitle: config.seo.siteTitle ?? "", description: config.seo.description ?? "" }}
+            />
           </SettingsSection>
 
           <SettingsSection title="Social links" description="Shown in your footer and on contact blocks.">

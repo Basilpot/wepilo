@@ -1,0 +1,107 @@
+---
+interface Props {
+  dashboard: string;
+}
+
+const { dashboard } = Astro.props;
+
+const tabs = [
+  {
+    title: "Trips and dates",
+    body: "Write the itinerary day by day, set the price and open departures. A trip only goes live once it is complete.",
+    image: "/shots/trip-editor.png",
+    alt: "The trip editor, with the step list for Everest Base Camp Trek on the left and its basic information on the right.",
+  },
+  {
+    title: "Bookings",
+    body: "Requests arrive with every traveller's details. Confirm one and its seats come off the departure.",
+    image: "/shots/bookings.png",
+    alt: "The bookings list, with confirmed and pending reservations and the amount owed on each.",
+  },
+  {
+    title: "Enquiries",
+    body: "Questions from your website land in one inbox, already tagged with the trip they are about.",
+    image: "/shots/inquiries.png",
+    alt: "The enquiries inbox, showing new messages from the website and the trip each one refers to.",
+  },
+  {
+    title: "Your website",
+    body: "Arrange the homepage, menus and pages yourself. No developer, no deploy.",
+    image: "/shots/website.png",
+    alt: "The website editor, where homepage sections and menus are arranged.",
+  },
+];
+---
+
+<section id="desk" class="rule">
+  <div class="shell py-28 sm:py-36">
+    <div class="grid grid-cols-1 items-end gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div class="reveal">
+        <p class="eyebrow">The dashboard</p>
+        <h2 class="mt-6 max-w-[15ch] text-section">
+          Everything a booking needs, <span class="serif">at one desk.</span>
+        </h2>
+        <p class="mt-6 max-w-[34rem] text-lead text-ink-2">
+          Most agencies run on a spreadsheet, a shared inbox and a website someone else updates. Wepilo puts the three
+          in one place, so the price on your site is always the price in your head.
+        </p>
+        <div class="mt-9 flex flex-wrap gap-3">
+          <a href={`${dashboard}/signup`} class="btn btn-dark">Try it for $1</a>
+          <a href="#talk" class="btn btn-light">Book a demo</a>
+        </div>
+      </div>
+      <img
+        src="/art/peak.png"
+        alt=""
+        width="800"
+        height="800"
+        loading="lazy"
+        class="reveal mx-auto hidden w-[19rem] mix-blend-multiply [mask-image:linear-gradient(to_bottom,black_60%,transparent)] lg:block"
+      />
+    </div>
+
+    <div class="reveal mt-16 sm:mt-20" data-tabs>
+      <div class="art art-haze rounded-t-[12px] px-4 pt-8 ring-1 ring-line sm:px-14 sm:pt-14 lg:px-24">
+        {
+          tabs.map((tab, i) => (
+            <img
+              id={`desk-panel-${i}`}
+              role="tabpanel"
+              aria-labelledby={`desk-tab-${i}`}
+              data-panel={i}
+              src={tab.image}
+              alt={tab.alt}
+              width="1440"
+              height="900"
+              loading={i === 0 ? "eager" : "lazy"}
+              decoding="async"
+              class:list={["shot block aspect-[16/8.4] w-full rounded-b-none object-cover object-left-top", i !== 0 && "hidden"]}
+            />
+          ))
+        }
+      </div>
+
+      <div class="grid grid-cols-1 border-x border-b border-line bg-card sm:grid-cols-2 lg:grid-cols-4" role="tablist" aria-label="Parts of the dashboard">
+        {
+          tabs.map((tab, i) => (
+            <button
+              type="button"
+              role="tab"
+              id={`desk-tab-${i}`}
+              aria-controls={`desk-panel-${i}`}
+              aria-selected={i === 0 ? "true" : "false"}
+              data-tab={i}
+              class="tab flex flex-col items-start justify-start border-line p-6 sm:p-7 [&:not(:last-child)]:border-b lg:[&:not(:last-child)]:border-b-0 lg:[&:not(:last-child)]:border-r"
+            >
+              <span class="flex items-center gap-3">
+                <span class="size-[7px] bg-flag" aria-hidden="true" />
+                <span class="tab-dim text-[1.0625rem] tracking-[-0.015em]">{tab.title}</span>
+              </span>
+              <span class="tab-body mt-2.5 block pl-[19px] text-[14px] leading-[1.6]">{tab.body}</span>
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

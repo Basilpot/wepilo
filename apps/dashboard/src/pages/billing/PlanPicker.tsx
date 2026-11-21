@@ -5,7 +5,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { InfoCard } from "@/components/atoms";
 import {
-  RECOMMENDED_PLAN,
   formatPrice,
   planFeatures,
   useCheckout,
@@ -16,7 +15,7 @@ import {
 } from "./billing";
 
 /**
- * Plan cards. "trial" sells the one-off $1 trial on the chosen plan; "subscribe" sells (or switches)
+ * Plan cards. "trial" sells the one-off $2.99 trial on the chosen plan; "subscribe" sells (or switches)
  * a recurring plan.
  */
 export function PlanPicker({
@@ -46,7 +45,7 @@ export function PlanPicker({
     !billing.access.locked &&
     sub?.plan === plan &&
     sub?.interval === interval;
-  const trialPrice = formatPrice(billing.trial.price) ?? "$1";
+  const trialPrice = formatPrice(billing.trial.price) ?? "$2.99";
 
   if (mode === "subscribe" && !billing.plans.some((p) => p.intervals.monthly || p.intervals.annual)) {
     return (
@@ -69,14 +68,14 @@ export function PlanPicker({
         </Tabs>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid max-w-md gap-4">
         {billing.plans.map((plan) => {
           const offer = plan.intervals[interval];
           const recurring = formatPrice(offer?.price ?? null, interval);
           const anyRecurring =
             formatPrice(plan.intervals.monthly?.price ?? null, "monthly") ??
             formatPrice(plan.intervals.annual?.price ?? null, "annual");
-          const recommended = plan.key === RECOMMENDED_PLAN;
+          const recommended = true;
           const current = isCurrent(plan.key);
           const unavailable = mode === "subscribe" && !offer;
           const switching = mode === "subscribe" && sub?.hasPaidSubscription && !billing.access.locked;
@@ -91,9 +90,6 @@ export function PlanPicker({
             >
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-semibold">{plan.name}</h3>
-                {recommended && (
-                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">Most popular</span>
-                )}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{plan.tagline}</p>
 
@@ -146,6 +142,14 @@ export function PlanPicker({
           );
         })}
       </div>
+
+      <p className="text-sm text-muted-foreground">
+        Want us to build and run your site for you?{" "}
+        <a className="font-medium text-foreground underline underline-offset-4" href="mailto:hello@wepilo.com?subject=Wepilo%20custom%20quote">
+          Ask for a quote
+        </a>
+        .
+      </p>
 
       {!canManage && (
         <p className="text-sm text-muted-foreground">Only the workspace owner can start a trial, buy a plan or change the plan. Please ask the owner to do this.</p>

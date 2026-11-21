@@ -1,0 +1,52 @@
+---
+interface Item {
+  title: string;
+  body: string;
+  icon: "code" | "spark" | "mail" | "globe";
+}
+
+interface Props {
+  items: Item[];
+  id?: string;
+}
+
+const { items, id } = Astro.props;
+
+const icons = {
+  code: "M8.5 6 5 10l3.5 4M15.5 6 19 10l-3.5 4M13 4.5 11 19.5",
+  spark: "M12 3.5c.6 3.9 1.9 5.2 5.8 5.8-3.9.6-5.2 1.9-5.8 5.8-.6-3.9-1.9-5.2-5.8-5.8 3.9-.6 5.2-1.9 5.8-5.8ZM18.5 15.5c.3 1.9.9 2.5 2.8 2.8-1.9.3-2.5.9-2.8 2.8-.3-1.9-.9-2.5-2.8-2.8 1.9-.3 2.5-.9 2.8-2.8Z",
+  mail: "M3.5 6.5h17v11h-17zM3.5 7l8.5 6 8.5-6",
+  globe: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM3.5 9.5h17M3.5 14.5h17M12 3c2.2 2.4 3.3 5.4 3.3 9S14.2 18.6 12 21c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3Z",
+};
+---
+
+<section class="rule" id={id}>
+  <div class="shell py-20 sm:py-28">
+    <h2 class="text-section max-w-[18ch]">
+      <span class="block text-faint">Connect once, publish everywhere</span>
+      <span class="block">with the tools you already use</span>
+    </h2>
+
+    <div class="mt-14 grid gap-y-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-0">
+      {
+        items.map((item, index) => (
+          <div
+            class:list={[
+              "reveal lg:px-8",
+              index > 0 && "lg:border-l lg:border-line",
+              index === 2 && "sm:border-l sm:border-line lg:border-l-0",
+            ]}
+          >
+            <span class="flex size-10 items-center justify-center rounded-xl border border-line text-ink">
+              <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d={icons[item.icon]} />
+              </svg>
+            </span>
+            <h3 class="mt-5 text-[15px] font-medium tracking-[-0.01em]">{item.title}</h3>
+            <p class="mt-2 text-[15px] leading-6 text-muted">{item.body}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,82 @@
+---
+/** One account, several agencies. A small piece of the real interface, drawn in HTML. */
+const workspaces = [
+  { name: "Acme Expeditions", role: "Owner", plan: "Growth", active: true },
+  { name: "Acme Trek Co", role: "Owner", plan: "Starter", active: false },
+  { name: "Acme Private Trips", role: "Manager", plan: "Scale", active: false },
+];
+---
+
+<section class="rule" id="workspaces">
+  <div class="shell py-20 sm:py-28">
+    <div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
+      <div class="reveal">
+        <h2 class="text-section max-w-[18ch]">
+          <span class="block text-faint">One account</span>
+          <span class="block">every agency you run</span>
+        </h2>
+        <p class="mt-5 max-w-[30rem] text-lead text-muted">
+          Sign in once and open any of your workspaces. Each one keeps its own trips, team, customers and plan — and
+          you can move between them without signing in again.
+        </p>
+        <ul class="mt-7 space-y-3 text-[15px] text-muted">
+          <li class="flex items-start gap-3">
+            <span class="mt-2 size-1 shrink-0 rounded-full bg-ink" aria-hidden="true"></span>
+            A different role in each workspace, if that is how you work.
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-2 size-1 shrink-0 rounded-full bg-ink" aria-hidden="true"></span>
+            One password for you. Your colleagues keep theirs.
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-2 size-1 shrink-0 rounded-full bg-ink" aria-hidden="true"></span>
+            Your own free trial per person, whatever the plan.
+          </li>
+        </ul>
+      </div>
+
+      <div class="reveal">
+        <div class="rounded-3xl border border-line bg-surface p-3 shadow-[0_30px_70px_-40px_rgb(16_24_40/0.35)]">
+          <div class="flex items-center gap-3 rounded-2xl bg-surface-2 px-4 py-3">
+            <span class="flex size-9 items-center justify-center rounded-xl bg-ink text-[13px] font-medium text-surface">AS</span>
+            <div class="min-w-0">
+              <p class="text-sm font-medium">Asha Shrestha</p>
+              <p class="truncate text-[13px] text-muted">asha@acme-expeditions.com</p>
+            </div>
+            <span class="ml-auto hidden shrink-0 rounded-full border border-line px-2.5 py-1 font-mono sm:inline text-[11px] text-muted">3 workspaces</span>
+          </div>
+
+          <ul class="mt-2 space-y-1.5 p-1">
+            {
+              workspaces.map((workspace) => (
+                <li
+                  class:list={[
+                    "flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors",
+                    workspace.active ? "bg-surface-2" : "hover:bg-surface-2/60",
+                  ]}
+                >
+                  <span class="flex size-8 items-center justify-center rounded-lg bg-surface-3 text-[11px] font-medium text-muted ring-1 ring-line">
+                    {workspace.name.slice(0, 2).toUpperCase()}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-medium">{workspace.name}</p>
+                    <p class="text-[13px] text-muted">{workspace.role}</p>
+                  </div>
+                  <span class="rounded-full border border-line px-2.5 py-1 text-[12px] text-muted">{workspace.plan}</span>
+                </li>
+              ))
+            }
+            <li class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-muted">
+              <span class="flex size-8 items-center justify-center rounded-lg border border-dashed border-line text-muted">
+                <svg viewBox="0 0 16 16" class="size-3.5" fill="none" aria-hidden="true">
+                  <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+              </span>
+              New workspace
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

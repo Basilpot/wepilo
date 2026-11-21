@@ -1,3 +1,4 @@
+import { agency, website } from "@/lib/schema";
 import { raw } from "hono/html";
 import type { Section } from "@/lib/api";
 import { safeHtml } from "@/lib/format";
@@ -183,7 +184,7 @@ function Render({ s, ctx, flash }: { s: Section; ctx: Ctx; flash: { subscribed?:
 export function Home({ ctx, flash }: { ctx: Ctx; flash: { subscribed?: string; error?: string } }) {
   const sections = ctx.site.homepage;
   return (
-    <Layout ctx={ctx}>
+    <Layout ctx={ctx} schema={[agency(ctx), website(ctx)]}>
       {sections.length ? (
         sections.map((s) => <Render s={s} ctx={ctx} flash={flash} />)
       ) : (

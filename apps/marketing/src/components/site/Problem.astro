@@ -1,0 +1,32 @@
+---
+/** The problem, said plainly and centred, with three numbers under a hairline. */
+const costs = [
+  { k: "~$250", unit: "/mo", v: "for a content agency, and your team still edits the drafts" },
+  { k: "1", unit: "dev", v: "standing between you and each small change to the site" },
+  { k: "Weeks", unit: "", v: "to translate a site for one new market" },
+];
+---
+
+<section id="problem" class="wrap scroll-mt-28 text-center" aria-labelledby="problem-title">
+  <h2 id="problem-title" class="mx-auto max-w-[22ch] font-display text-[clamp(1.875rem,1.5rem+1.3vw,2.75rem)] leading-[1.12] tracking-[-0.015em]">
+    Old dates <em>cost you enquiries.</em>
+  </h2>
+  <p class="mx-auto mt-6 max-w-[36rem] text-[clamp(1rem,0.96rem+0.25vw,1.125rem)] leading-[1.6] text-ink-2">
+    A traveller who finds last year's departures on your Kilimanjaro page books with someone else. Most agencies know
+    their site is behind, but fixing it means paying a content agency or waiting on a developer.
+  </p>
+
+  <dl class="reveal mx-auto mt-16 grid max-w-[1000px] border-t border-ink text-left md:grid-cols-3">
+    {
+      costs.map((c, i) => (
+        <div class:list={["border-b border-line py-8 md:border-b-0 md:py-10", i > 0 && "md:border-l md:pl-10", i < 2 && "md:pr-10"]}>
+          <dt class="flex items-baseline gap-2 font-display text-[clamp(2.5rem,2.1rem+1.2vw,3.25rem)] leading-none tracking-[-0.02em]">
+            {c.k}
+            {c.unit && <span class="font-mono text-[13px] tracking-normal text-muted">{c.unit}</span>}
+          </dt>
+          <dd class="mt-5 text-[15.5px] leading-[1.55] text-ink-2">{c.v}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</section>

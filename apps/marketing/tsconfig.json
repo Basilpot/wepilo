@@ -1,0 +1,12 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*", "../api/src/lib/plans.ts"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    // The plan limits live in the API package. Read them from there, so the marketing
+    // page and the dashboard can never disagree.
+    "paths": {
+      "@/*": ["../api/src/*"]
+    }
+  }
+}

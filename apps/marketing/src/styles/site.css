@@ -1,0 +1,766 @@
+@import "tailwindcss";
+@import "@fontsource-variable/mona-sans";
+@import "@fontsource-variable/geist-mono";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
+@import "@fontsource/young-serif/400.css";
+
+/*
+  Wepilo: white paper, near-black ink, and three colours from a trekking morning:
+  sunrise coral, saffron (prayer flags, marigolds) and glacier blue. Colour only ever
+  appears as light: the soft bars that glow behind product moments. Everything else
+  is type, whitespace and hairlines.
+*/
+@theme {
+  /* antimattr-style: cool grey paper, near-black ink, one red. */
+  --color-paper: #ffffff;
+  /* The soft grey for hovers and quiet panels on the white page. */
+  --color-mist: #f4f4f4;
+  --color-mist-2: #e2e2e2;
+  --color-ink: #0d0d0d;
+  --color-ink-2: #202020;
+  --color-muted: #5e5e5e;
+  --color-faint: #6a6a6a;
+  --color-line: #d6d6d6;
+  --color-line-strong: #bababa;
+  --color-apricot: #e8475f;
+  --color-ember: #dc143c;
+  --color-red: #dc143c;
+
+  --color-red-hover: #b8102f;
+
+  /* Feature tints: bg-sand, bg-sky, bg-lilac, bg-sage, bg-peach, bg-butter. */
+  --color-sand: #ead6b2;
+  --color-sky: #c6daf0;
+  --color-lilac: #d8cdf1;
+  --color-sage: #c9ddbd;
+  --color-peach: #f5c8ae;
+  --color-butter: #f0df9b;
+
+  /* Button depth: shadow-btn-dark, shadow-btn-red, shadow-btn-light and their -hover pairs. */
+  --shadow-btn-dark: inset 0 1px 0 rgb(255 255 255 / 0.18), inset 0 -1px 0 rgb(0 0 0 / 0.5), 0 0 0 1px #0d0d0d, 0 2px 3px rgb(0 0 0 / 0.12), 0 8px 18px -8px rgb(0 0 0 / 0.45);
+  --shadow-btn-dark-hover: inset 0 1px 0 rgb(255 255 255 / 0.2), inset 0 -1px 0 rgb(0 0 0 / 0.5), 0 0 0 1px #0d0d0d, 0 4px 6px rgb(0 0 0 / 0.12), 0 14px 26px -10px rgb(0 0 0 / 0.5);
+  --shadow-btn-red: inset 0 1px 0 rgb(255 255 255 / 0.32), inset 0 -1px 0 rgb(90 0 20 / 0.35), 0 0 0 1px #a80d2a, 0 2px 3px rgb(150 10 40 / 0.18), 0 10px 22px -8px rgb(220 20 60 / 0.55);
+  --shadow-btn-red-hover: inset 0 1px 0 rgb(255 255 255 / 0.36), inset 0 -1px 0 rgb(90 0 20 / 0.35), 0 0 0 1px #a80d2a, 0 4px 6px rgb(150 10 40 / 0.18), 0 16px 30px -10px rgb(220 20 60 / 0.6);
+  --shadow-btn-light: inset 0 1px 0 #fff, inset 0 -1px 0 rgb(0 0 0 / 0.06), 0 0 0 1px rgb(13 13 13 / 0.16), 0 1px 2px rgb(0 0 0 / 0.06), 0 6px 14px -8px rgb(0 0 0 / 0.25);
+  --shadow-btn-light-hover: inset 0 1px 0 #fff, inset 0 -1px 0 rgb(0 0 0 / 0.06), 0 0 0 1px rgb(13 13 13 / 0.3), 0 3px 5px rgb(0 0 0 / 0.06), 0 12px 22px -10px rgb(0 0 0 / 0.3);
+  /* Floating panels (the mega menu). */
+  --shadow-panel: 0 0 0 1px rgb(13 13 13 / 0.08), 0 24px 48px -16px rgb(13 13 13 / 0.28), 0 4px 10px -4px rgb(13 13 13 / 0.08);
+
+  --color-coral: #ff5c38;
+  --color-saffron: #f6b417;
+  --color-glacier: #3f5ff0;
+  --color-pine: #16865a;
+
+  --font-sans: "Mona Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-display: "Young Serif", ui-serif, Georgia, serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Display 40–72px, section 32–52px, title 24–34px. Big enough to lead, small enough to read. */
+  --text-display: clamp(2.5rem, 1.7rem + 2.6vw, 4.5rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.02em;
+
+  --text-section: clamp(2rem, 1.55rem + 1.5vw, 3.25rem);
+  --text-section--line-height: 1.06;
+  --text-section--letter-spacing: -0.015em;
+
+  --text-title: clamp(1.5rem, 1.3rem + 0.7vw, 2.125rem);
+  --text-title--line-height: 1.12;
+  --text-title--letter-spacing: -0.01em;
+
+  --text-lead: clamp(1.0625rem, 0.98rem + 0.35vw, 1.3125rem);
+  --text-lead--line-height: 1.55;
+
+  --animate-drift: drift 14s ease-in-out infinite alternate;
+  --animate-ticker: ticker 48s linear infinite;
+  --animate-mega-in: mega-in 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes mega-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(-2%) scaleY(1);
+  }
+  to {
+    transform: translateX(2%) scaleY(1.06);
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    /* Feature tints. Plain variables (not @theme) so Tailwind keeps them: they're only used from inline styles. */
+    --tint-sand: #ead6b2;
+    --tint-sky: #c6daf0;
+    --tint-lilac: #d8cdf1;
+    --tint-sage: #c9ddbd;
+    --tint-peach: #f5c8ae;
+    --tint-butter: #f0df9b;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+  }
+  /* Sharp corners everywhere except elements marked data-round (buttons). Beats utilities and inline styles. */
+  *:not([data-round]),
+  *:not([data-round])::before,
+  *:not([data-round])::after {
+    border-radius: 0 !important;
+  }
+  ::selection {
+    background: rgb(220 20 60 / 0.25);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-glacier);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  /* Primary headings set in Redaction; accent spans switch to its italic. */
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  /* The column: 1440 reference, 1280 content, gutters that grow with the viewport. */
+  .wrap {
+    width: 100%;
+    max-width: 1376px;
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+  @media (min-width: 768px) {
+    .wrap {
+      padding-inline: 40px;
+    }
+  }
+  @media (min-width: 1280px) {
+    .wrap {
+      padding-inline: 64px;
+    }
+  }
+
+  .serif {
+    font-family: var(--font-serif);
+    font-weight: 400;
+  }
+  /* Primary headings use Redaction even when marked .serif; accent spans inside go italic. */
+  :is(h1, h2).serif {
+    font-family: var(--font-display);
+  }
+  :is(h1, h2) .serif {
+    font-family: var(--font-display);
+    font-style: italic;
+  }
+  /* Young Serif has no italic, so a heading's accent phrase is set upright in grey instead. */
+  :where(.font-display, h1, h2) em {
+    font-style: normal;
+    color: var(--color-muted);
+  }
+  /* Italic accents belong to the page headline only; section headings stay upright. */
+  h2 .serif {
+    font-style: normal;
+  }
+  /* Extra shade on the left, where the headline sits on a clip. */
+  .clip-left::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(90deg, rgb(12 12 10 / 0.55) 0%, rgb(12 12 10 / 0.25) 45%, rgb(12 12 10 / 0) 70%);
+  }
+
+  /* Section labels: lowercase mono in square brackets. */
+  .label {
+    display: inline-flex;
+    gap: 0.5em;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    text-transform: lowercase;
+    color: var(--color-muted);
+  }
+  .label::before {
+    content: "[";
+  }
+  .label::after {
+    content: "]";
+  }
+  .label-light {
+    color: rgb(255 255 255 / 0.78);
+  }
+
+  /* Bracketed nav links; the current page is red. */
+  .nav-link {
+    display: inline-flex;
+    gap: 0.35em;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    text-transform: lowercase;
+    color: var(--color-ink);
+    transition: color 160ms ease;
+  }
+  .nav-link::before {
+    content: "[";
+  }
+  .nav-link::after {
+    content: "]";
+  }
+  .nav-link:hover,
+  .nav-link[aria-current="page"] {
+    color: var(--color-red);
+  }
+
+  .nav-link-red {
+    color: var(--color-red);
+  }
+  .nav-link-red:hover {
+    color: var(--color-ink);
+  }
+  /* Footer wordmark: ink at the top fading to grey, like antimattr's. */
+  .wordmark-fill {
+    background-image: linear-gradient(0deg, #6a6a6a 0%, #0d0d0d 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Sketches plot in from the left when they enter the view, then the notes appear one by one. */
+  @media (prefers-reduced-motion: no-preference) {
+    .js .sk-anim {
+      opacity: 1;
+      transform: none;
+    }
+    .js .sk-anim .dr {
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 1100ms cubic-bezier(0.65, 0, 0.35, 1);
+    }
+    .js .sk-anim.is-in .dr {
+      clip-path: inset(0 0 0 0);
+    }
+    .js .sk-anim .co > g {
+      opacity: 0;
+      transition: opacity 500ms ease var(--d, 700ms);
+    }
+    .js .sk-anim.is-in .co > g {
+      opacity: 1;
+    }
+  }
+
+  /* Drafting-paper dots behind the hero drawing, fading out at the edges. */
+  .dots {
+    background-image: radial-gradient(circle, #c9c9c9 1px, transparent 1.2px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(60% 60% at 50% 50%, #000 30%, transparent 100%);
+    mask-image: radial-gradient(60% 60% at 50% 50%, #000 30%, transparent 100%);
+  }
+
+  /* A full-width colour band; the feature's tint is passed in as --tint. */
+  .tint-band {
+    background: var(--tint);
+  }
+
+  /* A drawing ruler: fine ticks every 12px, taller ones every 60px, on an ink baseline. */
+  .ruler {
+    height: 12px;
+    border-bottom: 1px solid var(--color-ink);
+    background-image:
+      linear-gradient(90deg, var(--color-ink) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-line-strong) 1px, transparent 1px);
+    background-size:
+      60px 12px,
+      12px 5px;
+    background-position:
+      0 0,
+      0 7px;
+    background-repeat: repeat-x;
+  }
+  /* Technical-drawing hatch, for cells that are deliberately empty. */
+  .hatch {
+    background-image: repeating-linear-gradient(-45deg, transparent 0 7px, var(--color-line) 7px 8px);
+  }
+  /* Red registration marks in the corners of a spec cell, shown on hover. */
+  .spec-mark {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--color-red);
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .spec-cell:hover .spec-mark {
+    opacity: 1;
+  }
+
+  /* Line-drawn product sketches. */
+  .sk {
+    overflow: visible;
+    fill: none;
+    stroke: var(--color-ink);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .sk text {
+    stroke: none;
+    fill: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 12px;
+  }
+  .sk .m {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    fill: var(--color-muted);
+  }
+  .sk .s {
+    font-family: var(--font-display);
+    font-size: 19px;
+  }
+  .sk .b {
+    font-weight: 600;
+  }
+  .sk .wt {
+    fill: #fff;
+  }
+  .sk .w {
+    fill: #fff;
+  }
+  .sk .f2 {
+    fill: #eeeeee;
+    stroke: none;
+  }
+  .sk .k {
+    fill: var(--color-ink);
+  }
+  .sk .g {
+    stroke: var(--color-line-strong);
+  }
+  .sk .bar {
+    fill: #d4d4d4;
+    stroke: none;
+  }
+  .sk .r {
+    fill: var(--color-red);
+    stroke: none;
+  }
+  .sk .dash {
+    stroke-dasharray: 4 5;
+    stroke-width: 1;
+  }
+  .sk .co line {
+    stroke: var(--color-ink);
+    stroke-width: 1;
+    stroke-dasharray: 5 5;
+  }
+  .sk .co rect {
+    fill: var(--color-red);
+    stroke: none;
+  }
+  .sk .co text {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    fill: var(--color-ink-2);
+  }
+  @media (max-width: 767px) {
+    .sk .co {
+      display: none;
+    }
+  }
+
+  /* A framed clip: rounded, dark until the poster loads, with a scrim for type on top. */
+  .clip {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 28px;
+    background: var(--color-ink);
+  }
+  .clip > video {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .clip-scrim::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(180deg, rgb(12 12 10 / 0.35) 0%, rgb(12 12 10 / 0) 28%),
+      linear-gradient(0deg, rgb(12 12 10 / 0.72) 0%, rgb(12 12 10 / 0.2) 45%, rgb(12 12 10 / 0) 70%);
+  }
+  .clip-dim::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgb(12 12 10 / 0.5);
+  }
+
+  /* The activity ticker under the hero. */
+  .ticker {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .ticker > div {
+    display: flex;
+    width: max-content;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ticker > div {
+      animation: var(--animate-ticker);
+    }
+  }
+
+
+  /*
+    Buttons with some character: a soft gradient fill, a 1px highlight along the top edge,
+    a hairline border and a layered shadow. They lift on hover and press in on click.
+  */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 46px;
+    padding-inline: 22px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    transition:
+      transform 160ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 160ms ease,
+      background 160ms ease,
+      filter 160ms ease;
+  }
+  .btn:hover {
+    transform: translateY(-1px);
+  }
+  .btn:active {
+    transform: translateY(1px);
+    transition-duration: 60ms;
+  }
+  .btn-sm {
+    height: 40px;
+    padding-inline: 16px;
+    font-size: 14px;
+  }
+
+  /* Primary: near-black. */
+  .btn-dark {
+    color: #fff;
+    background: linear-gradient(180deg, #2e2e2e 0%, #121212 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.18),
+      inset 0 -1px 0 rgb(0 0 0 / 0.5),
+      0 0 0 1px #0d0d0d,
+      0 2px 3px rgb(0 0 0 / 0.12),
+      0 8px 18px -8px rgb(0 0 0 / 0.45);
+  }
+  .btn-dark:hover {
+    filter: brightness(1.12);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      inset 0 -1px 0 rgb(0 0 0 / 0.5),
+      0 0 0 1px #0d0d0d,
+      0 4px 6px rgb(0 0 0 / 0.12),
+      0 14px 26px -10px rgb(0 0 0 / 0.5);
+  }
+
+  /* The one main action on a screen: red. */
+  .btn-red {
+    color: #fff;
+    background: linear-gradient(180deg, #ea3f5c 0%, #c8102e 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.32),
+      inset 0 -1px 0 rgb(90 0 20 / 0.35),
+      0 0 0 1px #a80d2a,
+      0 2px 3px rgb(150 10 40 / 0.18),
+      0 10px 22px -8px rgb(220 20 60 / 0.55);
+  }
+  .btn-red:hover {
+    filter: brightness(1.06) saturate(1.05);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.36),
+      inset 0 -1px 0 rgb(90 0 20 / 0.35),
+      0 0 0 1px #a80d2a,
+      0 4px 6px rgb(150 10 40 / 0.18),
+      0 16px 30px -10px rgb(220 20 60 / 0.6);
+  }
+
+  /* Secondary: a solid white key, readable on grey and on colour bands. */
+  .btn-line,
+  .btn-light {
+    color: var(--color-ink);
+    background: linear-gradient(180deg, #ffffff 0%, #f1f1f1 100%);
+    box-shadow:
+      inset 0 1px 0 #fff,
+      inset 0 -1px 0 rgb(0 0 0 / 0.06),
+      0 0 0 1px rgb(13 13 13 / 0.16),
+      0 1px 2px rgb(0 0 0 / 0.06),
+      0 6px 14px -8px rgb(0 0 0 / 0.25);
+  }
+  .btn-line:hover,
+  .btn-light:hover {
+    box-shadow:
+      inset 0 1px 0 #fff,
+      inset 0 -1px 0 rgb(0 0 0 / 0.06),
+      0 0 0 1px rgb(13 13 13 / 0.3),
+      0 3px 5px rgb(0 0 0 / 0.06),
+      0 12px 22px -10px rgb(0 0 0 / 0.3);
+  }
+  .btn:active {
+    filter: brightness(0.97);
+  }
+  /* A border drawn in the three morning colours, for the one "start" action in the header. */
+  .btn-glow {
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      linear-gradient(90deg, var(--color-coral), var(--color-saffron), var(--color-glacier)) border-box;
+    border: 2px solid transparent;
+    color: var(--color-ink);
+  }
+
+  /* Pill with a soft halo, for announcements. */
+  .halo {
+    position: relative;
+    isolation: isolate;
+  }
+  .halo::before {
+    content: "";
+    position: absolute;
+    inset: -18px -28px;
+    z-index: -1;
+    border-radius: 999px;
+    background: radial-gradient(
+      60% 80% at 50% 50%,
+      color-mix(in oklab, var(--color-coral) 38%, transparent),
+      color-mix(in oklab, var(--color-saffron) 26%, transparent) 45%,
+      color-mix(in oklab, var(--color-glacier) 22%, transparent) 70%,
+      transparent 80%
+    );
+    filter: blur(14px);
+  }
+
+  /*
+    Light bars: a row of soft vertical stripes in the morning colours, fading upward.
+    The outer element fades; the inner one holds the colour and the stripes.
+  */
+  .bars {
+    pointer-events: none;
+    position: absolute;
+    -webkit-mask-image: linear-gradient(to top, #000 35%, transparent 100%);
+    mask-image: linear-gradient(to top, #000 35%, transparent 100%);
+  }
+  /* For bars that float behind something: soft at the top and the bottom. */
+  .bars-soft {
+    -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 22%, #000 55%, transparent 100%);
+    mask-image: linear-gradient(to top, transparent 0%, #000 22%, #000 55%, transparent 100%);
+  }
+  /* The blur sits on the parent of the striped layer, so the stripes themselves go soft. */
+  .bars > i {
+    position: absolute;
+    inset: 0;
+    filter: blur(14px) saturate(1.15);
+    opacity: 0.9;
+    transform-origin: bottom center;
+  }
+  .bars > i::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--color-glacier) 14%,
+      color-mix(in oklab, var(--color-glacier) 60%, var(--color-coral)) 30%,
+      var(--color-coral) 46%,
+      color-mix(in oklab, var(--color-coral) 40%, var(--color-saffron)) 60%,
+      var(--color-saffron) 76%,
+      transparent 100%
+    );
+    -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 34px, rgb(0 0 0 / 0.2) 34px 52px, #000 52px 64px, rgb(0 0 0 / 0.08) 64px 92px);
+    mask-image: repeating-linear-gradient(90deg, #000 0 34px, rgb(0 0 0 / 0.2) 34px 52px, #000 52px 64px, rgb(0 0 0 / 0.08) 64px 92px);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .bars > i {
+      animation: var(--animate-drift);
+    }
+  }
+
+  /* Louder bars, for the hero and the dark band. */
+  .bars-loud > i {
+    filter: blur(10px) saturate(1.35);
+    opacity: 1;
+  }
+
+  /* Result cards: a wash of one morning colour from one corner. */
+  .wash {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 0 0 1px rgb(20 20 18 / 0.07);
+    isolation: isolate;
+  }
+  .wash::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(120% 90% at 100% 0%, var(--wash) 0%, color-mix(in oklab, var(--wash) 35%, white) 45%, white 75%);
+  }
+  .wash-saffron {
+    --wash: #ffd257;
+  }
+  .wash-coral {
+    --wash: #ff8a6b;
+  }
+  .wash-glacier {
+    --wash: #8fa2ff;
+  }
+  .wash-pine {
+    --wash: #74d3a3;
+  }
+
+  /* A real piece of the product, cut out and laid on a photo. */
+  .ui {
+    overflow: hidden;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow:
+      0 0 0 1px rgb(20 20 18 / 0.08),
+      0 30px 80px -24px rgb(10 12 30 / 0.45);
+  }
+  .ui > img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .fade-b {
+    -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+  }
+
+  /* A landscape photo panel that product pieces sit on. */
+  .scene {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    isolation: isolate;
+  }
+  .scene > .scene-photo {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .scene::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, rgb(10 12 20 / 0.05), rgb(10 12 20 / 0.35));
+  }
+
+  /* A cloud of the three colours, for quieter backgrounds. */
+  .glow {
+    pointer-events: none;
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.55;
+  }
+
+  /* Product vignettes: white glass on white, a hairline and a long, soft shadow. */
+  .pane {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow:
+      0 0 0 1px rgb(20 20 18 / 0.07),
+      0 1px 2px rgb(20 20 18 / 0.04),
+      0 24px 60px -24px rgb(20 20 18 / 0.22);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px 10px 10px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.92);
+    backdrop-filter: blur(10px);
+    box-shadow:
+      0 0 0 1px rgb(20 20 18 / 0.08),
+      0 12px 30px -12px rgb(20 20 18 / 0.25);
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .chip-dot {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--color-mist);
+  }
+
+  .hairline {
+    border-color: var(--color-line);
+  }
+
+  /* Scroll reveal. Content is visible without JavaScript: the hiding class is only added by the script. */
+  .js .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .js .reveal.is-in {
+    opacity: 1;
+    transform: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .js .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+}

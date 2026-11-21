@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PLAN_NAMES, type PlanKey } from "@/pages/billing/billing";
+import { ASSIGNABLE_PLANS, PLAN_NAMES, type PlanKey } from "@/pages/billing/billing";
 import { fromDateInput, toDateInput, type SetupLink, type WorkspaceSummary } from "./admin-api";
 import { SetupLinkPanel } from "./handover";
 import { DatePicker } from "@/components/date-picker";
@@ -173,7 +173,7 @@ export function NewWorkspacePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(PLAN_NAMES) as PlanKey[]).map((key) => (
+                  {ASSIGNABLE_PLANS.map((key) => (
                     <SelectItem key={key} value={key}>
                       {PLAN_NAMES[key]}
                     </SelectItem>

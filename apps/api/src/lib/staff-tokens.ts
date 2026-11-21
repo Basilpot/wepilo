@@ -57,7 +57,8 @@ export async function peekStaffToken(db: Db, token: string, now = Date.now()) {
 
 /**
  * Set a staff password from a link token and burn every open link for that person.
- * The owner also signs in through the tenant record, so its password is kept in sync.
+ * The password belongs to the person, not to the workspace, so it changes in every
+ * workspace they can sign in to.
  */
 export async function consumeStaffToken(db: Db, token: string, passwordHash: string, now = Date.now()) {
   const found = await peekStaffToken(db, token, now);
@@ -72,13 +73,7 @@ export async function consumeStaffToken(db: Db, token: string, passwordHash: str
   await db
     .update(schema.tenantStaff)
     .set({ password: passwordHash, updatedAt: at })
-    .where(eq(schema.tenantStaff.id, staff.id));
+    .where(eq(schema.tenantStaff.email, staff.email));
 
-  if (staff.role === "OWNER") {
-    await db
-      .update(schema.tenants)
-      .set({ password: passwordHash, updatedAt: at })
-      .where(and(eq(schema.tenants.id, staff.tenantId), eq(schema.tenants.email, staff.email)));
-  }
   return { staff, purpose: found.row.purpose };
 }

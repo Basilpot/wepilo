@@ -1,0 +1,75 @@
+---
+const endpoints = [
+  { method: "GET", path: "/activities", body: "Trips, with prices, photos and itineraries" },
+  { method: "GET", path: "/departures", body: "Dates, prices and seats left" },
+  { method: "GET", path: "/blogs/published", body: "Journal posts for your blog" },
+  { method: "GET", path: "/info-pages/slug/:slug", body: "Pages, with their menus" },
+  { method: "POST", path: "/inquiries", body: "Enquiries from your own forms" },
+  { method: "POST", path: "/bookings", body: "Booking requests, straight to the desk" },
+];
+---
+
+<section id="developers" class="rule">
+  <div class="shell py-28 sm:py-36">
+    <div class="reveal max-w-[44rem]">
+      <p class="eyebrow">For developers</p>
+      <h2 class="mt-6 text-section">Build any site you like. <span class="serif">We'll keep it stocked.</span></h2>
+      <p class="mt-6 max-w-[36rem] text-lead text-ink-2">
+        Your website reads trips, departures, pages and posts from one REST API. Change a price in the dashboard and
+        the site has it on the next request. No rebuild, no ticket.
+      </p>
+      <a href="/developers" class="arrow-link mt-7">
+        Read the API guide
+        <svg viewBox="0 0 16 16" class="size-3.5" fill="none" aria-hidden="true">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+    </div>
+
+    <div class="reveal mt-16 grid grid-cols-1 gap-4 sm:mt-20 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      <ul class="grid content-start gap-2">
+        {
+          endpoints.map((e, i) => (
+            <li class:list={["tile flex items-start gap-4 px-5 py-4", i === 0 && "!shadow-[0_0_0_1px_var(--color-ink),4px_4px_0_0_var(--color-paper-3)]"]}>
+              <span
+                class:list={[
+                  "mt-0.5 w-11 shrink-0 font-mono text-[11px]",
+                  e.method === "GET" ? "text-sky" : "text-flag",
+                ]}
+              >
+                {e.method}
+              </span>
+              <span class="min-w-0">
+                <span class="block truncate font-mono text-[13px]">{e.path}</span>
+                <span class="mt-1 block text-[13px] text-muted">{e.body}</span>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="flex min-w-0 flex-col overflow-hidden border border-line bg-card">
+        <div class="flex items-stretch border-b border-line text-[13px]">
+          <span class="bg-ink px-4 py-2.5 font-mono text-white">trips.ts</span>
+        </div>
+        <pre class="flex-1 overflow-x-auto p-6 font-mono text-[12.5px] leading-[1.75] text-ink-2"><code><span class="text-faint">// Every trip on your site, from one request</span>
+<span class="text-flag">const</span> res = <span class="text-flag">await</span> fetch(<span class="text-sky">"https://wepiloapi.basilpot.com/api/v1/activities"</span>, &#123;
+  headers: &#123; <span class="text-sky">"x-api-key"</span>: process.env.WEPILO_KEY &#125;,
+&#125;);
+
+<span class="text-flag">const</span> &#123; data: trips &#125; = <span class="text-flag">await</span> res.json();
+
+<span class="text-flag">for</span> (<span class="text-flag">const</span> trip <span class="text-flag">of</span> trips) &#123;
+  console.log(<span class="text-sky">`$&#123;trip.title&#125; · $&#123;trip.duration&#125; days · $$&#123;trip.price&#125;`</span>);
+&#125;</code></pre>
+        <div class="bg-[#16150f] px-6 pb-6 pt-4 font-mono text-[12.5px] leading-[1.75] text-[#d9d6cc]">
+          <p class="mb-2 text-[11px] uppercase tracking-[0.08em] text-[#8a877c]">Terminal</p>
+          <p><span class="text-[#8a877c]">$</span> node trips.ts</p>
+          <p>Everest Base Camp Trek · 14 days · $1290</p>
+          <p>Annapurna Circuit · 12 days · $1450</p>
+          <p>Langtang Valley · 8 days · $780</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

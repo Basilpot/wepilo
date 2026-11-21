@@ -67,3 +67,15 @@ export function ListBox({ list }: { list: string[] }) {
     </ul>
   );
 }
+
+/**
+ * `[ trips ]`: the website's lowercase mono label, for eyebrows and small section titles.
+ * Pass plain words; they're lowercased for you.
+ */
+export function MonoLabel({ children, className, bracket = true }: { children: React.ReactNode; className?: string; bracket?: boolean }) {
+  return (
+    <span className={cn("font-mono text-xs font-normal lowercase tracking-normal text-muted-foreground", className)}>
+      {bracket ? <>[&nbsp;{children}&nbsp;]</> : children}
+    </span>
+  );
+}

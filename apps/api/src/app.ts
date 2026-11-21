@@ -7,7 +7,7 @@ import { authRoutes } from "@/routes/auth";
 import { tenantRoutes } from "@/routes/tenant";
 import { billingRoutes } from "@/routes/billing";
 import { emailSettingsRoutes } from "@/routes/email-settings";
-import { paymentRoutes } from "@/routes/payments";
+import { currencyRoutes } from "@/routes/currency-settings";
 import { domainRoutes } from "@/routes/tenant-domain";
 import { onboardingRoutes } from "@/routes/onboarding";
 import { siteRoutes, savedSectionRoutes, templateRoutes } from "@/routes/site";
@@ -22,7 +22,9 @@ import {
   featuredTagRoutes,
   extraRoutes,
 } from "@/routes/catalog";
-import { departureRoutes, bookingRoutes, inquiryRoutes } from "@/routes/bookings";
+import { departureRoutes, inquiryRoutes } from "@/routes/departures";
+import { localize } from "@/lib/i18n";
+import { calendarRoutes } from "@/routes/calendar";
 import {
   reviewRoutes,
   wishlistRoutes,
@@ -43,6 +45,8 @@ import {
 import { supportRoutes, authorRoutes, publicRoutes } from "@/routes/support";
 import { reviewLinkRoutes, publicReviewRoutes } from "@/routes/review-collection";
 import { connectRoutes, oauthAuthorizeRoutes } from "@/mcp/oauth";
+import { catalogPrices } from "@/lib/billing";
+import { PLANS, SELF_SERVE_PLANS, TRIAL_DAYS, productIdFor, type BillingInterval, type SelfServePlan } from "@/lib/plans";
 import apiGuide from "../../../docs/API.md";
 
 export const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
@@ -60,6 +64,31 @@ app.use(
 app.onError((err, c) => handleRouteError(c, err));
 
 app.get("/health", (c) => c.json({ ok: true, service: "wepilo-api" }));
+
+// The plan catalogue with live prices, for the marketing site's pricing page.
+// Public on purpose: prices are not secret, and the page must work without an account.
+app.get("/api/v1/plans", async (c) => {
+  const prices = await catalogPrices(c.env).catch(() => ({}) as Record<string, { amount: number; currency: string } | null>);
+  const priceOf = (plan: SelfServePlan, interval: BillingInterval) => {
+    const id = productIdFor(c.env, plan, interval);
+    const price = id ? prices[id] : null;
+    return price ? { amount: price.amount, currency: price.currency } : null;
+  };
+  return c.json({
+    trial: { days: TRIAL_DAYS, price: prices[c.env.DODO_TRIAL_PRODUCT_ID] ?? null },
+    plans: SELF_SERVE_PLANS.map((key) => ({
+      key,
+      name: PLANS[key].name,
+      tagline: PLANS[key].tagline,
+      // JSON has no Infinity, so an unlimited limit is null.
+      limits: Object.fromEntries(
+        Object.entries(PLANS[key].limits).map(([name, value]) => [name, value === Infinity ? null : value]),
+      ),
+      monthly: priceOf(key, "monthly"),
+      annual: priceOf(key, "annual"),
+    })),
+  });
+});
 
 // The website API guide as plain text, for AI site builders and coding assistants.
 app.get("/llms.txt", (c) =>
@@ -79,6 +108,8 @@ app.use("/api/v1/*", appContext);
 app.use("/api/v1/*", requirePaidAccess);
 
 const v1 = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+// `?lang=de` on any public read lays the German translations over the original text.
+v1.use("*", localize());
 
 v1.route("/auth", authRoutes);
 v1.route("/tenant/email-settings", emailSettingsRoutes);
@@ -98,8 +129,8 @@ v1.route("/trip-categories", tripCategoryRoutes);
 v1.route("/featured-tags", featuredTagRoutes);
 v1.route("/extras", extraRoutes);
 v1.route("/departures", departureRoutes);
-v1.route("/bookings", bookingRoutes);
-v1.route("/payments", paymentRoutes);
+v1.route("/calendar", calendarRoutes);
+v1.route("/currency-settings", currencyRoutes);
 v1.route("/site", siteRoutes);
 v1.route("/saved-sections", savedSectionRoutes);
 v1.route("/templates", templateRoutes);

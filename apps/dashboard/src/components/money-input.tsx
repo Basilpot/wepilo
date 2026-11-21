@@ -11,7 +11,7 @@ function currencySymbol(code: string) {
   }
 }
 
-/** Number field for an amount in the agency's currency (Settings → Payments), with the symbol shown inside the field. */
+/** Number field for an amount in the agency's currency (Settings → Currency), with the symbol shown inside the field. */
 export function MoneyInput({
   value,
   onChange,

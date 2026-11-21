@@ -1,0 +1,86 @@
+---
+import SketchFrame from "./SketchFrame.astro";
+import type { Callout } from "./util";
+
+/** Roles and publishing: an author drafts, an editor publishes or schedules, with the staff list. */
+interface Props {
+  annotated?: boolean;
+}
+const { annotated = false } = Astro.props;
+
+const stages = [
+  { label: "draft", who: "AS", role: "author or ai" },
+  { label: "review", who: "LM", role: "editor" },
+  { label: "publish", who: "LM", role: "editor" },
+  { label: "live", who: "", role: "now or later" },
+];
+const staff = [
+  ["Sofia Ortega", "owner"],
+  ["Liam Moore", "editor"],
+  ["Lucía Méndez", "manager"],
+  ["Asha Singh", "author"],
+];
+
+const callouts: Callout[] = [
+  { at: [300, 420], to: [262, 420], side: "left", lines: ["a login for everyone", "who writes"] },
+  { at: [668, 270], to: [620, 580], side: "right", lines: ["authors draft; editors,", "managers and admins publish"] },
+  { at: [900, 400], to: [960, 400], side: "right", lines: ["publish now or", "pick a date"] },
+];
+---
+
+<SketchFrame title="Content moving from an author's draft to an editor who publishes it, with a staff list." callouts={callouts} annotated={annotated}>
+  {
+    stages.map((s, i) => {
+      const x = 320 + i * 144;
+      const approve = s.label === "publish";
+      return (
+        <g>
+          {s.who ? (
+            <g>
+              <circle cx={x + 60} cy="138" r="20" class="w" />
+              <text x={x + 60} y="142" text-anchor="middle" class="m" style="fill:#0d0d0d">{s.who.toLowerCase()}</text>
+            </g>
+          ) : (
+            <g>
+              <circle cx={x + 60} cy="138" r="20" class="w" />
+              <path d={`M${x + 60} 126 L${x + 60} 138 L${x + 69} 143`} />
+            </g>
+          )}
+          <text x={x + 60} y="184" text-anchor="middle" class="m">{s.role}</text>
+          <rect x={x} y="206" width="120" height="64" class={approve ? "k" : "w"} />
+          <text x={x + 60} y="243" text-anchor="middle" class="m" style={`font-size:12px;${approve ? "fill:#fff" : ""}`}>{s.label}</text>
+          {i < stages.length - 1 && (
+            <g>
+              <line x1={x + 124} y1="238" x2={x + 140} y2="238" />
+              <path d={`M${x + 134} 233 L${x + 140} 238 L${x + 134} 243`} />
+            </g>
+          )}
+        </g>
+      );
+    })
+  }
+
+  <rect x="300" y="320" width="270" height="200" class="w" />
+  <text x="316" y="344" class="m">staff logins</text>
+  <line x1="300" y1="356" x2="570" y2="356" />
+  {
+    staff.map(([n, r], i) => {
+      const y = 386 + i * 34;
+      return (
+        <g>
+          <circle cx="326" cy={y - 4} r="11" class="w" />
+          <text x="346" y={y} style="font-size:12.5px">{n}</text>
+          <rect x="482" y={y - 15} width="72" height="20" />
+          <text x="518" y={y - 1} text-anchor="middle" class="m">{r}</text>
+        </g>
+      );
+    })
+  }
+
+  <rect x="700" y="320" width="200" height="140" class="w" />
+  <text x="716" y="344" class="m">scheduled</text>
+  <text x="716" y="384" class="s" style="font-size:24px">Mon 09:00</text>
+  <text x="716" y="412" style="font-size:12.5px">3 tours for the new season</text>
+  <rect x="716" y="426" width="9" height="9" class="r" />
+  <text x="732" y="435" class="m">scheduled by liam</text>
+</SketchFrame>

@@ -15,15 +15,15 @@ type ConnectRequest = {
 };
 
 const CAN = [
-  "See what needs you today: new inquiries, pending bookings and upcoming departures",
-  "Read your trips, departures, bookings and inquiries",
-  "Change an inquiry's status, and confirm, complete or cancel bookings",
-  "Add or edit departure dates",
-  "Create trips and blog posts as hidden drafts for you to review",
+  "See what's scheduled and which departures are coming up",
+  "Read your trips, departures, posts and calendar",
+  "Add or edit departure dates and seats left",
+  "Draft trips and blog posts, and translate them into your other languages",
+  "Publish or schedule them when you ask, if your role is allowed to publish",
   "Help a website builder connect your public website to Wepilo",
 ];
 const CANNOT = [
-  "Publish or delete anything",
+  "Publish anything you didn't ask it to, or delete anything",
   "Email or message travellers",
   "See or change billing, staff logins or API keys",
 ];

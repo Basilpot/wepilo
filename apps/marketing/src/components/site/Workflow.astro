@@ -1,0 +1,39 @@
+---
+import SectionHead from "./SectionHead.astro";
+import Shot from "./Shot.astro";
+
+const steps = [
+  { state: "Draft", who: "Writer or AI", body: "A writer or the assistant starts it. It isn't public yet.", tone: "" },
+  { state: "Review", who: "Editor", body: "Someone checks the facts and the wording, with SEO tips beside the text.", tone: "" },
+  { state: "Approve", who: "Approver", body: "A named person gives the final OK.", tone: "" },
+  { state: "Publish", who: "Now or later", body: "Publish now, or schedule it for a date.", tone: "" },
+];
+---
+
+<section id="workflow" class="relative scroll-mt-28 pt-36 md:pt-56" aria-labelledby="workflow-title">
+  <div class="wrap">
+    <SectionHead
+      id="workflow-title"
+      label="workflow"
+      lead="Everyone who works on the site gets their own login. Writers draft and editors check, and the owner decides who can publish."
+    >
+      Nothing goes live until someone approves it.
+    </SectionHead>
+
+    <ol class="reveal mt-20 grid md:mt-24 gap-px overflow-hidden bg-line ring-1 ring-line sm:grid-cols-2 lg:grid-cols-4">
+      {
+        steps.map((s, i) => (
+          <li class="bg-white p-6 md:p-7">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[12px] text-faint">0{i + 1}</span>
+              <span class="font-mono text-[12px] lowercase text-ink">[ {s.state} ]</span>
+            </div>
+            <p class="mt-10 font-display text-[24px] leading-[1.1] tracking-[-0.01em]">{s.who}</p>
+            <p class="mt-1.5 text-[15px] leading-[1.55] text-muted">{s.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+
+  </div>
+</section>

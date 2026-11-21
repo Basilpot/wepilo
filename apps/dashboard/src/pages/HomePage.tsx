@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { ArrowRight, CalendarCheck, Check, ExternalLink, Inbox, Plus, Receipt, Star } from "@/components/icons";
+import { ArrowRight, CalendarCheck, Check, ExternalLink, FileText, Plus, Star } from "@/components/icons";
 import { api } from "@/lib/api";
 import { OnboardingCard } from "@/pages/OnboardingCard";
 import { useSession } from "@/App";
@@ -9,15 +8,12 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
-import { money } from "@/lib/format";
 
 type Analytics = {
   trips: { total: number; published: number; drafts: number };
-  bookings: { confirmed: number; pending: number };
-  revenue: number;
-  inquiriesNew: number;
+  /** Trips, posts and pages with a publish date set. */
+  scheduled: number;
   upcomingDepartures: Array<{
     id: number;
     startDate: string;
@@ -33,32 +29,19 @@ type Analytics = {
     views: number;
     averageRating: number;
   }>;
-  monthly: Array<{ month: string; bookings: number; revenue: number }>;
 };
 
-type Inquiry = { id: number; name: string; email: string; trip: string | null; status: string; createdAt: string };
+type CalendarItem = { kind: "trip" | "post" | "page" | "departure"; id: number; title: string | null; at: string; state: string };
+
+const KIND_LINK = { trip: "/trips", post: "/posts", page: "/info-pages" } as const;
 
 const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-
-function relative(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.round(diff / 60_000);
-  if (mins < 60) return `${Math.max(1, mins)}m ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  return days < 30 ? `${days}d ago` : shortDate(iso);
-}
 
 function greeting() {
   const h = new Date().getHours();
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 }
-
-const chartConfig = {
-  bookings: { label: "Bookings", color: "var(--chart-4)" },
-} satisfies ChartConfig;
 
 function SetupChecklist({ data }: { data: Analytics }) {
   const { data: session } = useSession();
@@ -87,7 +70,7 @@ function SetupChecklist({ data }: { data: Analytics }) {
     },
     {
       title: "Add departure dates",
-      hint: "A departure is a specific start date with a set number of seats and a price. Travellers can only book online once a trip has at least one upcoming departure.",
+      hint: "A departure is a start date with seats and a price. Your trip page shows the open dates, and travellers ask about one through your enquiry form.",
       done: data.upcomingDepartures.length > 0,
       href: "/departures",
       cta: "Add dates",
@@ -101,7 +84,7 @@ function SetupChecklist({ data }: { data: Analytics }) {
     <section className="rounded-2xl border bg-card">
       <div className="flex flex-wrap items-end justify-between gap-3 px-5 pt-4 pb-3">
         <div>
-          <h2 className="text-sm font-semibold">Get your site taking inquiries</h2>
+          <h2 className="text-sm font-semibold">Get your site ready for travellers</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {completed} of {steps.length} done
           </p>
@@ -148,35 +131,34 @@ function SetupChecklist({ data }: { data: Analytics }) {
   );
 }
 
-/** What needs a person today: unanswered leads, unconfirmed bookings, the next departure. */
-function TodayStrip({ data, isLoading }: { data: Analytics | undefined; isLoading: boolean }) {
+/** What's coming: content going live soon, drafts still open, and the next departure. */
+function TodayStrip({ data, soon, isLoading }: { data: Analytics | undefined; soon: number; isLoading: boolean }) {
   const next = data?.upcomingDepartures[0];
+  const drafts = data?.trips.drafts ?? 0;
   const items = [
     {
-      key: "inquiries",
-      label: "Inquiries to answer",
-      value: data?.inquiriesNew ?? 0,
-      hint: (data?.inquiriesNew ?? 0) > 0 ? "Travellers are waiting for your reply" : "You're all caught up",
-      to: "/inquiries",
-      icon: Inbox,
-      urgent: (data?.inquiriesNew ?? 0) > 0,
+      key: "scheduled",
+      label: "Going live in 14 days",
+      value: soon,
+      hint: soon > 0 ? "Scheduled trips, posts and pages" : "Nothing scheduled yet",
+      to: "/calendar",
+      icon: CalendarCheck,
+      urgent: false,
     },
     {
-      key: "bookings",
-      label: "Bookings to confirm",
-      value: data?.bookings.pending ?? 0,
-      hint: (data?.bookings.pending ?? 0) > 0 ? "Confirm so travellers know their seat is safe" : "Nothing waiting",
-      to: "/bookings",
-      icon: Receipt,
-      urgent: (data?.bookings.pending ?? 0) > 0,
+      key: "drafts",
+      label: "Trip drafts",
+      value: drafts,
+      hint: drafts > 0 ? "Finish, publish or schedule them" : "No drafts waiting",
+      to: "/trips",
+      icon: FileText,
+      urgent: drafts > 0,
     },
     {
       key: "departure",
       label: "Next departure",
       value: next ? new Date(next.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "None",
-      hint: next
-        ? `${next.activity.title ?? "Untitled trip"} · ${next.capacity - next.availableSpots} of ${next.capacity} seats booked`
-        : "Add dates so travellers can book",
+      hint: next ? `${next.activity.title ?? "Untitled trip"} · ${next.availableSpots} of ${next.capacity} seats left` : "Add dates to your trips",
       to: "/departures",
       icon: CalendarCheck,
       urgent: false,
@@ -208,7 +190,7 @@ function TodayStrip({ data, isLoading }: { data: Analytics | undefined; isLoadin
             )}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-muted-foreground">{item.label}</span>
+            <span className="block font-mono text-xs lowercase text-muted-foreground">{item.label}</span>
             {isLoading ? (
               <Skeleton className="my-1 h-7 w-12" />
             ) : (
@@ -241,7 +223,9 @@ function Panel({
   return (
     <section className={cn("flex min-w-0 flex-col rounded-2xl border bg-card", className)}>
       <header className="flex h-12 items-center justify-between border-b px-5">
-        <h2 className="text-sm font-semibold">{title}</h2>
+        <h2 className="font-mono text-[13px] font-normal lowercase text-foreground">
+          <span className="text-brand">[</span> {title} <span className="text-brand">]</span>
+        </h2>
         {href && (
           <Link
             to={href}
@@ -283,10 +267,14 @@ export function HomePage() {
     queryKey: ["analytics"],
     queryFn: () => api<Analytics>("/tenant/analytics"),
   });
-  const inquiries = useQuery({
-    queryKey: ["inquiries", "recent"],
-    queryFn: () => api<{ data: Inquiry[] }>("/inquiries", { query: { limit: 5 } }),
+  const today = new Date();
+  const in14 = new Date(today.getTime() + 14 * 86_400_000);
+  const day = (d: Date) => d.toISOString().slice(0, 10);
+  const coming = useQuery({
+    queryKey: ["calendar", "coming-up"],
+    queryFn: () => api<{ items: CalendarItem[] }>("/calendar", { query: { from: day(today), to: day(in14) } }),
   });
+  const scheduledSoon = coming.data?.items.filter((i) => i.state === "scheduled") ?? [];
 
   // The owner account is named after the company at signup; greet by name only for real people.
   const staffName = session?.staff.name?.trim();
@@ -295,27 +283,11 @@ export function HomePage() {
   const website = session?.tenant?.website;
 
   const stats = [
-    { label: "Live trips", value: data?.trips.published, sub: data ? `${data.trips.drafts} draft${data.trips.drafts === 1 ? "" : "s"}` : "", to: "/trips" },
-    { label: "Confirmed bookings", value: data?.bookings.confirmed, sub: data ? `${data.bookings.pending} pending` : "", to: "/bookings" },
-    { label: "New inquiries", value: data?.inquiriesNew, sub: "Awaiting a reply", to: "/inquiries" },
-    { label: "Confirmed value", value: data ? money(data.revenue) : undefined, sub: "All time", to: "/bookings" },
+    { label: "Live trips", value: data?.trips.published, sub: "On your website", to: "/trips" },
+    { label: "Drafts", value: data?.trips.drafts, sub: "Not on your website yet", to: "/trips" },
+    { label: "Scheduled", value: data?.scheduled, sub: "Trips, posts and pages", to: "/calendar" },
+    { label: "Upcoming departures", value: data?.upcomingDepartures.length, sub: "Next five open dates", to: "/departures" },
   ];
-
-  // The API only returns months that had bookings; plot all twelve.
-  const monthly = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() - 11 + i);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const hit = data?.monthly.find((m) => m.month === key);
-    return {
-      month: key,
-      bookings: hit?.bookings ?? 0,
-      revenue: hit?.revenue ?? 0,
-      label: d.toLocaleDateString(undefined, { month: "short" }),
-    };
-  });
-  const hasTrend = monthly.some((m) => m.bookings > 0);
 
   return (
     <div className="space-y-6">
@@ -354,7 +326,7 @@ export function HomePage() {
 
       <OnboardingCard />
 
-      <TodayStrip data={data} isLoading={isLoading} />
+      <TodayStrip data={data} soon={scheduledSoon.length} isLoading={isLoading || coming.isLoading} />
 
       <div className="grid grid-cols-2 overflow-hidden rounded-2xl border bg-card lg:grid-cols-4">
         {stats.map((stat, i) => (
@@ -368,7 +340,7 @@ export function HomePage() {
               i === 2 && "lg:border-l",
             )}
           >
-            <span className="flex items-center justify-between text-sm text-muted-foreground">
+            <span className="flex items-center justify-between font-mono text-xs lowercase text-muted-foreground">
               {stat.label}
               <ArrowRight className="size-3.5 -translate-x-1 opacity-0 transition-[opacity,translate] duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
             </span>
@@ -385,81 +357,53 @@ export function HomePage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <Panel title="Bookings, last 12 months" href="/bookings" className="lg:col-span-3">
-          {isLoading ? (
-            <div className="p-5">
-              <Skeleton className="h-60 w-full" />
-            </div>
-          ) : hasTrend ? (
-            <div className="p-4 pr-6">
-              <ChartContainer config={chartConfig} className="aspect-auto h-60 w-full">
-                <AreaChart data={monthly} margin={{ left: -16, right: 4, top: 8 }}>
-                  <defs>
-                    <linearGradient id="fillBookings" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-bookings)" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="var(--color-bookings)" stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} interval="preserveStartEnd" minTickGap={16} />
-                  <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={40} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-                  <Area
-                    dataKey="bookings"
-                    type="monotone"
-                    fill="url(#fillBookings)"
-                    stroke="var(--color-bookings)"
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ChartContainer>
-            </div>
-          ) : (
-            <PanelEmpty>This chart will show how many bookings you receive each month. It stays empty until your first customer booking arrives.</PanelEmpty>
-          )}
-        </Panel>
-
-        <Panel title="Recent inquiries" href="/inquiries" className="lg:col-span-2">
-          {inquiries.isLoading ? (
+        <Panel title="Coming up" href="/calendar" linkLabel="Open calendar" className="lg:col-span-3">
+          {coming.isLoading ? (
             <ListSkeleton />
-          ) : inquiries.data?.data.length ? (
+          ) : coming.data?.items.length ? (
             <ul className="divide-y">
-              {inquiries.data.data.map((inq) => (
-                <li key={inq.id}>
-                  <Link to="/inquiries" className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/40">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                      {inq.name.slice(0, 1).toUpperCase()}
-                    </span>
+              {coming.data.items.slice(0, 8).map((item) => (
+                <li key={`${item.kind}-${item.id}-${item.at}`}>
+                  <Link
+                    to={item.kind === "departure" ? "/departures" : `${KIND_LINK[item.kind]}/${item.id}`}
+                    className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/40"
+                  >
+                    <div className="flex w-11 shrink-0 flex-col items-center rounded-md border py-1 leading-none">
+                      <span className="text-[10px] font-medium text-muted-foreground uppercase">
+                        {new Date(item.at).toLocaleDateString(undefined, { month: "short" })}
+                      </span>
+                      <span className="mt-0.5 text-base font-semibold tabular-nums">{new Date(item.at).getDate()}</span>
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{inq.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{inq.trip || inq.email}</p>
+                      <p className="truncate text-sm font-medium">{item.title ?? "Untitled"}</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {item.kind === "departure" ? "Departure" : `${item.kind} ${item.state === "scheduled" ? "goes live" : "went live"}`}
+                        {item.kind !== "departure" && ` · ${new Date(item.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`}
+                      </p>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <StatusBadge kind="inquiry" status={inq.status} />
-                      <span className="text-xs text-muted-foreground">{relative(inq.createdAt)}</span>
-                    </div>
+                    <StatusBadge kind={item.kind === "departure" ? "departure" : "schedule"} status={item.kind === "departure" ? item.state.toUpperCase() : item.state.toUpperCase()} />
                   </Link>
                 </li>
               ))}
             </ul>
           ) : (
-            <div className="flex flex-col items-center px-5 py-10 text-center">
-              <Inbox className="size-5 text-muted-foreground" />
-              <p className="mt-2 text-sm text-muted-foreground">When a traveller sends a question through a form on your website, it will appear here so you can reply quickly.</p>
-            </div>
+            <PanelEmpty>
+              Nothing scheduled or departing in the next two weeks.{" "}
+              <Link to="/calendar" className="font-medium text-foreground underline underline-offset-4">
+                Plan your calendar
+              </Link>
+            </PanelEmpty>
           )}
         </Panel>
-      </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="Upcoming departures" href="/departures">
+        <Panel title="Upcoming departures" href="/departures" className="lg:col-span-2">
           {isLoading ? (
             <ListSkeleton />
           ) : data?.upcomingDepartures.length ? (
             <ul className="divide-y">
               {data.upcomingDepartures.map((d) => {
-                const booked = d.capacity - d.availableSpots;
-                const pct = d.capacity ? Math.round((booked / d.capacity) * 100) : 0;
+                const taken = d.capacity - d.availableSpots;
+                const pct = d.capacity ? Math.round((taken / d.capacity) * 100) : 0;
                 return (
                   <li key={d.id} className="flex items-center gap-4 px-5 py-3">
                     <div className="flex w-11 shrink-0 flex-col items-center rounded-md border py-1 leading-none">
@@ -475,7 +419,7 @@ export function HomePage() {
                           <div className=" h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
                         </div>
                         <span className="text-xs text-muted-foreground tabular-nums">
-                          {booked}/{d.capacity} booked
+                          {d.availableSpots} of {d.capacity} seats left
                         </span>
                       </div>
                     </div>
@@ -493,7 +437,9 @@ export function HomePage() {
             </PanelEmpty>
           )}
         </Panel>
+      </div>
 
+      <div className="grid gap-6">
         <Panel title="Top trips" href="/trips">
           {isLoading ? (
             <ListSkeleton />

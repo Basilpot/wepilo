@@ -1,0 +1,51 @@
+<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}body{width:1440px;height:900px;overflow:hidden;font-family:Inter,sans-serif;background:#f1f3ef;color:#14201a;display:flex;font-feature-settings:"tnum"}
+.rail{width:248px;background:#143a2a;color:#e8efe9;padding:20px 14px;display:flex;flex-direction:column;gap:4px}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 18px}.logo{width:32px;height:32px;border-radius:10px;background:#1f8a4c}
+.brand b{font-size:14px}.brand small{display:block;font-size:11px;color:#9fbcab}
+.grp{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#7fa08c;padding:14px 10px 6px}
+.it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:999px;font-size:13.5px;color:#cfdcd3}
+.it i{width:16px;height:16px;border:1.6px solid currentColor;border-radius:5px}
+.it.on{background:#e8efe9;color:#143a2a;font-weight:600}.it .n{margin-left:auto;background:#e9a23b;color:#2b1d05;font-size:11px;font-weight:700;border-radius:999px;padding:1px 7px}
+main{flex:1;padding:28px 40px;display:flex;flex-direction:column;gap:22px}
+.top{display:flex;justify-content:space-between;align-items:flex-end}
+h1{font-size:28px;letter-spacing:-.02em}.sub{color:#5b6b61;font-size:14px;margin-top:6px}
+.pill{border-radius:999px;padding:11px 20px;font-weight:600;font-size:14px;box-shadow:inset 0 6px 10px -5px #ffffff59,inset 0 -4px 8px -4px #1212152e,0 8px 20px -10px #1212154d}
+.p1{background:#1f8a4c;color:#fff}.p2{background:#e4e9e4;color:#14201a}
+.board{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:16px}
+.lane{background:#fff;border:1px solid #dfe5df;border-radius:18px;padding:16px}
+.lh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.lh b{font-size:14px}
+.cnt{font-size:12px;font-weight:700;background:#fdf1dd;color:#8a5a0f;border-radius:999px;padding:2px 9px}
+.row{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #eef1ee;font-size:13px}
+.av{width:30px;height:30px;border-radius:50%;background:#e4ece6;display:grid;place-items:center;font-weight:600;font-size:12px}
+.row .m{flex:1}.row small{display:block;color:#6b7a70;font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:#e9a23b}
+.dep{padding:10px 0;border-top:1px solid #eef1ee}.dep .t{display:flex;justify-content:space-between;font-size:13px;font-weight:600}
+.dep small{color:#6b7a70;font-weight:500}.pegs{display:flex;gap:4px;margin-top:8px}.pegs span{width:14px;height:14px;border-radius:50%;border:1.6px solid #b9c7bd}
+.pegs .f{background:#1f8a4c;border-color:#1f8a4c}.pegs .new{background:#e9a23b;border-color:#e9a23b}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border:1px solid #dfe5df;border-radius:18px}
+.st{padding:18px 20px;border-left:1px solid #eef1ee}.st:first-child{border:0}.st small{color:#6b7a70;font-size:12.5px}.st b{display:block;font-size:26px;margin-top:6px;letter-spacing:-.02em}
+</style></head><body>
+<nav class="rail"><div class="brand"><div class="logo"></div><div><b>Himalaya Treks</b><small>Growth plan · himalaya-treks</small></div></div>
+<div class="it on"><i></i>Dashboard</div><div class="it"><i></i>Inquiries<span class="n">4</span></div><div class="it"><i></i>Bookings<span class="n">2</span></div>
+<div class="grp">Trips</div><div class="it"><i></i>Trips</div><div class="it"><i></i>Departures</div><div class="it"><i></i>Extras</div>
+<div class="grp">Catalog</div><div class="it"><i></i>Destinations</div><div class="it"><i></i>Trip categories</div><div class="it"><i></i>Featured tags</div>
+<div class="grp">Website</div><div class="it"><i></i>Pages</div><div class="it"><i></i>Posts</div><div class="it"><i></i>Media</div></nav>
+<main><div class="top"><div><h1>Good morning, Pemba</h1><p class="sub">4 travellers are waiting for a reply and 2 bookings need confirming.</p></div>
+<div style="display:flex;gap:10px"><span class="pill p2">View site</span><span class="pill p1">New trip</span></div></div>
+<section class="board">
+<div class="lane"><div class="lh"><b>Reply to</b><span class="cnt">4 new</span></div>
+<div class="row"><div class="av">S</div><div class="m">Sarah Lindqvist<small>Everest Base Camp · 12 min ago</small></div><span class="dot"></span></div>
+<div class="row"><div class="av">D</div><div class="m">David Okafor<small>Annapurna Circuit · 1 hr ago</small></div><span class="dot"></span></div>
+<div class="row"><div class="av">M</div><div class="m">Mei Tanaka<small>General question · 3 hr ago</small></div><span class="dot"></span></div>
+<div class="row"><div class="av">L</div><div class="m">Lucas Moreau<small>Langtang Valley · Yesterday</small></div><span class="dot"></span></div></div>
+<div class="lane"><div class="lh"><b>Confirm</b><span class="cnt">2 waiting</span></div>
+<div class="row"><div class="av">A</div><div class="m">Anna Kowalski · 2 seats<small>Everest Base Camp · 14 Oct · $2,780</small></div></div>
+<div class="row"><div class="av">R</div><div class="m">Raj Mehta · 4 seats<small>Poon Hill · 2 Nov · $3,160</small></div></div></div>
+<div class="lane"><div class="lh"><b>Departing soon</b><span style="font-size:12px;color:#6b7a70">seats booked</span></div>
+<div class="dep"><div class="t">Everest Base Camp <small>14 Oct · 10 of 12</small></div><div class="pegs"><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="new"></span><span class="new"></span><span></span><span></span></div></div>
+<div class="dep"><div class="t">Annapurna Circuit <small>21 Oct · 5 of 10</small></div><div class="pegs"><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span></span><span></span><span></span><span></span><span></span></div></div>
+<div class="dep"><div class="t">Poon Hill <small>2 Nov · 8 of 8 · Full</small></div><div class="pegs"><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span></div></div></div>
+</section>
+<section class="stats"><div class="st"><small>Trips on your website</small><b>18</b></div><div class="st"><small>Confirmed bookings</small><b>142</b></div><div class="st"><small>New inquiries</small><b>4</b></div><div class="st"><small>Confirmed value</small><b>$186,400</b></div></section>
+</main></body></html>

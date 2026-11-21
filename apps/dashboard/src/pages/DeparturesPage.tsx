@@ -16,7 +16,6 @@ import { useErrorMessage } from "@/pages/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/date-picker";
 import {
   Select,
@@ -44,6 +43,8 @@ type FormState = {
   startDate: string;
   endDate: string;
   capacity: string;
+  /** Seats still free. The agency keeps this up to date: Wepilo doesn't take bookings. */
+  seatsLeft: string;
   price: string;
   status: "OPEN" | "FULL" | "DELAYED";
 };
@@ -53,6 +54,7 @@ const emptyForm: FormState = {
   startDate: "",
   endDate: "",
   capacity: "",
+  seatsLeft: "",
   price: "",
   status: "OPEN",
 };
@@ -92,6 +94,8 @@ export function DeparturesPage() {
         startDate: form.startDate,
         endDate: form.endDate || null,
         capacity: Number(form.capacity),
+        // Empty means "all seats free" on a new departure, and "no change" when editing.
+        ...(form.seatsLeft !== "" ? { seatsLeft: Number(form.seatsLeft) } : {}),
         price: Number(form.price),
         status: form.status,
       };
@@ -134,6 +138,7 @@ export function DeparturesPage() {
       startDate: departure.startDate,
       endDate: departure.endDate ?? "",
       capacity: String(departure.capacity),
+      seatsLeft: String(departure.availableSpots),
       price: String(departure.price),
       status: departure.status,
     });
@@ -168,16 +173,16 @@ export function DeparturesPage() {
     },
     {
       key: "seats",
-      header: "Seats booked",
+      header: "Seats left",
       cell: (d) => {
-        const booked = d.capacity - d.availableSpots;
+        const taken = d.capacity - d.availableSpots;
         return (
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-primary" style={{ width: `${d.capacity ? (booked / d.capacity) * 100 : 0}%` }} />
+              <div className="h-full rounded-full bg-primary" style={{ width: `${d.capacity ? (taken / d.capacity) * 100 : 0}%` }} />
             </div>
             <span className="text-xs text-muted-foreground tabular-nums">
-              {booked}/{d.capacity}
+              {d.availableSpots} of {d.capacity}
             </span>
           </div>
         );
@@ -222,7 +227,7 @@ export function DeparturesPage() {
     <div>
       <PageHeader
         title="Departures"
-        description="A departure is one specific start date for a trip, with a set number of seats and a price. Travellers can only book your trips online if the trip has an upcoming departure with seats left. Add, edit or delay departures here."
+        description="A departure is one start date for a trip, with seats and a price. Your website shows the open dates, and travellers ask about one through your enquiry form. Wepilo doesn't take bookings, so update the seats left as you sell them."
         action={
           <Button onClick={openCreate}>
             <Plus />
@@ -259,7 +264,7 @@ export function DeparturesPage() {
         isLoading={isLoading}
         onRowClick={openEdit}
         emptyTitle="No departures yet"
-        emptyHint="Travellers can only book a trip once it has a departure date. If you have not created a trip yet, start with “Trips” in the menu. Then come back here and select “New departure”."
+        emptyHint="Add the dates each trip runs so travellers can see them on your website. If you have not created a trip yet, start with “Trips” in the menu. Then come back here and select “New departure”."
         emptyIcon={CalendarCheck}
         pagination={
           data
@@ -279,7 +284,7 @@ export function DeparturesPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         title={editing ? "Edit departure" : "New departure"}
-        description={editing ? "Change the dates, number of seats, price or availability. Changes show on your website straight away." : "Choose the trip, the dates it runs, how many seats you can sell and the price for one traveller."}
+        description={editing ? "Change the dates, seats, price or availability. Changes show on your website straight away." : "Choose the trip, the dates it runs, how many seats there are and the price for one traveller."}
         onSubmit={() => save.mutate()}
         pending={save.isPending}
       >
@@ -306,12 +311,22 @@ export function DeparturesPage() {
           <Field label="End date">
             <DatePicker value={form.endDate} min={form.startDate || undefined} onChange={(v) => setForm((f) => ({ ...f, endDate: v }))} placeholder="Choose the end date" />
           </Field>
-          <Field label="Capacity" required>
+          <Field label="Total seats" required>
             <Input
               type="number"
               min={0}
               value={form.capacity}
               onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
+            />
+          </Field>
+          <Field label="Seats left" hint="Lower it as you sell seats. At 0 the date shows as full.">
+            <Input
+              type="number"
+              min={0}
+              max={form.capacity ? Number(form.capacity) : undefined}
+              value={form.seatsLeft}
+              placeholder={form.capacity || "All"}
+              onChange={(e) => setForm((f) => ({ ...f, seatsLeft: e.target.value }))}
             />
           </Field>
           <Field label="Price per person" required>
@@ -330,12 +345,6 @@ export function DeparturesPage() {
             </SelectContent>
           </Select>
         </Field>
-        {editing && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Checkbox checked disabled />
-            Right now {editing.availableSpots} of {editing.capacity} seats are still available to book
-          </div>
-        )}
       </FormDialog>
     </div>
   );

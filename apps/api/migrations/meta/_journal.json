@@ -120,6 +120,41 @@
       "when": 1794059266248,
       "tag": "0016_currency_translation",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1794465244120,
+      "tag": "0017_sweet_kabuki",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1795187062670,
+      "tag": "0018_fancy_lockjaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1795252306518,
+      "tag": "0019_drop_bookings_and_inquiries",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1795252323966,
+      "tag": "0020_scheduling_and_languages",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1795252438756,
+      "tag": "0021_published_at",
+      "breakpoints": true
     }
   ]
 }

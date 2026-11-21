@@ -1,0 +1,35 @@
+---
+import type { SketchName } from "../../data/features";
+import EditorSketch from "./EditorSketch.astro";
+import DeparturesSketch from "./DeparturesSketch.astro";
+import AssistantSketch from "./AssistantSketch.astro";
+import LanguagesSketch from "./LanguagesSketch.astro";
+import WorkflowSketch from "./WorkflowSketch.astro";
+import SeoSketch from "./SeoSketch.astro";
+import InboxSketch from "./InboxSketch.astro";
+import WebsiteSketch from "./WebsiteSketch.astro";
+import ApiSketch from "./ApiSketch.astro";
+import CalendarSketch from "./CalendarSketch.astro";
+
+/** Picks a product sketch by name. */
+interface Props {
+  name: SketchName;
+  annotated?: boolean;
+}
+const { name, annotated = false } = Astro.props;
+const map = {
+  editor: EditorSketch,
+  departures: DeparturesSketch,
+  assistant: AssistantSketch,
+  languages: LanguagesSketch,
+  workflow: WorkflowSketch,
+  seo: SeoSketch,
+  inbox: InboxSketch,
+  website: WebsiteSketch,
+  api: ApiSketch,
+  calendar: CalendarSketch,
+};
+const Component = map[name];
+---
+
+<Component annotated={annotated} />

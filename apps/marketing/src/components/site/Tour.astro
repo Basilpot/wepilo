@@ -1,0 +1,111 @@
+---
+import Shot from "./Shot.astro";
+
+/** A walk through the real dashboard. Every image is a screenshot of Wepilo with a sample agency's content. */
+const stops = [
+  {
+    id: "trips",
+    label: "Trips",
+    title: "All your trips in one list.",
+    body: "See which trips are live and which are still drafts, with the price and page views beside each one.",
+    src: "/product/trips.webp",
+    alt: "The Trips list in Wepilo: eight Himalayan treks with photos, categories, prices from $85 to $2,650, and Live on site or Draft labels.",
+  },
+  {
+    id: "photos",
+    label: "Photos",
+    title: "Photos that sell the trip.",
+    body: "Upload a set and choose the cover photo. Wepilo resizes each image for the web.",
+    src: "/product/ed-photos.webp",
+    alt: "The Photos step of the trip editor with four mountain photos, one marked as the main photo, and a check that the minimum number of photos is met.",
+  },
+  {
+    id: "posts",
+    label: "Posts",
+    title: "Write for the journal.",
+    body: "Publish packing lists and route guides that help travellers find you on Google.",
+    src: "/product/post.webp",
+    alt: "The post editor showing a packing-list article with headings and bullet points, written by a staff author, with tags and a cover photo.",
+  },
+  {
+    id: "media",
+    label: "Media",
+    title: "Reuse photos across the site.",
+    body: "Use one photo on any trip or post, and see which images still need alt text.",
+    src: "/product/media.webp",
+    alt: "The media library: a grid of Himalayan landscape photos, each with its file name and size, several marked No alt text.",
+  },
+  {
+    id: "inquiries",
+    label: "Enquiries",
+    title: "Never miss an enquiry.",
+    body: "Messages from your website arrive in one inbox with the trip they're about. Reply by email or WhatsApp as usual.",
+    src: "/product/inquiries.webp",
+    alt: "The Inquiries list with five new messages from travellers asking about specific treks and dates.",
+  },
+  {
+    id: "website",
+    label: "Homepage",
+    title: "Change the homepage yourself.",
+    body: "Choose the sections and write the headline. Your change goes live when you save.",
+    src: "/product/website.webp",
+    alt: "The Website settings, editing the homepage hero section: heading, subheading, button text and link, and a background image.",
+  },
+];
+---
+
+<section id="tour" class="relative scroll-mt-28 pt-36 md:pt-56" aria-labelledby="tour-title" data-scrolly>
+  <div class="wrap">
+    <div class="reveal max-w-[52rem]">
+      <p class="label">the product</p>
+      <h2 id="tour-title" class="mt-6 text-section">
+        Run the whole site <span class="serif">from one editor.</span>
+      </h2>
+      <p class="mt-7 max-w-[36rem] text-lead text-ink-2">
+        It's made for the person who answers enquiries and writes the trip pages. These are real screens, filled with a
+        sample agency's content.
+      </p>
+    </div>
+
+    <div class="mt-16 grid gap-10 lg:mt-24 lg:grid-cols-12 lg:gap-12">
+      <!-- The index: pinned, underlines the part on screen. -->
+      <nav class="hidden lg:col-span-3 lg:block" aria-label="Parts of the editor">
+        <ol class="sticky top-10">
+          {
+            stops.map((s, i) => (
+              <li>
+                <a
+                  href={`#tour-${s.id}`}
+                  data-pip={i}
+                  data-active={i === 0 ? "true" : "false"}
+                  class="flex items-baseline gap-3 border-b border-line py-4 text-[17px] text-muted transition-colors hover:text-ink data-[active=true]:border-b-2 data-[active=true]:border-ink data-[active=true]:text-ink"
+                >
+                  <span class="font-mono text-[12px] text-faint">0{i + 1}</span>
+                  {s.label}
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+
+      <!-- The parts, one after another. -->
+      <div class="space-y-24 lg:col-span-9 lg:space-y-40">
+        {
+          stops.map((s, i) => (
+            <article id={`tour-${s.id}`} data-step={i} class="scroll-mt-10">
+              <p class="font-mono text-[13px] text-faint lg:hidden">
+                0{i + 1} · {s.label.toLowerCase()}
+              </p>
+              <h3 class="mt-3 font-display text-[clamp(1.625rem,1.4rem+0.8vw,2.25rem)] leading-[1.12] tracking-[-0.02em] lg:mt-0">{s.title}</h3>
+              <p class="mt-4 max-w-[40rem] text-lead text-ink-2">{s.body}</p>
+              <div class="mt-10 bg-mist p-4 sm:p-8 md:p-12">
+                <Shot src={s.src} alt={s.alt} width={2000} height={1361} />
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

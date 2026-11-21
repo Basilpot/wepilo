@@ -1,0 +1,43 @@
+---
+import PixelIcon, { type PixelName } from "../PixelIcon.astro";
+
+/** One trip, three readers. Drawn as three cards floating over the mountains. */
+const steps: Array<{ n: string; title: string; body: string; icon: PixelName }> = [
+  { n: "01", title: "Your team writes it once.", body: "Itinerary, price, dates and seats.", icon: "people" },
+  { n: "02", title: "Your website reads it live.", body: "Change a price and the page has it.", icon: "globe" },
+  { n: "03", title: "Your assistant works from it.", body: "Drafts and answers, never guesses.", icon: "ledger" },
+];
+---
+
+<section class="rule">
+  <div class="grid grid-cols-1 lg:grid-cols-2">
+    <div class="flex items-center bg-paper-2/60 px-5 py-24 sm:px-10 sm:py-32 lg:px-16">
+      <div class="reveal max-w-[34rem]">
+        <div class="h-px w-full bg-line-strong"></div>
+        <p class="mt-6 text-statement">
+          One record for every trip. <span class="text-muted">Nothing is copied twice, so nothing on your site goes
+          stale.</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="art art-sky relative min-h-[34rem] border-t border-line lg:min-h-[44rem] lg:border-l lg:border-t-0">
+      <ol class="relative z-10 ml-auto flex max-w-[34rem] flex-col gap-8 px-5 py-16 sm:gap-14 sm:px-10 lg:py-20 lg:pl-0 lg:pr-8">
+        {
+          steps.map((s) => (
+            <li class="reveal rounded-[10px] bg-white/95 px-5 pb-5 pt-4 shadow-[0_24px_50px_-28px_rgb(13_24_48/0.6)] ring-1 ring-black/5 backdrop-blur-sm">
+              <PixelIcon name={s.icon} class="size-6" />
+              <div class="mt-5 grid grid-cols-[3.5rem_1fr] border-t border-ink pt-3">
+                <span class="font-mono text-[13px] text-faint">{s.n}</span>
+                <span>
+                  <span class="block text-[17px] tracking-[-0.015em]">{s.title}</span>
+                  <span class="block text-[17px] tracking-[-0.015em] text-muted">{s.body}</span>
+                </span>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </div>
+</section>

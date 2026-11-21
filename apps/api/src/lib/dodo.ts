@@ -75,7 +75,7 @@ export function dodoCreateCheckout(
       customer: { customer_id: input.customerId },
       return_url: input.returnUrl,
       metadata: input.metadata,
-      // Our trial is a separate $1 purchase, so a product-level trial must never start on a subscription.
+      // Our trial is a separate $2.99 purchase, so a product-level trial must never start on a subscription.
       ...(input.subscription ? { subscription_data: { trial_period_days: 0 } } : {}),
     }),
   });

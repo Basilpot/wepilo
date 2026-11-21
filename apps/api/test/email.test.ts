@@ -119,7 +119,7 @@ describe("alerts use the agency's recipients", () => {
         slug: tenant.slug,
         body: { name: "Asha", email: "asha@example.com", message: "Hi there" },
       });
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(202);
       expect(sent).toHaveLength(1);
       expect(sent[0].to).toEqual(["sales@agency.test"]);
       expect(sent[0].reply_to).toBe("asha@example.com");

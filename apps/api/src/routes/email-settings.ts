@@ -103,7 +103,7 @@ export const emailSettingsRoutes = new Hono<AppEnv>()
         subject: "Your Wepilo email settings work",
         html: layout(
           "Email settings verified",
-          `<p>Hi ${escapeHtml(staff.name)}, this message was sent through your own Resend account. Bookings, inquiries and newsletters will now go out from <strong>${escapeHtml(config.fromEmail)}</strong>.</p>`,
+          `<p>Hi ${escapeHtml(staff.name)}, this message was sent through your own Resend account. Enquiry alerts and newsletters will now go out from <strong>${escapeHtml(config.fromEmail)}</strong>.</p>`,
         ),
       }),
     }).catch(() => null);

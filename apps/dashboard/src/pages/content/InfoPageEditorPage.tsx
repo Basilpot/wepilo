@@ -22,6 +22,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useLanguageEditing } from "@/lib/translations";
+import { LanguageSwitch, SameInEveryLanguage } from "@/components/language-switch";
+import { ScheduleButton } from "@/components/schedule-button";
+import { formatWhen } from "@/components/schedule-field";
 
 type InfoPage = {
   id: number;
@@ -34,6 +38,8 @@ type InfoPage = {
   published: boolean;
   featuredInNavbar: boolean;
   infoPageCategoryId: number | null;
+  translations?: unknown;
+  publishAt?: string | null;
 };
 
 type Category = { id: number; name: string | null };
@@ -69,8 +75,11 @@ export function InfoPageEditorPage() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const [form, setForm] = useState<FormState>(empty);
-  const [baseline, setBaseline] = useState(JSON.stringify(empty));
+  const [baseline, setBaseline] = useState(JSON.stringify({ f: empty, t: {} }));
   const [published, setPublished] = useState(false);
+  const [publishAt, setPublishAt] = useState<string | null>(null);
+  // Title, body and search listing can be translated; the rest is shared by every language.
+  const i18n = useLanguageEditing(form, setForm, ["title", "content", "metaTitle", "metaDescription"]);
   const [saving, setSaving] = useState<"draft" | "publish" | "unpublish" | null>(null);
 
   const { data: existing, isLoading, isError } = useQuery({
@@ -97,47 +106,54 @@ export function InfoPageEditorPage() {
       infoPageCategoryId: p.infoPageCategoryId ? String(p.infoPageCategoryId) : "",
     };
     setForm(loaded);
-    setBaseline(JSON.stringify(loaded));
+    i18n.load(p.translations);
+    setBaseline(JSON.stringify({ f: loaded, t: (p.translations as object | null) ?? {} }));
     setPublished(p.published);
-  }, [existing]);
+    setPublishAt(p.publishAt ?? null);
+  }, [existing]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const dirty = JSON.stringify(form) !== baseline;
+  const dirty = JSON.stringify({ f: i18n.original, t: i18n.translations }) !== baseline;
   const confirmLeave = useLeaveGuard(dirty);
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
 
-  const save = async (intent: "draft" | "publish" | "unpublish") => {
-    if (!form.title.trim()) {
+  const save = async (intent: "draft" | "publish" | "unpublish"): Promise<boolean> => {
+    const o = i18n.original;
+    if (!o.title.trim()) {
       toast.error("Please type a title for the page before saving. The title box is at the top of the page.");
-      return;
+      return false;
     }
     const nextPublished = intent === "publish" ? true : intent === "unpublish" ? false : published;
     setSaving(intent);
     try {
       const body = {
-        title: form.title.trim(),
-        slug: form.slug || undefined,
-        content: form.content,
-        coverImage: form.coverImage || null,
-        metaTitle: form.metaTitle || null,
-        metaDescription: form.metaDescription || null,
+        title: o.title.trim(),
+        slug: o.slug || undefined,
+        content: o.content,
+        coverImage: o.coverImage || null,
+        metaTitle: o.metaTitle || null,
+        metaDescription: o.metaDescription || null,
         published: nextPublished,
-        featuredInNavbar: form.featuredInNavbar,
-        infoPageCategoryId: form.infoPageCategoryId ? Number(form.infoPageCategoryId) : null,
+        featuredInNavbar: o.featuredInNavbar,
+        infoPageCategoryId: o.infoPageCategoryId ? Number(o.infoPageCategoryId) : null,
+        translations: i18n.translations,
       };
       const res = isNew
         ? await api<{ page: InfoPage }>("/info-pages", { body })
         : await api<{ page: InfoPage }>(`/info-pages/${id}`, { body, method: "PATCH" });
-      const saved = { ...form, slug: res.page?.slug ?? form.slug };
-      setForm(saved);
-      setBaseline(JSON.stringify(saved));
+      const saved = { ...o, slug: res.page?.slug ?? o.slug };
+      i18n.replaceOriginal(saved);
+      setBaseline(JSON.stringify({ f: saved, t: i18n.translations }));
       setPublished(nextPublished);
+      if (nextPublished) setPublishAt(null);
       void queryClient.invalidateQueries({ queryKey: ["info-pages"] });
       toast.success(
         intent === "publish" ? (published ? "Changes saved" : "Page published") : intent === "unpublish" ? "Page moved to drafts" : "Draft saved",
       );
       if (isNew && res.page) navigate(`/info-pages/${res.page.id}`, { replace: true });
+      return true;
     } catch (err) {
       toastApiError(err, "The page could not be saved. Your writing is still on this page, so check your internet connection and try saving again.");
+      return false;
     } finally {
       setSaving(null);
     }
@@ -181,19 +197,32 @@ export function InfoPageEditorPage() {
     <div>
       <EditorHeader
         title={form.title.trim() || (isNew ? "New page" : "Untitled page")}
-        badge={<StatusBadge kind="content" status={published ? "published" : "draft"} />}
+        badge={<StatusBadge kind="content" status={published ? "published" : publishAt ? "scheduled" : "draft"} />}
         dirty={dirty}
-        subtitle={isNew ? "Not saved yet" : `/${form.slug}`}
+        subtitle={isNew ? "Not saved yet" : publishAt && !published ? `Goes live ${formatWhen(publishAt)}` : `/${form.slug}`}
         onBack={() => confirmLeave(() => navigate("/info-pages"))}
         actions={
+          <div className="flex flex-wrap items-center gap-2">
+          <LanguageSwitch value={i18n.lang} onChange={i18n.switchTo} translations={i18n.translations} />
+          {!isNew && !published && (
+            <ScheduleButton
+              path={`/info-pages/${id}`}
+              value={publishAt}
+              onChange={setPublishAt}
+              noun="the page"
+              beforeSave={async () => (dirty ? save("draft") : true)}
+              disabled={saving !== null}
+            />
+          )}
           <PublishActions
             published={published}
             dirty={dirty}
             isNew={isNew}
             saving={saving}
             canSave={Boolean(form.title.trim())}
-            onSave={save}
+            onSave={(intent) => void save(intent)}
           />
+          </div>
         }
       />
 
@@ -203,7 +232,7 @@ export function InfoPageEditorPage() {
             title={form.title}
             onTitleChange={(v) => set("title", v)}
             slug={form.slug}
-            onSlugChange={(v) => set("slug", v)}
+            onSlugChange={(v) => !i18n.lang && set("slug", v)}
             prefix={urlPrefix}
             placeholder="Type the title of this page here"
           />
@@ -218,6 +247,8 @@ export function InfoPageEditorPage() {
         </div>
 
         <aside className="lg:sticky lg:top-32 lg:max-h-[calc(100vh-9rem)] lg:self-start lg:overflow-y-auto lg:border-l lg:pl-8">
+          {i18n.lang && <SameInEveryLanguage />}
+          <fieldset disabled={Boolean(i18n.lang)} className="contents">
           <SidebarSection title="Page settings" description="Choose how this page is grouped and whether it appears in your website menu.">
             <Field label="Category" hint="Tip: put legal pages such as terms and privacy in a category called “Legal”. Create categories under “Page categories”.">
               <Select
@@ -250,6 +281,7 @@ export function InfoPageEditorPage() {
             <ImageField value={form.coverImage} onChange={(url) => set("coverImage", url)} />
           </SidebarSection>
 
+          </fieldset>
           <SidebarSection title="Search engine listing" description="This preview shows how your page may look in search results. Good titles and descriptions bring more visitors.">
             <SerpPreview
               title={form.metaTitle || form.title}

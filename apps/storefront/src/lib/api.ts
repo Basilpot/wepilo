@@ -33,22 +33,26 @@ export type Site = {
   announcement: { text: string; href?: string | null } | null;
   navigation: { header: NavItem[]; footer: { title: string; items: NavItem[] }[] };
   homepage: Section[];
+  /** The language content is written in, and every language the site is published in (default first). */
+  languages?: { default: string; available: string[] };
 };
 
 export type Trip = Record<string, any> & { id: number; title: string; slug: string };
 
 export type Client = ReturnType<typeof client>;
 
-export function client(env: Env, slug: string) {
+/** `lang` asks the API for that language: translated text laid over the original, which fills any gaps. */
+export function client(env: Env, slug: string, lang?: string) {
   const get = async <T = any>(path: string, query: Record<string, string | number | undefined> = {}): Promise<T> => {
     const url = new URL(`/api/v1${path}`, env.API_BASE_URL);
+    if (lang) url.searchParams.set("lang", lang);
     for (const [k, v] of Object.entries(query)) if (v !== undefined && v !== "") url.searchParams.set(k, String(v));
     const res = await fetch(url, { headers: { "x-tenant-slug": slug, accept: "application/json" } });
     const data = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
     if (!res.ok) throw new ApiProblem(res.status, data.error ?? "Request failed", data.code);
     return data as T;
   };
-  const post = async (path: string, body: unknown) => {
+  const post = async <T = any>(path: string, body: unknown): Promise<T> => {
     const res = await fetch(new URL(`/api/v1${path}`, env.API_BASE_URL), {
       method: "POST",
       headers: { "x-tenant-slug": slug, "content-type": "application/json" },
@@ -57,11 +61,18 @@ export function client(env: Env, slug: string) {
     const data = (await res.json().catch(() => ({}))) as { error?: string; fields?: Record<string, string> };
     if (!res.ok) {
       // A validation problem names the first field that needs fixing, in words a visitor can act on.
-      const labels: Record<string, string> = { name: "Your name", email: "Email", message: "Message", phone: "Phone" };
+      const labels: Record<string, string> = {
+        name: "Your name",
+        email: "Email",
+        message: "Message",
+        phone: "Phone",
+        travellers: "Number of travellers",
+        departureDate: "Date",
+      };
       const [key, text] = data.fields ? (Object.entries(data.fields)[0] ?? []) : [];
       throw new ApiProblem(res.status, text ? `${labels[key!] ?? "Please check your details"}: ${text}` : (data.error ?? "Something went wrong. Please try again."));
     }
-    return data;
+    return data as T;
   };
   return {
     slug,
@@ -70,11 +81,24 @@ export function client(env: Env, slug: string) {
     trips: (query: Record<string, string | number | undefined> = {}) => get<{ data: Trip[]; pagination: { total: number } }>("/activities", { limit: 48, ...query }),
     trip: (tripSlug: string) => get<{ activity: Trip }>(`/activities/slug/${encodeURIComponent(tripSlug)}`),
     departures: (activityId: number) => get<{ data: Record<string, any>[] }>("/departures", { activityId, status: "OPEN", limit: 6 }).catch(() => ({ data: [] })),
-    reviews: (activityId: number) => get<{ data: Record<string, any>[] }>("/reviews", { activityId, limit: 6 }).catch(() => ({ data: [] })),
+    reviews: (activityId: number) =>
+      get<{ data: Record<string, any>[]; pagination?: { total: number } }>("/reviews", { activityId, limit: 6 }).catch(() => ({ data: [], pagination: { total: 0 } })),
     categories: () => get<{ data: Record<string, any>[] }>("/trip-categories"),
     locations: () => get<{ data: Record<string, any>[] }>("/locations"),
     posts: () => get<{ data: Record<string, any>[] }>("/blogs/published", { limit: 24 }),
     post: (postSlug: string) => get<{ post: Record<string, any> }>(`/blogs/slug/${encodeURIComponent(postSlug)}`),
+    /** Live info pages (About, Terms…), for the sitemap. */
+    pages: () => get<{ data: Record<string, any>[] }>("/info-pages/published").catch(() => ({ data: [] })),
+    /** Every published trip or post, page by page, for the sitemap. Capped so a huge catalog can't stall a request. */
+    every: async (path: "/activities" | "/blogs/published", size = 100, maxPages = 20) => {
+      const out: Record<string, any>[] = [];
+      for (let page = 1; page <= maxPages; page++) {
+        const res = await get<{ data: Record<string, any>[]; pagination?: { totalPages?: number } }>(path, { limit: size, page }).catch(() => ({ data: [], pagination: { totalPages: 0 } }));
+        out.push(...res.data);
+        if (!res.pagination?.totalPages || page >= res.pagination.totalPages) break;
+      }
+      return out;
+    },
     page: (pageSlug: string) => get<{ page: Record<string, any> }>(`/info-pages/slug/${encodeURIComponent(pageSlug)}`),
     inquiry: (body: Record<string, unknown>) => post("/inquiries", body),
     subscribe: (email: string) => post("/newsletter/subscribe", { email }),

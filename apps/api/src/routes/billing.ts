@@ -38,7 +38,7 @@ export const billingRoutes = new Hono<AppEnv>().post("/webhook", async (c) => {
   let result: unknown = { ignored: true };
   if (tenantId) {
     if (event.type === "payment.succeeded" && metadata.kind === "trial") {
-      const plan = SELF_SERVE_PLANS.includes(metadata.plan as SelfServePlan) ? (metadata.plan as SelfServePlan) : "STARTER";
+      const plan = "PRO";
       result = await grantTrial(db, { tenantId, plan, customerId });
     } else if (event.type.startsWith("subscription.") && data.subscription_id) {
       // Re-read from Dodo so out-of-order deliveries still land on the latest state.

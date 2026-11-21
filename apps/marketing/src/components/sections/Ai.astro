@@ -1,0 +1,64 @@
+---
+/** Wepilo over MCP: say what you want in Claude, and it lands as a draft in your workspace. */
+const tools = [
+  "Create trips and departures as drafts you review",
+  "Read today's bookings, enquiries and open seats",
+  "Draft replies to travellers for you to send",
+  "Build and edit your website over the same API",
+];
+---
+
+<section class="rule" id="ai">
+  <div class="shell py-20 sm:py-28">
+    <div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:gap-16">
+      <div class="reveal">
+        <p class="eyebrow">Wepilo for AI</p>
+        <h2 class="mt-4 text-section max-w-[16ch]">Tell your assistant. Wepilo does the work.</h2>
+        <p class="mt-5 max-w-[32rem] text-lead text-muted">
+          Connect Claude, Cursor or ChatGPT to your workspace over MCP. They act with your permissions, and everything
+          they make waits as a draft until you publish it.
+        </p>
+        <ul class="mt-8 space-y-3">
+          {
+            tools.map((t) => (
+              <li class="flex gap-3 text-[15px] leading-6">
+                <svg viewBox="0 0 16 16" class="mt-1 size-4 shrink-0 text-accent" fill="none" aria-hidden="true">
+                  <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                {t}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div class="reveal mesh rounded-[28px] px-5 py-10 sm:px-12 sm:py-14">
+        <p class="mx-auto max-w-[30rem] rounded-[20px] bg-[#5b6b8c]/55 px-6 py-4 text-center text-[1.0625rem] leading-7 text-white backdrop-blur-md">
+          “Add a 12-day Annapurna Circuit trek for March, $1,450 per person, 12 seats.”
+        </p>
+        <div class="mx-auto h-8 w-px bg-white/70" aria-hidden="true"></div>
+
+        <div class="mx-auto max-w-[30rem] rounded-[22px] bg-[#f4f4f6]/95 p-4 shadow-[0_30px_60px_-30px_rgb(40_50_90/0.5)] sm:p-5">
+          <p class="px-1 text-[14px] font-medium">Trip</p>
+          <div class="mt-2.5 rounded-2xl bg-surface p-4 text-[15px] leading-9">
+            <span class="chip">Annapurna Circuit</span> for <span class="chip">12 days</span> at
+            <span class="chip">$1,450</span>
+          </div>
+
+          <p class="mt-4 px-1 text-[14px] font-medium">Departure</p>
+          <div class="mt-2.5 rounded-2xl bg-surface p-4 text-[15px] leading-9">
+            Starts <span class="chip">Mar 8, 2027</span> with <span class="chip">12 seats</span>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3 text-[13px]">
+            <span class="flex items-center gap-2">
+              <span class="size-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
+              Saved as a draft
+            </span>
+            <span class="font-mono text-[11px] text-faint">waiting for your review</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

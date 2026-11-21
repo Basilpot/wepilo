@@ -1,0 +1,145 @@
+---
+/** The product in five cards. Small pieces of the real interface, drawn in HTML where a screenshot would be too small to read. */
+const departures = [
+  { date: "Mar 8", trip: "Annapurna Circuit", taken: 9, seats: 12 },
+  { date: "Mar 22", trip: "Everest Base Camp", taken: 12, seats: 12 },
+  { date: "Apr 5", trip: "Langtang Valley", taken: 3, seats: 10 },
+];
+---
+
+<section class="rule" id="product">
+  <div class="shell py-20 sm:py-28">
+    <div class="reveal max-w-[40rem]">
+      <p class="eyebrow">The product</p>
+      <h2 class="mt-4 text-section">Everything the sales desk and the website need, written once</h2>
+      <p class="mt-5 text-lead text-muted">
+        Your team works in the dashboard. Your site asks for the same records over one API. Nothing is copied twice.
+      </p>
+    </div>
+
+    <div class="mt-14 grid grid-cols-1 gap-4 lg:grid-cols-6">
+      <!-- Trip editor -->
+      <article class="card reveal lg:col-span-4">
+        <div class="p-6 sm:p-8">
+          <h3 class="card-title">Write the trip once</h3>
+          <p class="card-body">
+            Day-by-day itinerary, price, inclusions and open dates. The editor tracks what is missing, so a half-written
+            trip never reaches your site.
+          </p>
+        </div>
+        <div class="mesh mx-3 mb-3 overflow-hidden rounded-2xl px-6 pt-6 sm:px-10 sm:pt-10">
+          <img
+            src="/shots/trip-editor.png"
+            alt="The Wepilo trip editor, with the step list for Everest Base Camp and the title field."
+            width="1440"
+            height="900"
+            loading="lazy"
+            decoding="async"
+            class="shot-sm block aspect-[16/9] w-full rounded-b-none object-cover object-left-top"
+          />
+        </div>
+      </article>
+
+      <!-- API -->
+      <article class="card reveal flex flex-col lg:col-span-2">
+        <div class="p-6 sm:p-8">
+          <h3 class="card-title">Publish without a developer</h3>
+          <p class="card-body">Change a price in Wepilo and your site has it. No deploy, no ticket.</p>
+        </div>
+        <div class="mx-3 mb-3 flex-1 rounded-2xl bg-[#141416] p-5 font-mono text-[12px] leading-6 text-[#e8e8ea]">
+          <p class="text-white/40">GET /api/v1/activities</p>
+          <pre class="mt-3 overflow-x-auto"><code>&#123;
+  <span class="text-[#a5d6ff]">"title"</span>: <span class="text-[#c4f1be]">"Annapurna Circuit"</span>,
+  <span class="text-[#a5d6ff]">"days"</span>: <span class="text-[#fbbf77]">12</span>,
+  <span class="text-[#a5d6ff]">"price"</span>: <span class="text-[#fbbf77]">1450</span>,
+  <span class="text-[#a5d6ff]">"departures"</span>: [
+    &#123; <span class="text-[#a5d6ff]">"date"</span>: <span class="text-[#c4f1be]">"2027-03-08"</span>,
+      <span class="text-[#a5d6ff]">"seatsLeft"</span>: <span class="text-[#fbbf77]">3</span> &#125;
+  ]
+&#125;</code></pre>
+        </div>
+      </article>
+
+      <!-- Departures -->
+      <article class="card reveal lg:col-span-2">
+        <div class="p-6 sm:p-8">
+          <h3 class="card-title">Dates that add up</h3>
+          <p class="card-body">Each departure has its own seats and price. Seats go only when a booking is confirmed.</p>
+        </div>
+        <ul class="mx-3 mb-3 space-y-2 rounded-2xl bg-surface-2 p-3">
+          {
+            departures.map((d) => (
+              <li class="rounded-xl bg-surface px-4 py-3 ring-1 ring-line">
+                <div class="flex items-baseline justify-between gap-3 text-[13px]">
+                  <span class="font-medium">{d.trip}</span>
+                  <span class="font-mono text-[11px] text-faint">{d.date}</span>
+                </div>
+                <div class="mt-2.5 flex items-center gap-3">
+                  <span class="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-3">
+                    <span
+                      class:list={["block h-full rounded-full", d.taken === d.seats ? "bg-ink" : "bg-accent"]}
+                      style={`width:${(d.taken / d.seats) * 100}%`}
+                    />
+                  </span>
+                  <span class="font-mono text-[11px] text-muted">
+                    {d.taken === d.seats ? "Full" : `${d.seats - d.taken} left`}
+                  </span>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </article>
+
+      <!-- Enquiries -->
+      <article class="card reveal lg:col-span-2">
+        <div class="p-6 sm:p-8">
+          <h3 class="card-title">Enquiries that don't get lost</h3>
+          <p class="card-body">Every message from your site lands in one inbox, with the trip it asks about attached.</p>
+        </div>
+        <div class="mx-3 mb-3 space-y-2 rounded-2xl bg-surface-2 p-3">
+          <div class="rounded-xl bg-surface px-4 py-3 ring-1 ring-line">
+            <div class="flex items-center justify-between text-[13px]">
+              <span class="font-medium">Maya Lindqvist</span>
+              <span class="rounded-pill bg-[#eaf1ff] px-2 py-0.5 text-[11px] text-accent">New</span>
+            </div>
+            <p class="mt-1 text-[13px] leading-5 text-muted">Is the March departure still open for two?</p>
+            <p class="mt-2 font-mono text-[11px] text-faint">Annapurna Circuit</p>
+          </div>
+          <div class="rounded-xl bg-surface px-4 py-3 ring-1 ring-line">
+            <div class="flex items-center justify-between text-[13px]">
+              <span class="font-medium">Tom Okafor</span>
+              <span class="rounded-pill bg-surface-3 px-2 py-0.5 text-[11px] text-muted">Replied</span>
+            </div>
+            <p class="mt-1 text-[13px] leading-5 text-muted">Can we add a rest day in Namche?</p>
+            <p class="mt-2 font-mono text-[11px] text-faint">Everest Base Camp</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- Payments -->
+      <article class="card reveal lg:col-span-2">
+        <div class="p-6 sm:p-8">
+          <h3 class="card-title">Money that arrives</h3>
+          <p class="card-body">Take a deposit by card, record a bank transfer, see what is still owed.</p>
+        </div>
+        <div class="mx-3 mb-3 rounded-2xl bg-surface-2 p-3">
+          <div class="rounded-xl bg-surface px-4 py-4 ring-1 ring-line">
+            <div class="flex items-baseline justify-between text-[13px]">
+              <span class="font-medium">Booking #1042</span>
+              <span class="font-mono text-[11px] text-faint">2 travellers</span>
+            </div>
+            <p class="mt-3 text-[1.75rem] font-medium leading-none tracking-[-0.03em]">$2,900</p>
+            <div class="mt-4 h-1.5 overflow-hidden rounded-full bg-surface-3">
+              <span class="block h-full w-[30%] rounded-full bg-emerald-500"></span>
+            </div>
+            <div class="mt-3 space-y-1.5 text-[13px]">
+              <div class="flex justify-between"><span class="text-muted">Deposit · card</span><span>$870 paid</span></div>
+              <div class="flex justify-between"><span class="text-muted">Balance · bank transfer</span><span class="text-faint">$2,030 due Feb 8</span></div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>

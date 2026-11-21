@@ -1,6 +1,6 @@
 /** Shared display formatters so money and dates read the same everywhere. */
 
-/** The agency's currency, set once the session loads (Settings → Payments). */
+/** The agency's currency, set once the session loads (Settings → Currency). */
 let defaultCurrency = "USD";
 export const setDefaultCurrency = (code: string | null | undefined) => {
   defaultCurrency = code && /^[A-Z]{3}$/.test(code) ? code : "USD";

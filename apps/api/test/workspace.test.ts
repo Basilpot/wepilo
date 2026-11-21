@@ -90,13 +90,12 @@ describe("onboarding checklist", () => {
     const { tenant, token } = await makeTenant();
     const before = await call("/api/v1/tenant/onboarding", { staff: token });
     const done = (r: typeof before) => Object.fromEntries((r.json.steps as Array<{ key: string; done: boolean }>).map((s) => [s.key, s.done]));
-    expect(done(before)).toMatchObject({ profile: false, trip: false, departure: false, payments: false, team: false });
+    expect(done(before)).toMatchObject({ profile: false, trip: false, departure: false, team: false });
 
     await makeTrip(tenant.id);
-    await call("/api/v1/payments/settings", { method: "PUT", staff: token, body: { bankEnabled: true, bankInstructions: "IBAN 1" } });
     await call("/api/v1/site/config", { method: "PUT", staff: token, body: (await import("@/lib/site")).defaultSiteConfig() });
     const after = await call("/api/v1/tenant/onboarding", { staff: token });
-    expect(done(after)).toMatchObject({ trip: true, departure: true, payments: true, homepage: true });
+    expect(done(after)).toMatchObject({ trip: true, departure: true, homepage: true });
     expect(after.json.completed).toBeGreaterThan(before.json.completed);
   });
 });

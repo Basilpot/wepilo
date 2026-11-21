@@ -1,0 +1,41 @@
+---
+import { tintBg } from "../../lib/tints";
+import type { SketchName, Tint } from "../../data/features";
+import Sketch from "./Sketch.astro";
+
+/** A grid card: the drawing without notes, a name, one line, and a bracketed link. */
+interface Props {
+  href: string;
+  sketch?: SketchName;
+  name: string;
+  summary: string;
+  /** Shown top-right in mono, e.g. "03". */
+  index?: string;
+  tint?: Tint;
+  /** Bigger type, for wide cards in a bento grid. */
+  large?: boolean;
+  class?: string;
+}
+const { href, sketch, name, summary, index, tint, large = false, class: cls } = Astro.props;
+---
+
+<a href={href} class:list={["spec-cell group relative flex flex-col border border-line bg-paper p-6 transition-colors duration-200 hover:border-ink hover:bg-mist md:p-7", cls]}>
+  <span class="spec-mark -left-px -top-px" aria-hidden="true"></span>
+  <span class="spec-mark -right-px -top-px" aria-hidden="true"></span>
+  {index && <span class="absolute right-6 top-6 z-10 font-mono text-[12px] text-ink-2 md:right-7 md:top-7">{index}</span>}
+  {
+    sketch && (
+      <div
+        class:list={["-mx-6 -mt-6 mb-8 border-b border-line px-6 pb-6 pt-12 transition-[filter] duration-300 group-hover:saturate-150 md:-mx-7 md:-mt-7 md:px-7", large && "md:px-14", tint && tintBg[tint]]}
+      >
+        <div class:list={[large && "mx-auto max-w-[480px]"]}><Sketch name={sketch} /></div>
+      </div>
+    )
+  }
+  <h3 class:list={["font-display tracking-[-0.01em]", large ? "text-[clamp(1.5rem,1.3rem+0.8vw,2rem)]" : "text-[21px]", !sketch && "mt-10"]}>{name}</h3>
+  <p class="mt-2 flex-1 text-[15.5px] leading-[1.55] text-muted">{summary}</p>
+  <p class="mt-7 flex items-center justify-between font-mono text-[13px] lowercase text-ink">
+    <span class="transition-colors group-hover:text-red">[ read more ]</span>
+    <span class="translate-x-0 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-red" aria-hidden="true">→</span>
+  </p>
+</a>

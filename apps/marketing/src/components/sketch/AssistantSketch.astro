@@ -1,0 +1,69 @@
+---
+import SketchFrame from "./SketchFrame.astro";
+import type { Callout } from "./util";
+
+/** The AI assistant: a request in Claude on the left, the draft it saved in Wepilo on the right. */
+interface Props {
+  annotated?: boolean;
+}
+const { annotated = false } = Astro.props;
+
+const callouts: Callout[] = [
+  { at: [300, 160], to: [262, 160], side: "left", lines: ["ask in your", "own words"] },
+  { at: [820, 137], to: [940, 120], side: "right", lines: ["saved as a draft", "unless you ask", "it to publish"] },
+  { at: [856, 466], to: [940, 470], side: "right", lines: ["read it, then publish", "or schedule it"] },
+];
+
+const doc = [
+  [196, 220],
+  [212, 236],
+  [228, 190],
+  [268, 224],
+  [284, 232],
+  [300, 160],
+  [364, 214],
+  [380, 228],
+  [396, 120],
+];
+---
+
+<SketchFrame title="A request typed into Claude, and the draft it saved into Wepilo for review." callouts={callouts} annotated={annotated}>
+  <!-- Claude. -->
+  <rect x="300" y="70" width="280" height="450" class="w" />
+  <rect x="314" y="86" width="9" height="9" class="r" />
+  <text x="330" y="95" class="m">claude</text>
+  <line x1="300" y1="108" x2="580" y2="108" />
+
+  <rect x="356" y="126" width="210" height="76" class="f2" />
+  <text x="368" y="150" style="font-size:12.5px">Refresh the Inca Trail tour</text>
+  <text x="368" y="168" style="font-size:12.5px">for 2027: new permit rules</text>
+  <text x="368" y="186" style="font-size:12.5px">and an altitude FAQ.</text>
+
+  <text x="316" y="232" style="font-size:12.5px">Done. Saved as a draft in</text>
+  <text x="316" y="250" style="font-size:12.5px">Wepilo: 2 days rewritten,</text>
+  <text x="316" y="268" style="font-size:12.5px">1 FAQ added, meta description</text>
+  <text x="316" y="286" style="font-size:12.5px">154 characters.</text>
+  <rect x="316" y="302" width="168" height="22" />
+  <text x="326" y="317" class="m">wepilo · update_trip</text>
+
+  <rect x="316" y="474" width="250" height="32" />
+  <text x="328" y="494" class="m">ask for a change…</text>
+
+  <!-- Hand-off. -->
+  <path d="M590 312 C 616 312, 612 272, 634 272" class="dash" />
+  <path d="M628 267 L635 272 L628 277" />
+
+  <!-- The draft in Wepilo. -->
+  <rect x="640" y="110" width="260" height="400" class="w" />
+  <rect x="656" y="126" width="164" height="22" />
+  <rect x="664" y="133" width="8" height="8" class="r" />
+  <text x="678" y="141" class="m">draft · needs review</text>
+  <text x="656" y="178" class="s" style="font-size:18px">Inca Trail to Machu Picchu</text>
+  {doc.map(([y, w]) => <rect x="656" y={y} width={w} height="6" class="bar" />)}
+  <text x="656" y="258" class="m">day 2 · wiñay wayna</text>
+  <text x="656" y="354" class="m">faq · altitude</text>
+  <rect x="656" y="452" width="110" height="28" class="k" />
+  <text x="711" y="471" text-anchor="middle" class="m" style="fill:#fff">publish</text>
+  <rect x="776" y="452" width="80" height="28" />
+  <text x="816" y="471" text-anchor="middle" class="m">edit</text>
+</SketchFrame>

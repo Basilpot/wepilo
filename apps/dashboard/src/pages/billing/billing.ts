@@ -1,8 +1,9 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api, toastApiError } from "@/lib/api";
 
-export type PlanKey = "STARTER" | "GROWTH" | "SCALE" | "ENTERPRISE";
-export type SelfServePlan = Exclude<PlanKey, "ENTERPRISE">;
+/** PRO is the one self-serve plan. STARTER/GROWTH/SCALE only appear on workspaces created before that. */
+export type PlanKey = "PRO" | "ENTERPRISE" | "STARTER" | "GROWTH" | "SCALE";
+export type SelfServePlan = "PRO";
 export type BillingInterval = "monthly" | "annual";
 export type AccessState = "UNPAID" | "TRIAL" | "ACTIVE" | "PAST_DUE" | "EXPIRED";
 
@@ -45,14 +46,15 @@ export type Billing = {
 };
 
 export const PLAN_NAMES: Record<PlanKey, string> = {
-  STARTER: "Starter",
-  GROWTH: "Growth",
-  SCALE: "Scale",
-  ENTERPRISE: "Enterprise",
+  PRO: "Pro",
+  ENTERPRISE: "Custom",
+  STARTER: "Pro",
+  GROWTH: "Pro",
+  SCALE: "Pro",
 };
 
-/** Plan highlighted as the default choice. */
-export const RECOMMENDED_PLAN: SelfServePlan = "GROWTH";
+/** The plans an admin can assign by hand. */
+export const ASSIGNABLE_PLANS: PlanKey[] = ["PRO", "ENTERPRISE"];
 
 export function useBilling() {
   return useQuery({ queryKey: ["billing"], queryFn: () => api<Billing>("/tenant/billing") });
@@ -64,7 +66,7 @@ const goTo = (r: { url?: string }) => {
 
 export function useStartTrial() {
   return useMutation({
-    mutationFn: (plan: SelfServePlan) => api<{ url: string }>("/tenant/billing/trial", { body: { plan } }),
+    mutationFn: (plan: SelfServePlan = "PRO") => api<{ url: string }>("/tenant/billing/trial", { body: { plan } }),
     onSuccess: goTo,
     onError: (err) => toastApiError(err, "The payment page could not be opened. Please check your internet connection and try again."),
   });

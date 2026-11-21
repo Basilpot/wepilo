@@ -1,0 +1,83 @@
+---
+import SketchFrame from "./SketchFrame.astro";
+import type { Callout } from "./util";
+
+/** The content calendar: a month of scheduled trips, posts and pages, with departures alongside. */
+interface Props {
+  annotated?: boolean;
+}
+const { annotated = false } = Astro.props;
+
+const X = 300;
+const Y = 126;
+const W = 600 / 7;
+const H = 78;
+// January 2027 starts on a Friday; the grid starts on Monday.
+const dayAt = (r: number, c: number) => r * 7 + c - 3;
+const cell = (day: number) => {
+  const i = day + 3;
+  return { x: X + (i % 7) * W, y: Y + Math.floor(i / 7) * H };
+};
+type Item = { day: number; label: string; kind: "scheduled" | "live" | "departure" };
+const items: Item[] = [
+  { day: 5, label: "09:00 Inca Trail", kind: "scheduled" },
+  { day: 7, label: "Visa guide", kind: "live" },
+  { day: 12, label: "Kilimanjaro", kind: "departure" },
+  { day: 12, label: "08:00 Spring dates", kind: "scheduled" },
+  { day: 18, label: "fr · Inca Trail", kind: "scheduled" },
+  { day: 26, label: "Mont Blanc", kind: "departure" },
+];
+const slots = new Map<number, number>();
+
+const callouts: Callout[] = [
+  { at: [300, 190], to: [262, 190], side: "left", lines: ["schedule any draft", "for a day and time"] },
+  { at: [728, 360], to: [960, 330], side: "right", lines: ["drag to move it,", "it keeps its time"] },
+  { at: [900, 210], to: [960, 160], side: "right", lines: ["departures on the", "same calendar"] },
+];
+---
+
+<SketchFrame title="A month calendar with scheduled trips and posts and departure dates." callouts={callouts} annotated={annotated}>
+  <rect x="300" y="60" width="600" height="472" class="w" />
+  <text x="318" y="83" class="s" style="font-size:17px">January 2027</text>
+  <rect x="826" y="68" width="22" height="20" />
+  <path d="M840 73 L833 78 L840 83" />
+  <rect x="856" y="68" width="22" height="20" />
+  <path d="M864 73 L871 78 L864 83" />
+  <line x1="300" y1="96" x2="900" y2="96" />
+  {["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((d, i) => <text x={X + i * W + 8} y="114" class="m">{d}</text>)}
+  <line x1="300" y1="122" x2="900" y2="122" class="g" />
+  {[1, 2, 3, 4, 5, 6].map((i) => <line x1={X + i * W} y1="122" x2={X + i * W} y2="532" class="g" />)}
+  {[1, 2, 3, 4].map((r) => <line x1="300" y1={Y + r * H} x2="900" y2={Y + r * H} class="g" />)}
+  {
+    [0, 1, 2, 3, 4].flatMap((r) =>
+      [0, 1, 2, 3, 4, 5, 6].map((c) => {
+        const d = dayAt(r, c);
+        return d >= 1 && d <= 31 ? <text x={X + c * W + 8} y={Y + r * H + 16} class="m" style={d === 12 ? "fill:#fff" : ""}>{d}</text> : null;
+      }),
+    )
+  }
+  <!-- Today. -->
+  <circle cx={cell(12).x + 11} cy={cell(12).y + 12} r="9" class="k" stroke="none" />
+  <text x={cell(12).x + 11} y={cell(12).y + 16} text-anchor="middle" class="m" style="fill:#fff">12</text>
+  {
+    items.map((it) => {
+      const { x, y } = cell(it.day);
+      const k = slots.get(it.day) ?? 0;
+      slots.set(it.day, k + 1);
+      const top = y + 24 + k * 20;
+      return (
+        <g>
+          <rect x={x + 4} y={top} width={W - 8} height="16" class={it.kind === "departure" ? "w dash" : it.kind === "live" ? "f2" : "w"} />
+          {it.kind === "scheduled" && <rect x={x + 8} y={top + 5} width="6" height="6" class="r" />}
+          <text x={x + (it.kind === "scheduled" ? 18 : 9)} y={top + 11.5} class="m" style="font-size:8.5px;fill:#0d0d0d">{it.label}</text>
+        </g>
+      );
+    })
+  }
+  <!-- A scheduled post being dragged from the 20th to the 22nd. -->
+  <rect x={cell(20).x + 4} y={cell(20).y + 24} width={W - 8} height="16" class="g dash" />
+  <path d={`M${cell(20).x + 40} ${cell(20).y + 44} C ${cell(20).x + 70} ${cell(20).y + 62}, ${cell(22).x + 10} ${cell(22).y + 60}, ${cell(22).x + 30} ${cell(22).y + 46}`} class="dash" />
+  <rect x={cell(22).x + 8} y={cell(22).y + 30} width={W - 8} height="16" class="w" />
+  <rect x={cell(22).x + 12} y={cell(22).y + 35} width="6" height="6" class="r" />
+  <text x={cell(22).x + 22} y={cell(22).y + 41.5} class="m" style="font-size:8.5px;fill:#0d0d0d">10:00 Packing list</text>
+</SketchFrame>

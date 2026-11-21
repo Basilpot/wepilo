@@ -37,20 +37,15 @@ describe("cross-workspace isolation", () => {
     expect(row?.tenantId).toBe(a.tenant.id);
   });
 
-  it("cannot read another agency's bookings", async () => {
+  it("cannot change or remove another agency's departures", async () => {
     const a = await makeTenant();
     const b = await makeTenant();
-    const { activity, departure } = await makeTrip(a.tenant.id);
-    const created = await call("/api/v1/bookings", {
-      slug: a.tenant.slug,
-      body: { activityId: activity.id, departureId: departure.id, groupSize: 2, name: "Asha", email: "asha@example.com", phone: "+977 9800000000" },
-    });
-    expect(created.status).toBe(201);
-    const id = created.json.booking.id;
+    const { departure } = await makeTrip(a.tenant.id);
 
-    expect((await call(`/api/v1/bookings/${id}`, { staff: b.token })).status).toBe(404);
-    expect((await call(`/api/v1/bookings/${id}/status`, { method: "PATCH", staff: b.token, body: { status: "CONFIRMED" } })).status).toBe(404);
-    expect((await call("/api/v1/bookings", { staff: b.token })).json.data).toHaveLength(0);
+    expect((await call(`/api/v1/departures/${departure.id}`, { method: "PATCH", staff: b.token, body: { seatsLeft: 0 } })).status).toBe(404);
+    expect((await call(`/api/v1/departures/${departure.id}`, { method: "DELETE", staff: b.token })).status).toBe(404);
+    const cal = await call("/api/v1/calendar?from=2099-01-01&to=2099-01-31", { staff: b.token });
+    expect(cal.json.items).toHaveLength(0);
   });
 
   it("cannot edit or remove another agency's staff", async () => {
@@ -103,7 +98,7 @@ describe("role permissions", () => {
     const newStaff = { name: "New hire", email: `hire-${crypto.randomUUID()}@test.dev`, password: "password123", role: "EDITOR" };
 
     expect((await call("/api/v1/tenant/staff", { staff: manager.token, body: newStaff })).status).toBe(403);
-    expect((await call("/api/v1/payments/settings/stripe", { method: "POST", staff: manager.token, body: { secretKey: "sk_test_x" } })).status).toBe(403);
+    expect((await call("/api/v1/currency-settings", { method: "PUT", staff: manager.token, body: { currency: "EUR" } })).status).toBe(403);
     expect((await call("/api/v1/tenant/staff", { staff: admin.token, body: newStaff })).status).toBe(201);
   });
 
@@ -187,7 +182,7 @@ describe("paywall at the route level", () => {
     const { tenant, token } = await makeTenant();
     await setAccess(tenant.id, { plan: "STARTER", planExpiresAt: new Date(Date.now() - DAY), trialUsedAt: new Date(Date.now() - 10 * DAY), billingMode: "SELF_SERVE" });
 
-    const res = await call("/api/v1/bookings", { staff: token });
+    const res = await call("/api/v1/tenant/languages", { staff: token });
     expect(res.status).toBe(402);
     expect(res.json.code).toBe("PAYMENT_REQUIRED");
   });
@@ -200,7 +195,7 @@ describe("paywall at the route level", () => {
       { status: "TRIALING" },
     );
 
-    expect((await call("/api/v1/bookings", { staff: token })).status).toBe(200);
+    expect((await call("/api/v1/tenant/languages", { staff: token })).status).toBe(200);
     const website = await call("/api/v1/site", { slug: tenant.slug });
     expect(website.status).toBe(402);
     expect(website.json.code).toBe("API_ACCESS_INACTIVE");
@@ -214,7 +209,7 @@ describe("paywall at the route level", () => {
       { plan: "GROWTH", status: "ACTIVE", dodoSubscriptionId: `sub_${tenant.id}` },
     );
 
-    expect((await call("/api/v1/bookings", { staff: token })).status).toBe(402);
+    expect((await call("/api/v1/tenant/languages", { staff: token })).status).toBe(402);
     expect((await call("/api/v1/site", { slug: tenant.slug })).status).toBe(200);
   });
 

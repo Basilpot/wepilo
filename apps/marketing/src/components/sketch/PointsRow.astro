@@ -1,0 +1,32 @@
+---
+import Glyph from "./Glyph.astro";
+import type { GlyphName } from "./util";
+
+/** Numbered benefits under an ink rule: an icon in a square, a counter, a serif title and a line. */
+interface Props {
+  items: Array<{ icon: GlyphName; title: string; body: string }>;
+  label?: string;
+}
+const { items, label } = Astro.props;
+const n = items.length;
+const cols = n === 4 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3";
+---
+
+<section class="wrap" aria-label={label}>
+  <ol class:list={["reveal grid gap-px border-t border-ink bg-line", cols]}>
+    {
+      items.map((p, i) => (
+        <li class="bg-paper py-10 md:px-8 md:py-12">
+          <div class="flex items-center gap-4">
+            <span class="grid size-12 place-items-center border border-ink bg-white">
+              <Glyph name={p.icon} class="size-6" />
+            </span>
+            <span class="font-mono text-[12px] text-faint">0{i + 1} / 0{n}</span>
+          </div>
+          <h3 class="mt-8 font-display text-[clamp(1.5rem,1.35rem+0.6vw,1.875rem)] leading-[1.15] tracking-[-0.01em]">{p.title}</h3>
+          <p class="mt-3 max-w-[34ch] text-[16px] leading-[1.6] text-ink-2">{p.body}</p>
+        </li>
+      ))
+    }
+  </ol>
+</section>

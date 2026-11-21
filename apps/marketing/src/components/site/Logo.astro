@@ -1,0 +1,13 @@
+---
+/** The Wepilo mark: a flat ember square with a lowercase w. Same as the favicon. */
+interface Props {
+  size?: number;
+  class?: string;
+}
+const { size = 28, class: cls } = Astro.props;
+---
+
+<svg width={size} height={size} viewBox="0 0 32 32" class={cls} aria-hidden="true">
+  <rect width="32" height="32" fill="#dc143c"></rect>
+  <text x="16" y="23" text-anchor="middle" font-family="Inter Variable, Inter, Helvetica, Arial, sans-serif" font-size="22" font-weight="500" fill="#fff">w</text>
+</svg>

@@ -1,0 +1,235 @@
+---
+import "../styles/site.css";
+import SiteNav from "../components/site/SiteNav.astro";
+import SiteFooter from "../components/site/SiteFooter.astro";
+import { SITE_URL } from "../config";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, SITE_URL).toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta name="twitter:card" content="summary" />
+    <script is:inline>document.documentElement.classList.add("js");</script>
+  </head>
+  <body class="overflow-x-clip antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-white"
+      >Skip to content</a
+    >
+    <SiteNav />
+    <main id="main">
+      <slot />
+    </main>
+    <SiteFooter />
+
+    <script>
+      // Sections settle in the first time they come into view.
+      const items = document.querySelectorAll<HTMLElement>(".reveal");
+      if ("IntersectionObserver" in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (!e.isIntersecting) continue;
+              e.target.classList.add("is-in");
+              io.unobserve(e.target);
+            }
+          },
+          { rootMargin: "0px 0px -10% 0px", threshold: 0.06 },
+        );
+        items.forEach((el) => io.observe(el));
+      } else {
+        items.forEach((el) => el.classList.add("is-in"));
+      }
+
+      // Background clips play only while on screen, and never for reduced motion.
+      const clips = document.querySelectorAll<HTMLVideoElement>("[data-bg-video]");
+      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!still && "IntersectionObserver" in window) {
+        const vio = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              const v = e.target as HTMLVideoElement;
+              if (e.isIntersecting) {
+                v.preload = "auto";
+                v.play().catch(() => {});
+              } else {
+                v.pause();
+              }
+            }
+          },
+          { rootMargin: "200px 0px" },
+        );
+        clips.forEach((v) => vio.observe(v));
+      }
+
+      // Mega menus: hover or click to open, one at a time; Escape, outside click or focus leaving closes.
+      const megas = [...document.querySelectorAll<HTMLElement>("[data-mega]")];
+      const canHover = window.matchMedia("(hover: hover)").matches;
+      const setMega = (root: HTMLElement, open: boolean) => {
+        const btn = root.querySelector<HTMLButtonElement>("[data-mega-trigger]");
+        const panel = root.querySelector<HTMLElement>("[data-mega-panel]");
+        if (!btn || !panel) return;
+        btn.setAttribute("aria-expanded", String(open));
+        panel.hidden = !open;
+        if (open) megas.filter((m) => m !== root).forEach((m) => setMega(m, false));
+      };
+      megas.forEach((root) => {
+        const btn = root.querySelector<HTMLButtonElement>("[data-mega-trigger]");
+        let closeTimer: number | undefined;
+        btn?.addEventListener("click", () => setMega(root, btn.getAttribute("aria-expanded") !== "true"));
+        if (canHover) {
+          root.addEventListener("mouseenter", () => {
+            window.clearTimeout(closeTimer);
+            setMega(root, true);
+          });
+          root.addEventListener("mouseleave", () => {
+            closeTimer = window.setTimeout(() => setMega(root, false), 160);
+          });
+        }
+        root.addEventListener("focusout", (e) => {
+          if (!root.contains(e.relatedTarget as Node | null)) setMega(root, false);
+        });
+      });
+      document.addEventListener("click", (e) => {
+        megas.forEach((m) => !m.contains(e.target as Node) && setMega(m, false));
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        const open = megas.find((m) => m.querySelector("[data-mega-trigger]")?.getAttribute("aria-expanded") === "true");
+        if (open) {
+          setMega(open, false);
+          open.querySelector<HTMLButtonElement>("[data-mega-trigger]")?.focus();
+        }
+      });
+
+      // Mobile menu.
+      const toggle = document.querySelector<HTMLButtonElement>("[data-menu-toggle]");
+      const menu = document.querySelector<HTMLElement>("[data-menu]");
+      const setOpen = (open: boolean) => {
+        if (!toggle || !menu) return;
+        toggle.setAttribute("aria-expanded", String(open));
+        menu.hidden = !open;
+      };
+      toggle?.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"));
+      menu?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setOpen(false)));
+      document.addEventListener("keydown", (e) => e.key === "Escape" && setOpen(false));
+
+      // Scroll-driven tour: the part crossing the middle of the screen is underlined in the index.
+      document.querySelectorAll<HTMLElement>("[data-scrolly]").forEach((root) => {
+        const steps = [...root.querySelectorAll<HTMLElement>("[data-step]")];
+        const pips = [...root.querySelectorAll<HTMLElement>("[data-pip]")];
+        if (!("IntersectionObserver" in window)) return;
+        const sio = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (!e.isIntersecting) continue;
+              const n = Number((e.target as HTMLElement).dataset.step);
+              pips.forEach((p, k) => {
+                p.dataset.active = String(k === n);
+                if (k === n) p.setAttribute("aria-current", "true");
+                else p.removeAttribute("aria-current");
+              });
+            }
+          },
+          { rootMargin: "-45% 0px -45% 0px" },
+        );
+        steps.forEach((s) => sio.observe(s));
+      });
+
+      // Plain tabs: click or arrow keys, no rotation.
+      document.querySelectorAll<HTMLElement>("[data-tabs]").forEach((root) => {
+        const tabs = [...root.querySelectorAll<HTMLButtonElement>("[role=tab]")];
+        const panels = [...root.querySelectorAll<HTMLElement>("[role=tabpanel]")];
+        const show = (i: number, focus = false) => {
+          const n = (i + tabs.length) % tabs.length;
+          tabs.forEach((t, k) => {
+            t.setAttribute("aria-selected", String(k === n));
+            t.tabIndex = k === n ? 0 : -1;
+          });
+          panels.forEach((p, k) => (p.hidden = k !== n));
+          if (focus) tabs[n].focus();
+        };
+        tabs.forEach((t, k) => {
+          t.addEventListener("click", () => show(k));
+          t.addEventListener("keydown", (e) => {
+            const next = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+            if (next === undefined) return;
+            e.preventDefault();
+            show(tabs.indexOf(t) + next, true);
+          });
+        });
+      });
+
+      // Story tabs: rotate on their own until someone picks one; the bar shows the time left.
+      document.querySelectorAll<HTMLElement>("[data-stories]").forEach((root) => {
+        const tabs = [...root.querySelectorAll<HTMLButtonElement>("[role=tab]")];
+        const panels = [...root.querySelectorAll<HTMLElement>("[role=tabpanel]")];
+        const bar = root.querySelector<HTMLElement>("[data-progress]");
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        let index = 0;
+        let timer: number | undefined;
+        const show = (i: number, focus = false) => {
+          index = (i + tabs.length) % tabs.length;
+          tabs.forEach((t, n) => {
+            t.setAttribute("aria-selected", String(n === index));
+            t.tabIndex = n === index ? 0 : -1;
+          });
+          panels.forEach((p, n) => (p.hidden = n !== index));
+          if (focus) tabs[index].focus();
+          if (bar) {
+            bar.style.transition = "none";
+            bar.style.left = `${(index / tabs.length) * 100}%`;
+            bar.style.width = "0%";
+            if (!reduced && timer !== undefined) {
+              requestAnimationFrame(() => {
+                bar.style.transition = "width 7s linear";
+                bar.style.width = `${100 / tabs.length}%`;
+              });
+            } else {
+              bar.style.width = `${100 / tabs.length}%`;
+            }
+          }
+        };
+        const stop = () => {
+          window.clearInterval(timer);
+          timer = undefined;
+        };
+        tabs.forEach((t, n) => {
+          t.addEventListener("click", () => {
+            stop();
+            show(n);
+          });
+          t.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+              e.preventDefault();
+              stop();
+              show(index + (e.key === "ArrowRight" ? 1 : -1), true);
+            }
+          });
+        });
+        if (!reduced) timer = window.setInterval(() => show(index + 1), 7000);
+        show(0);
+      });
+    </script>
+  </body>
+</html>

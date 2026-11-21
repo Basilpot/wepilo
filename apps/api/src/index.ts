@@ -1,8 +1,8 @@
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
 import { app } from "@/app";
 import type { Env } from "@/env";
-import { reconcileStripePayments } from "@/lib/payments";
 import { sweepRateLimits } from "@/lib/rate-limit";
+import { publishDue } from "@/lib/publish";
 import { getDb } from "@/db";
 import { sendExpiryNotices } from "@/lib/billing";
 import { mcpHandler } from "@/mcp/server";
@@ -35,11 +35,15 @@ function oauthProvider(env: Env) {
 
 export default {
   fetch: (request: Request, env: Env, ctx: ExecutionContext) => oauthProvider(env).fetch(request, env, ctx),
-  // Cron (wrangler.jsonc → triggers.crons): email owners whose trial or plan just ended.
-  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+  // Cron (wrangler.jsonc → triggers.crons), every 5 minutes: put scheduled content live.
+  // Once an hour (the first run of each hour) it also emails owners whose trial or plan just
+  // ended and sweeps old rate-limit windows.
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
     const db = getDb(env);
-    ctx.waitUntil(sendExpiryNotices(env, db).then((r) => console.log("expiry notices", JSON.stringify(r))));
-    ctx.waitUntil(sweepRateLimits(db));
-    ctx.waitUntil(reconcileStripePayments(env, db).then((r) => console.log("stripe reconcile", JSON.stringify(r))));
+    ctx.waitUntil(publishDue(db).then((r) => r.trips + r.posts + r.pages > 0 && console.log("published", JSON.stringify(r))));
+    if (new Date(controller.scheduledTime).getUTCMinutes() < 5) {
+      ctx.waitUntil(sendExpiryNotices(env, db).then((r) => console.log("expiry notices", JSON.stringify(r))));
+      ctx.waitUntil(sweepRateLimits(db));
+    }
   },
 } satisfies ExportedHandler<Env>;

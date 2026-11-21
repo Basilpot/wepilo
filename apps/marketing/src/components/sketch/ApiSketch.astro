@@ -1,0 +1,66 @@
+---
+import SketchFrame from "./SketchFrame.astro";
+import type { Callout } from "./util";
+
+/** The website API: a server file fetching published trips, and the JSON that comes back. Fields match docs/API.md. */
+interface Props {
+  annotated?: boolean;
+}
+const { annotated = false } = Astro.props;
+
+const code: Array<[string, "c" | "t"]> = [
+  ["// astro, next.js, nuxt or a build script", "c"],
+  ["const res = await fetch(", "t"],
+  ["  `${API}/activities?sort=popular`,", "t"],
+  ['  { headers: { "x-api-key": KEY } },', "t"],
+  [");", "t"],
+  ["const { data } = await res.json();", "t"],
+  ["", "t"],
+  ["data.map((trip) => (", "t"],
+  ["  <TripCard {...trip} />", "t"],
+  ["));", "t"],
+];
+
+const json = [
+  "{",
+  '  "slug": "kilimanjaro-machame",',
+  '  "title": "Kilimanjaro, Machame…",',
+  '  "price": 2150,',
+  '  "duration": "7 days",',
+  '  "itinerary": [ … ],',
+  '  "images": [ … ],',
+  '  "tripSeo": { … }',
+  "}",
+];
+
+const callouts: Callout[] = [
+  { at: [300, 116], to: [262, 116], side: "left", lines: ["works with any", "frontend you like"] },
+  { at: [300, 202], to: [262, 250], side: "left", lines: ["the api key stays", "on your server"] },
+  { at: [900, 300], to: [950, 290], side: "right", lines: ["only published", "content comes back"] },
+];
+---
+
+<SketchFrame title="Code that fetches published trips from the Wepilo API, and the JSON it returns." callouts={callouts} annotated={annotated}>
+  <!-- Editor. -->
+  <rect x="300" y="60" width="380" height="380" class="w" />
+  <line x1="300" y1="92" x2="680" y2="92" />
+  <rect x="300" y="60" width="112" height="32" class="f2" />
+  <text x="316" y="80" class="m" style="fill:#0d0d0d">trips.astro</text>
+  <text x="428" y="80" class="m">layout.astro</text>
+  <line x1="336" y1="92" x2="336" y2="440" class="g" />
+  {
+    code.map(([line, kind], i) => (
+      <g>
+        <text x="326" y={124 + i * 26} text-anchor="end" class="m" style="font-size:10px">{i + 1}</text>
+        <text x="348" y={124 + i * 26} class="m" style={`font-size:11.5px;${kind === "t" ? "fill:#0d0d0d" : ""}`}>{line}</text>
+      </g>
+    ))
+  }
+
+  <!-- Response. -->
+  <rect x="620" y="220" width="280" height="300" class="w" />
+  <rect x="636" y="236" width="9" height="9" class="r" />
+  <text x="652" y="245" class="m">200 · application/json</text>
+  <line x1="620" y1="258" x2="900" y2="258" />
+  {json.map((l, i) => <text x="636" y={284 + i * 24} class="m" style="font-size:11px;fill:#0d0d0d">{l}</text>)}
+</SketchFrame>

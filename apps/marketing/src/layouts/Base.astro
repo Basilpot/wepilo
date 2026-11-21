@@ -1,0 +1,104 @@
+---
+import "../styles/global.css";
+import Announcement from "../components/Announcement.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const dashboard = "https://wepilo.basilpot.com";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#f8f7f3" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body class="overflow-x-clip bg-paper text-ink antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-surface"
+      >Skip to content</a
+    >
+    <div class="frame">
+      <Announcement />
+      <Nav dashboard={dashboard} />
+      <main id="main">
+        <slot />
+      </main>
+      <Footer dashboard={dashboard} />
+    </div>
+
+    <script>
+      // Sections settle in the first time they come into view.
+      const reveal = () => {
+        const items = document.querySelectorAll<HTMLElement>(".reveal");
+        if (!items.length) return;
+        if (!("IntersectionObserver" in window)) {
+          items.forEach((el) => el.classList.add("is-in"));
+          return;
+        }
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              entry.target.classList.add("is-in");
+              observer.unobserve(entry.target);
+            }
+          },
+          { rootMargin: "0px 0px -12% 0px", threshold: 0.08 },
+        );
+        items.forEach((el) => observer.observe(el));
+      };
+      reveal();
+
+      // The header keeps a hairline once the page has moved.
+      const header = document.querySelector<HTMLElement>("[data-header]");
+      const onScroll = () => {
+        if (!header) return;
+        header.classList.toggle("is-scrolled", window.scrollY > 8);
+      };
+      onScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+
+      // Tabs: a row of buttons that swaps which panel is showing.
+      document.querySelectorAll<HTMLElement>("[data-tabs]").forEach((root) => {
+        const tabs = root.querySelectorAll<HTMLButtonElement>("[data-tab]");
+        const panels = root.querySelectorAll<HTMLElement>("[data-panel]");
+        tabs.forEach((tab) =>
+          tab.addEventListener("click", () => {
+            tabs.forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
+            panels.forEach((p) => p.classList.toggle("hidden", p.dataset.panel !== tab.dataset.tab));
+          }),
+        );
+      });
+
+      // The mobile menu is a plain toggle; it closes on Escape or when a link is followed.
+      const menu = document.querySelector<HTMLElement>("[data-mobile-menu]");
+      const toggle = document.querySelector<HTMLButtonElement>("[data-mobile-toggle]");
+      const setOpen = (open: boolean) => {
+        menu?.classList.toggle("hidden", !open);
+        toggle?.setAttribute("aria-expanded", String(open));
+        document.body.classList.toggle("overflow-hidden", open);
+      };
+      toggle?.addEventListener("click", () => setOpen(menu?.classList.contains("hidden") ?? true));
+      menu?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setOpen(false)));
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") setOpen(false);
+      });
+    </script>
+  </body>
+</html>

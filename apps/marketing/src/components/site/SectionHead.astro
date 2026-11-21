@@ -1,0 +1,20 @@
+---
+/**
+ * The one section header used across the site: label, heading, lead, stacked and left-aligned,
+ * so the eye reads straight down instead of zig-zagging between columns.
+ */
+interface Props {
+  id: string;
+  label: string;
+  lead?: string;
+  dark?: boolean;
+  class?: string;
+}
+const { id, label, lead, dark = false, class: cls } = Astro.props;
+---
+
+<div class:list={["reveal max-w-[46rem]", cls]}>
+  <p class:list={["label", dark && "label-light"]}>{label}</p>
+  <h2 id={id} class="mt-5 text-section"><slot /></h2>
+  {lead && <p class:list={["mt-6 max-w-[38rem] text-lead", dark ? "text-white/75" : "text-ink-2"]}>{lead}</p>}
+</div>

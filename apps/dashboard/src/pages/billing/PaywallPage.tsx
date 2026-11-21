@@ -43,17 +43,23 @@ export function PaywallPage({ session }: { session: Session }) {
   const access = data?.access ?? session.access;
   const trial = Boolean(access?.trialAvailable);
   const lapsedPaid = access?.state === "EXPIRED" && data?.subscription?.hasPaidSubscription;
+  // A workspace whose owner's free trial is already used on another one.
+  const neverTrialed = access?.state === "UNPAID";
 
   const title = trial
     ? `Start your ${data?.trial.days ?? 3}-day trial`
     : lapsedPaid
       ? "Your plan has ended"
-      : "Your trial has ended";
+      : neverTrialed
+        ? "Choose a plan for this workspace"
+        : "Your trial has ended";
   const lead = trial
     ? "Pick the plan you want to try first. You make one small payment for the trial period. Nothing renews automatically when the trial ends, so you will never be charged again unless you choose to continue."
     : lapsedPaid
       ? "All your trips, pages and settings are safe and nothing has been deleted. Renew your plan to get back into your dashboard."
-      : "All your trips, pages and settings are saved and nothing has been deleted. Choose a plan below to continue where you left off.";
+      : neverTrialed
+        ? "This workspace needs a plan before the dashboard opens. Pick one below — you can change or cancel it whenever you like."
+        : "All your trips, pages and settings are saved and nothing has been deleted. Choose a plan below to continue where you left off.";
 
   return (
     <PaywallLayout session={session}>

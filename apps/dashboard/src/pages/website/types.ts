@@ -1,3 +1,5 @@
+import type { Translations } from "@/lib/translations";
+
 export const SECTION_LABELS = {
   HERO: "Hero banner",
   FEATURED_TRIPS: "Featured trips",
@@ -34,6 +36,8 @@ export type HomeSection = {
   body?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
+  /** `{ de: { title, subtitle, body, ctaLabel } }`, laid over the section on /de pages. */
+  translations?: Translations;
 };
 
 export type SiteConfig = {
@@ -44,6 +48,6 @@ export type SiteConfig = {
   };
   paths: { trips: string; trip: string; category: string; destination: string; posts: string; post: string; page: string };
   social: { facebook?: string | null; instagram?: string | null; x?: string | null; youtube?: string | null; tiktok?: string | null; linkedin?: string | null; whatsapp?: string | null };
-  seo: { siteTitle?: string | null; description?: string | null; ogImage?: string | null };
-  announcement: { enabled: boolean; text: string; href?: string | null };
+  seo: { siteTitle?: string | null; description?: string | null; ogImage?: string | null; translations?: Translations };
+  announcement: { enabled: boolean; text: string; href?: string | null; translations?: Translations };
 };

@@ -1,0 +1,21 @@
+---
+interface Props {
+  grey: string;
+  black: string;
+  lead?: string;
+  id?: string;
+}
+
+const { grey, black, lead, id } = Astro.props;
+---
+
+<section class="rule" id={id}>
+  <div class="shell py-20 sm:py-28">
+    <h2 class="max-w-[20ch] text-[clamp(2rem,1.2rem+3.4vw,3.25rem)] leading-[1.06] tracking-[-0.035em]">
+      <span class="block text-faint">{grey}</span>
+      <span class="block text-ink">{black}</span>
+    </h2>
+    {lead && <p class="mt-6 max-w-[34rem] text-lead text-muted">{lead}</p>}
+    <slot />
+  </div>
+</section>

@@ -4,6 +4,7 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/outfit";
 @import "@fontsource-variable/raleway";
+@import "@fontsource-variable/geist-mono";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -117,6 +118,9 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-heading: 'Raleway Variable', sans-serif;
   --font-sans: 'Outfit Variable', sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* The website's crimson, used sparingly for small marks. */
+  --color-brand: #dc143c;
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
