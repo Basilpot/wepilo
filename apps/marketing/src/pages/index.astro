@@ -11,6 +11,7 @@ import SketchSplit from "../components/sketch/SketchSplit.astro";
 import TripReel from "../components/sketch/TripReel.astro";
 import Video from "../components/site/Video.astro";
 import Ridge from "../components/site/Ridge.astro";
+import AiDemo from "../components/site/AiDemo.astro";
 import SplitHead from "../components/site/SplitHead.astro";
 import { features, featureBySlug } from "../data/features";
 import { solutions } from "../data/solutions";
@@ -37,7 +38,11 @@ const rest = features.filter((f) => !showcase.includes(f));
 
   {
     showcase.map((f, i) =>
-      i % 2 === 0 ? (
+      f.slug === "ai-assistant" ? (
+        <div class="pt-32 md:pt-48">
+          <AiDemo />
+        </div>
+      ) : i % 2 === 0 ? (
         <SketchBlock id={`home-${f.slug}`} class="mt-32 md:mt-48" tint={f.tint} line={f.line} sketch={f.sketch} name={f.name} sub={f.lead}>
           <Button href={`/product/${f.slug}`} variant="light">
             more on {f.name.toLowerCase()}

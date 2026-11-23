@@ -1,0 +1,155 @@
+---
+import { sceneStyle } from "../../lib/tints";
+import Button from "../ui/Button.astro";
+
+/**
+ * The AI section: three things an agency might ask on the left, and on the right the
+ * conversation Claude has with Wepilo for the one that's picked. Uses the tab script in
+ * Site.astro ([data-tabs], role=tab / role=tabpanel). Each panel's lines settle in one after
+ * another when it's shown; with reduced motion they're simply there.
+ */
+type Line = { text: string; strong?: boolean; gap?: boolean };
+const demos: Array<{ ask: string; title: string; lines: Line[]; next: string }> = [
+  {
+    ask: "Add next season's departures for the Inca Trail",
+    title: "Next season, Inca Trail",
+    lines: [
+      { text: "Reading trip: Inca Trail to Machu Picchu…" },
+      { text: "6 departures in 2026, from $2,150", strong: true },
+      { text: "Drafted 6 departures for 2027", strong: true, gap: true },
+      { text: "Apr to Sep, 12 seats each, prices up 5%" },
+      { text: "Nothing is live yet", strong: true, gap: true },
+      { text: "Saved as drafts for you to check and publish" },
+    ],
+    next: "Move the May departure to the 18th",
+  },
+  {
+    ask: "Translate the Kilimanjaro page into Spanish",
+    title: "Kilimanjaro in Spanish",
+    lines: [
+      { text: "Reading trip: Kilimanjaro, Machame Route…" },
+      { text: "7 days, 14 FAQs, 9 photo captions", strong: true },
+      { text: "Spanish draft ready at /es/kilimanjaro", strong: true, gap: true },
+      { text: "Prices and dates shared with the English page" },
+      { text: "Flagged for review", strong: true, gap: true },
+      { text: "2 altitude terms worth a native speaker's look" },
+    ],
+    next: "Use “mal de altura” instead of “soroche”",
+  },
+  {
+    ask: "Which trips have no dates after March?",
+    title: "Trips running out of dates",
+    lines: [
+      { text: "Checking departures on 38 published trips…" },
+      { text: "5 trips have nothing after March", strong: true },
+      { text: "#1 Everest Base Camp, 2 dates left", strong: true, gap: true },
+      { text: "Last one sold out on 3 March" },
+      { text: "#2 Annapurna Circuit, 1 date left", strong: true, gap: true },
+      { text: "Usually your best seller in autumn" },
+    ],
+    next: "Draft autumn dates for both, same as last year",
+  },
+];
+---
+
+<section class="px-5 md:px-10 xl:px-[72px]" aria-labelledby="ai-title" data-tabs>
+  <div class="grid items-center gap-12 lg:grid-cols-[1fr_minmax(0,40rem)] lg:gap-16">
+    <div>
+      <h2 id="ai-title" class="max-w-[14em] text-[clamp(2.125rem,1.4rem+2.6vw,3.5rem)] leading-[1.08]">
+        Ask for a change, <em>get a draft back.</em>
+      </h2>
+      <p class="mt-6 max-w-[34rem] text-[clamp(1.0625rem,0.98rem+0.35vw,1.3rem)] leading-[1.4] text-ink-2">
+        Connect Claude to Wepilo once. It reads your trips, writes the change as a draft, and publishes only when you ask
+        and your role allows it.
+      </p>
+
+      <div role="tablist" aria-label="Things you can ask" class="mt-10 grid gap-3">
+        {
+          demos.map((d, i) => (
+            <button
+              type="button"
+              role="tab"
+              id={`ai-tab-${i}`}
+              aria-controls={`ai-panel-${i}`}
+              aria-selected={i === 0 ? "true" : "false"}
+              tabindex={i === 0 ? 0 : -1}
+              data-round
+              class="group flex w-full items-center justify-between gap-4 rounded-[8px] bg-mist px-6 py-5 text-left text-[clamp(1rem,0.95rem+0.25vw,1.125rem)] text-ink transition-colors hover:bg-mist-2/70 aria-selected:bg-white aria-selected:shadow-[inset_0_0_0_1.5px_var(--color-cobalt)]"
+            >
+              <span>“{d.ask}”</span>
+              <svg viewBox="0 0 12 12" class="size-3 shrink-0 text-red opacity-0 transition-opacity group-aria-selected:opacity-100" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4.5 3l3 3-3 3"></path></svg>
+            </button>
+          ))
+        }
+      </div>
+
+      <Button href="/product/ai-assistant" variant="light" class="mt-8">More on the AI assistant</Button>
+    </div>
+
+    <!-- The conversation, on the lilac scene. -->
+    <div class="painted overflow-hidden rounded-[12px] p-3 sm:p-5" style={sceneStyle("lilac")}>
+      {
+        demos.map((d, i) => (
+          <div role="tabpanel" id={`ai-panel-${i}`} aria-labelledby={`ai-tab-${i}`} hidden={i !== 0} class="ai-panel frost flex min-h-[540px] flex-col rounded-[10px] p-6 sm:p-8">
+            <p class="flex items-center gap-2 text-[15px] font-medium text-ink">
+              {d.title}
+              <span class="rounded-[6px] bg-white/80 px-2 py-0.5 text-[12.5px] font-normal text-ink-2 shadow-[inset_0_0_0_1px_rgb(13_13_13/0.08)]">Claude</span>
+            </p>
+
+            <p class="ai-line ml-auto mt-6 max-w-[85%] rounded-[10px] bg-white/85 px-5 py-3.5 text-[15.5px] leading-[1.45] text-ink" style="--i:0">
+              {d.ask}
+            </p>
+
+            <div class="mt-7 text-[15.5px] leading-[1.6]">
+              {d.lines.map((l, k) => (
+                <p class:list={["ai-line", l.strong ? "font-medium text-ink" : "text-ink-2", l.gap && "mt-4"]} style={`--i:${k + 1}`}>
+                  {l.text}
+                </p>
+              ))}
+            </div>
+
+            <span class="ai-line ai-pulse mt-6 block size-3 rounded-full bg-red" style={`--i:${d.lines.length + 1}`} aria-hidden="true"></span>
+
+            <div class="mt-auto pt-8">
+              <p class="flex items-center justify-between gap-4 rounded-[8px] bg-white px-5 py-4 text-[15px] text-ink shadow-[inset_0_0_0_1px_rgb(13_13_13/0.1)]">
+                <span>{d.next}</span>
+                <svg viewBox="0 0 16 16" class="size-4 shrink-0 text-ink-2" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13 3v5H4 M7 5L4 8l3 3"></path></svg>
+              </p>
+              <p class="mt-4 flex items-center justify-between text-[13.5px] text-ink-2/75">
+                <span>Drafts only</span>
+                <span>Wepilo connector</span>
+              </p>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Each line of the reply settles in after the one before; re-runs whenever a panel is shown. */
+  @media (prefers-reduced-motion: no-preference) {
+    .ai-panel:not([hidden]) .ai-line {
+      animation: ai-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      animation-delay: calc(var(--i) * 260ms);
+    }
+    .ai-pulse {
+      animation:
+        ai-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both,
+        ai-pulse 1.4s ease-in-out calc(var(--i) * 260ms + 420ms) infinite !important;
+    }
+  }
+  @keyframes ai-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes ai-pulse {
+    50% {
+      opacity: 0.35;
+      transform: scale(0.8);
+    }
+  }
+</style>
